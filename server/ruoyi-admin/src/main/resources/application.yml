@@ -52,7 +52,8 @@ spring:
     # 国际化资源文件路径
     basename: i18n/messages
   profiles:
-    active: druid
+    # 本机密码放在未纳入 Git 的 application-local.yml
+    active: druid,local
   # 文件上传
   servlet:
     multipart:
@@ -72,13 +73,14 @@ spring:
     # redis 配置
     redis:
       # 地址
-      host: localhost
-      # 端口，默认为6379
-      port: 6379
+      # 通过 SSH 隧道连接远端 Redis
+      host: 127.0.0.1
+      # 本机 Redis 隧道端口
+      port: 16379
       # 数据库索引
       database: 0
       # 密码
-      password:
+      password: ${RUOYI_REDIS_PASSWORD:}
       # 连接超时时间
       timeout: 10s
       lettuce:

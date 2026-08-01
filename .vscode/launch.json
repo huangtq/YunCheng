@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Start RuoYi Server",
+            "request": "launch",
+            "mainClass": "com.ruoyi.RuoYiApplication",
+            "projectName": "ruoyi-admin",
+            "cwd": "${workspaceFolder}/server/ruoyi-admin",
+            "vmArgs": "-Dfile.encoding=UTF-8",
+            "console": "integratedTerminal",
+            "preLaunchTask": "Start SSH Tunnel",
+            "postDebugTask": "Stop SSH Tunnel"
+        }
+    ]
+}

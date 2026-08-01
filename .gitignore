@@ -5,7 +5,10 @@ Desktop.ini
 
 # IDE / Editor
 .idea/
-.vscode/
+# Keep shared launch/task configuration; ignore other local IDE settings.
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 *.suo
 *.ntvs*
 *.njsproj
