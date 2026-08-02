@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcActivityConfigMapper">
+    <resultMap type="YcActivityConfig" id="YcActivityConfigResult">
+        <result property="activityId" column="activity_id" />
+        <result property="mpShow" column="mp_show" />
+        <result property="homeBanner" column="home_banner" />
+        <result property="hotShow" column="hot_show" />
+        <result property="showCountdown" column="show_countdown" />
+        <result property="countdownStyle" column="countdown_style" />
+        <result property="showRegisterCount" column="show_register_count" />
+        <result property="hotelNeedRegister" column="hotel_need_register" />
+        <result property="liveNeedRegister" column="live_need_register" />
+        <result property="registerShowLive" column="register_show_live" />
+        <result property="registerShowHotel" column="register_show_hotel" />
+        <result property="hotelOnce" column="hotel_once" />
+        <result property="cancelRegisterCancelHotel" column="cancel_register_cancel_hotel" />
+        <result property="loginSms" column="login_sms" />
+        <result property="registerForceMobile" column="register_force_mobile" />
+        <result property="gridTemplate" column="grid_template" />
+        <result property="qrUrl" column="qr_url" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <select id="selectYcActivityConfigById" parameterType="Long" resultMap="YcActivityConfigResult">
+        select * from yc_activity_config where activity_id = #{activityId}
+    </select>
+
+    <insert id="insertYcActivityConfig" parameterType="YcActivityConfig">
+        insert into yc_activity_config (
+            activity_id, mp_show, home_banner, hot_show, show_countdown, countdown_style, show_register_count,
+            hotel_need_register, live_need_register, register_show_live, register_show_hotel, hotel_once,
+            cancel_register_cancel_hotel, login_sms, register_force_mobile, grid_template, qr_url,
+            create_by, create_time, remark
+        ) values (
+            #{activityId}, #{mpShow}, #{homeBanner}, #{hotShow}, #{showCountdown}, #{countdownStyle}, #{showRegisterCount},
+            #{hotelNeedRegister}, #{liveNeedRegister}, #{registerShowLive}, #{registerShowHotel}, #{hotelOnce},
+            #{cancelRegisterCancelHotel}, #{loginSms}, #{registerForceMobile}, #{gridTemplate}, #{qrUrl},
+            #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateYcActivityConfig" parameterType="YcActivityConfig">
+        update yc_activity_config
+        <set>
+            <if test="mpShow != null">mp_show = #{mpShow},</if>
+            <if test="homeBanner != null">home_banner = #{homeBanner},</if>
+            <if test="hotShow != null">hot_show = #{hotShow},</if>
+            <if test="showCountdown != null">show_countdown = #{showCountdown},</if>
+            <if test="countdownStyle != null">countdown_style = #{countdownStyle},</if>
+            <if test="showRegisterCount != null">show_register_count = #{showRegisterCount},</if>
+            <if test="hotelNeedRegister != null">hotel_need_register = #{hotelNeedRegister},</if>
+            <if test="liveNeedRegister != null">live_need_register = #{liveNeedRegister},</if>
+            <if test="registerShowLive != null">register_show_live = #{registerShowLive},</if>
+            <if test="registerShowHotel != null">register_show_hotel = #{registerShowHotel},</if>
+            <if test="hotelOnce != null">hotel_once = #{hotelOnce},</if>
+            <if test="cancelRegisterCancelHotel != null">cancel_register_cancel_hotel = #{cancelRegisterCancelHotel},</if>
+            <if test="loginSms != null">login_sms = #{loginSms},</if>
+            <if test="registerForceMobile != null">register_force_mobile = #{registerForceMobile},</if>
+            <if test="gridTemplate != null">grid_template = #{gridTemplate},</if>
+            <if test="qrUrl != null">qr_url = #{qrUrl},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where activity_id = #{activityId}
+    </update>
+</mapper>

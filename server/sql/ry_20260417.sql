@@ -161,7 +161,6 @@ create table sys_menu (
 -- 一级菜单
 insert into sys_menu values('1', '系统管理', '0', '1', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', sysdate(), '', null, '系统管理目录');
 insert into sys_menu values('2', '系统监控', '0', '2', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', sysdate(), '', null, '系统监控目录');
-insert into sys_menu values('3', '系统工具', '0', '3', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
 insert into sys_menu values('4', '若依官网', '0', '4', 'http://ruoyi.vip', null, '', '', 0, 0, 'M', '0', '0', '', 'guide',    'admin', sysdate(), '', null, '若依官网地址');
 -- 二级菜单
 insert into sys_menu values('100',  '用户管理', '1',   '1', 'user',       'system/user/index',        '', '', 1, 0, 'C', '0', '0', 'system:user:list',        'user',          'admin', sysdate(), '', null, '用户管理菜单');
@@ -178,9 +177,6 @@ insert into sys_menu values('110',  '定时任务', '2',   '2', 'job',        'm
 insert into sys_menu values('112',  '服务监控', '2',   '4', 'server',     'monitor/server/index',     '', '', 1, 0, 'C', '0', '0', 'monitor:server:list',     'server',        'admin', sysdate(), '', null, '服务监控菜单');
 insert into sys_menu values('113',  '缓存监控', '2',   '5', 'cache',      'monitor/cache/index',      '', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',      'redis',         'admin', sysdate(), '', null, '缓存监控菜单');
 insert into sys_menu values('114',  '缓存列表', '2',   '6', 'cacheList',  'monitor/cache/list',       '', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',      'redis-list',    'admin', sysdate(), '', null, '缓存列表菜单');
-insert into sys_menu values('115',  '表单构建', '3',   '1', 'build',      'tool/build/index',         '', '', 1, 0, 'C', '0', '0', 'tool:build:list',         'build',         'admin', sysdate(), '', null, '表单构建菜单');
-insert into sys_menu values('116',  '代码生成', '3',   '2', 'gen',        'tool/gen/index',           '', '', 1, 0, 'C', '0', '0', 'tool:gen:list',           'code',          'admin', sysdate(), '', null, '代码生成菜单');
-insert into sys_menu values('117',  '系统接口', '3',   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', sysdate(), '', null, '系统接口菜单');
 -- 三级菜单
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
@@ -251,13 +247,6 @@ insert into sys_menu values('1051', '任务修改', '110', '3', '#', '', '', '',
 insert into sys_menu values('1052', '任务删除', '110', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:remove',         '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1053', '状态修改', '110', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:changeStatus',   '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1054', '任务导出', '110', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:export',         '#', 'admin', sysdate(), '', null, '');
--- 代码生成按钮
-insert into sys_menu values('1055', '生成查询', '116', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:query',             '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1056', '生成修改', '116', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:edit',              '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1057', '生成删除', '116', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:remove',            '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1058', '导入代码', '116', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:import',            '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1059', '预览代码', '116', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview',           '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1060', '生成代码', '116', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code',              '#', 'admin', sysdate(), '', null, '');
 
 
 -- ----------------------------
@@ -292,7 +281,6 @@ create table sys_role_menu (
 -- ----------------------------
 insert into sys_role_menu values ('2', '1');
 insert into sys_role_menu values ('2', '2');
-insert into sys_role_menu values ('2', '3');
 insert into sys_role_menu values ('2', '4');
 insert into sys_role_menu values ('2', '100');
 insert into sys_role_menu values ('2', '101');
@@ -308,9 +296,6 @@ insert into sys_role_menu values ('2', '110');
 insert into sys_role_menu values ('2', '112');
 insert into sys_role_menu values ('2', '113');
 insert into sys_role_menu values ('2', '114');
-insert into sys_role_menu values ('2', '115');
-insert into sys_role_menu values ('2', '116');
-insert into sys_role_menu values ('2', '117');
 insert into sys_role_menu values ('2', '500');
 insert into sys_role_menu values ('2', '501');
 insert into sys_role_menu values ('2', '1000');
@@ -368,12 +353,6 @@ insert into sys_role_menu values ('2', '1051');
 insert into sys_role_menu values ('2', '1052');
 insert into sys_role_menu values ('2', '1053');
 insert into sys_role_menu values ('2', '1054');
-insert into sys_role_menu values ('2', '1055');
-insert into sys_role_menu values ('2', '1056');
-insert into sys_role_menu values ('2', '1057');
-insert into sys_role_menu values ('2', '1058');
-insert into sys_role_menu values ('2', '1059');
-insert into sys_role_menu values ('2', '1060');
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
@@ -658,64 +637,169 @@ create table sys_notice_read (
   unique key uk_user_notice (user_id, notice_id)   comment '同一用户同一公告只记录一次'
 ) engine=innodb auto_increment=1 comment='公告已读记录表';
 
-
 -- ----------------------------
--- 19、代码生成业务表
+-- 19、文件管理表
 -- ----------------------------
-drop table if exists gen_table;
-create table gen_table (
-  table_id          bigint(20)      not null auto_increment    comment '编号',
-  table_name        varchar(200)    default ''                 comment '表名称',
-  table_comment     varchar(500)    default ''                 comment '表描述',
-  sub_table_name    varchar(64)     default null               comment '关联子表的表名',
-  sub_table_fk_name varchar(64)     default null               comment '子表关联的外键名',
-  class_name        varchar(100)    default ''                 comment '实体类名称',
-  tpl_category      varchar(200)    default 'crud'             comment '使用的模板（crud单表操作 tree树表操作）',
-  tpl_web_type      varchar(30)     default ''                 comment '前端模板类型（element-ui模版 element-plus模版）',
-  package_name      varchar(100)                               comment '生成包路径',
-  module_name       varchar(30)                                comment '生成模块名',
-  business_name     varchar(30)                                comment '生成业务名',
-  function_name     varchar(50)                                comment '生成功能名',
-  function_author   varchar(50)                                comment '生成功能作者',
-  form_col_num      int(1)          default 1                  comment '表单布局（单列 双列 三列）',
-  gen_type          char(1)         default '0'                comment '生成代码方式（0zip压缩包 1自定义路径）',
-  gen_path          varchar(200)    default '/'                comment '生成路径（不填默认项目路径）',
-  options           varchar(1000)                              comment '其它生成选项',
+drop table if exists sys_file;
+create table sys_file (
+  file_id           bigint(20)      not null auto_increment    comment '文件ID',
+  original_name     varchar(255)    default ''                 comment '原始文件名',
+  file_name         varchar(500)    default ''                 comment '存储相对路径（含 /profile 前缀）',
+  url               varchar(500)    default ''                 comment '访问地址',
+  file_suffix       varchar(50)     default ''                 comment '文件后缀',
+  file_size         bigint(20)      default 0                  comment '文件大小（字节）',
   create_by         varchar(64)     default ''                 comment '创建者',
-  create_time 	    datetime                                   comment '创建时间',
+  create_time       datetime                                   comment '创建时间',
   update_by         varchar(64)     default ''                 comment '更新者',
   update_time       datetime                                   comment '更新时间',
   remark            varchar(500)    default null               comment '备注',
-  primary key (table_id)
-) engine=innodb auto_increment=1 comment = '代码生成业务表';
+  primary key (file_id)
+) engine=innodb auto_increment=1 comment = '文件管理表';
 
+-- 文件管理菜单（紧挨首页之后）
+insert into sys_menu values('2000', '文件管理', '0', '0', 'file', 'file/index', '', '', 1, 0, 'C', '0', '0', 'system:file:list', 'upload', 'admin', sysdate(), '', null, '文件管理菜单');
+insert into sys_menu values('2001', '文件上传', '2000', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'system:file:upload', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2002', '文件删除', '2000', '2', '', '', '', '', 1, 0, 'F', '0', '0', 'system:file:remove', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2003', '文件查询', '2000', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'system:file:query', '#', 'admin', sysdate(), '', null, '');
 
 -- ----------------------------
--- 20、代码生成业务表字段
+-- 会议管理第一期
 -- ----------------------------
-drop table if exists gen_table_column;
-create table gen_table_column (
-  column_id         bigint(20)      not null auto_increment    comment '编号',
-  table_id          bigint(20)                                 comment '归属表编号',
-  column_name       varchar(200)                               comment '列名称',
-  column_comment    varchar(500)                               comment '列描述',
-  column_type       varchar(100)                               comment '列类型',
-  java_type         varchar(500)                               comment 'JAVA类型',
-  java_field        varchar(200)                               comment 'JAVA字段名',
-  is_pk             char(1)                                    comment '是否主键（1是）',
-  is_increment      char(1)                                    comment '是否自增（1是）',
-  is_required       char(1)                                    comment '是否必填（1是）',
-  is_insert         char(1)                                    comment '是否为插入字段（1是）',
-  is_edit           char(1)                                    comment '是否编辑字段（1是）',
-  is_list           char(1)                                    comment '是否列表字段（1是）',
-  is_query          char(1)                                    comment '是否查询字段（1是）',
-  query_type        varchar(200)    default 'EQ'               comment '查询方式（等于、不等于、大于、小于、范围）',
-  html_type         varchar(200)                               comment '显示类型（文本框、文本域、下拉框、复选框、单选框、日期控件）',
-  dict_type         varchar(200)    default ''                 comment '字典类型',
-  sort              int                                        comment '排序',
+drop table if exists yc_activity;
+create table yc_activity (
+  activity_id       bigint(20)      not null auto_increment    comment '会议ID',
+  activity_code     varchar(64)     not null                   comment '会议编号',
+  activity_name     varchar(200)    not null                   comment '会议名称',
+  cover_url         varchar(500)    default ''                 comment '主视觉地址',
+  start_time        datetime                                   comment '开始时间',
+  end_time          datetime                                   comment '结束时间',
+  province          varchar(50)     default ''                 comment '省份',
+  city              varchar(50)     default ''                 comment '城市',
+  address           varchar(255)    default ''                 comment '详细地址',
+  third_party_url   varchar(500)    default ''                 comment '第三方链接',
+  is_show           char(1)         default '1'                comment '是否展示（0否 1是）',
+  is_hot            char(1)         default '0'                comment '是否热门（0否 1是）',
+  is_home           char(1)         default '0'                comment '是否首页（0否 1是）',
+  register_count    int(11)         default 0                  comment '报名人数',
+  visit_count       int(11)         default 0                  comment '点击/访问',
+  view_count        int(11)         default 0                  comment '流量/观看',
+  del_flag          char(1)         default '0'                comment '删除标志（0存在 2删除）',
   create_by         varchar(64)     default ''                 comment '创建者',
-  create_time 	    datetime                                   comment '创建时间',
+  create_time       datetime                                   comment '创建时间',
   update_by         varchar(64)     default ''                 comment '更新者',
   update_time       datetime                                   comment '更新时间',
-  primary key (column_id)
-) engine=innodb auto_increment=1 comment = '代码生成业务表字段';
+  remark            varchar(500)    default null               comment '备注',
+  primary key (activity_id),
+  unique key uk_activity_code (activity_code)
+) engine=innodb auto_increment=1 comment = '会议活动表';
+
+-- 会议管理目录与列表
+insert into sys_menu values('2100', '会议管理', '0', '0', 'meeting', null, '', '', 1, 0, 'M', '0', '0', '', 'date', 'admin', sysdate(), '', null, '会议管理目录');
+insert into sys_menu values('2101', '会议列表', '2100', '1', 'activity', 'meeting/activity/index', '', '', 1, 0, 'C', '0', '0', 'meeting:activity:list', 'list', 'admin', sysdate(), '', null, '会议列表菜单');
+insert into sys_menu values('2102', '会议查询', '2101', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:activity:query', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2103', '会议新增', '2101', '2', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:activity:add', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2104', '会议修改', '2101', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:activity:edit', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2105', '会议删除', '2101', '4', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:activity:remove', '#', 'admin', sysdate(), '', null, '');
+
+-- 文件管理挂到会议管理下
+update sys_menu set parent_id = 2100, order_num = 2, path = 'file' where menu_id = 2000;
+
+-- ----------------------------
+-- 会议配置（B期）
+-- ----------------------------
+-- ----------------------------
+-- 会议配置相关表
+-- ----------------------------
+drop table if exists yc_activity_config;
+create table yc_activity_config (
+  activity_id                bigint(20)      not null                   comment '会议ID',
+  mp_show                    char(1)         default '1'                comment '公众号显示',
+  home_banner                char(1)         default '0'                comment '首页轮播',
+  hot_show                   char(1)         default '0'                comment '热门会议',
+  show_countdown             char(1)         default '1'                comment '显示倒计时',
+  countdown_style            varchar(32)     default 'classic'          comment '倒计时样式',
+  show_register_count        char(1)         default '0'                comment '显示报名人数',
+  hotel_need_register        char(1)         default '1'                comment '酒店需要报名',
+  live_need_register         char(1)         default '1'                comment '直播需要报名',
+  register_show_live         char(1)         default '1'                comment '报名成功显示直播',
+  register_show_hotel        char(1)         default '1'                comment '报名成功显示酒店',
+  hotel_once                 char(1)         default '1'                comment '只能订一次酒店',
+  cancel_register_cancel_hotel char(1)       default '0'                comment '取消报名同步取消酒店',
+  login_sms                  char(1)         default '0'                comment '登录需要短信验证码',
+  register_force_mobile      char(1)         default '0'                comment '报名强制手机号登录',
+  grid_template              varchar(64)     default 'grid3x3'          comment '九宫格模板',
+  qr_url                     varchar(500)    default ''                 comment '二维码落地链接',
+  create_by                  varchar(64)     default ''                 comment '创建者',
+  create_time                datetime                                   comment '创建时间',
+  update_by                  varchar(64)     default ''                 comment '更新者',
+  update_time                datetime                                   comment '更新时间',
+  remark                     varchar(500)    default null               comment '备注',
+  primary key (activity_id)
+) engine=innodb comment = '会议配置开关表';
+
+drop table if exists yc_activity_grid;
+create table yc_activity_grid (
+  grid_id           bigint(20)      not null auto_increment    comment '九宫格项ID',
+  activity_id       bigint(20)      not null                   comment '会议ID',
+  title             varchar(100)    not null                   comment '标题',
+  icon_url          varchar(500)    default ''                 comment '图标地址',
+  link_type         varchar(20)     default 'none'             comment '链接类型 none/module/url',
+  module_key        varchar(64)     default 'none'             comment '内置模块键',
+  external_url      varchar(500)    default ''                 comment '外部链接',
+  sort_order        int(11)         default 0                  comment '排序',
+  status            char(1)         default '1'                comment '状态（0停用 1启用）',
+  del_flag          char(1)         default '0'                comment '删除标志（0存在 2删除）',
+  create_by         varchar(64)     default ''                 comment '创建者',
+  create_time       datetime                                   comment '创建时间',
+  update_by         varchar(64)     default ''                 comment '更新者',
+  update_time       datetime                                   comment '更新时间',
+  remark            varchar(500)    default null               comment '备注',
+  primary key (grid_id),
+  key idx_grid_activity (activity_id)
+) engine=innodb auto_increment=1 comment = '会议九宫格配置表';
+
+drop table if exists yc_apply_channel;
+create table yc_apply_channel (
+  channel_id        bigint(20)      not null auto_increment    comment '通道ID',
+  activity_id       bigint(20)      not null                   comment '会议ID',
+  channel_name      varchar(100)    not null                   comment '通道名称',
+  is_main           char(1)         default '0'                comment '是否主通道',
+  parent_id         bigint(20)      default 0                  comment '上级通道',
+  sort_order        int(11)         default 0                  comment '排序',
+  price_type        varchar(20)     default 'free'             comment '价格类型 free/paid',
+  price             decimal(10,2)   default 0.00               comment '价格',
+  quota             int(11)         default 0                  comment '名额0不限',
+  deadline          datetime                                   comment '截止时间',
+  need_invite       char(1)         default '0'                comment '需要邀请码',
+  need_audit        char(1)         default '0'                comment '需要审核',
+  need_invoice      char(1)         default '0'                comment '需要发票',
+  visible           char(1)         default '1'                comment '是否显示',
+  sms_notify        char(1)         default '0'                comment '短信通知',
+  del_flag          char(1)         default '0'                comment '删除标志',
+  create_by         varchar(64)     default ''                 comment '创建者',
+  create_time       datetime                                   comment '创建时间',
+  update_by         varchar(64)     default ''                 comment '更新者',
+  update_time       datetime                                   comment '更新时间',
+  remark            varchar(500)    default null               comment '备注',
+  primary key (channel_id),
+  key idx_channel_activity (activity_id)
+) engine=innodb auto_increment=1 comment = '会议报名通道表';
+
+-- 权限按钮（挂在会议列表下）
+insert into sys_menu values('2110', '九宫格查询', '2101', '10', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:grid:list', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2111', '九宫格新增', '2101', '11', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:grid:add', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2112', '九宫格修改', '2101', '12', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:grid:edit', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2113', '九宫格删除', '2101', '13', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:grid:remove', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2114', '报名通道查询', '2101', '14', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:list', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2115', '报名通道新增', '2101', '15', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:add', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2116', '报名通道修改', '2101', '16', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:edit', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2117', '报名通道删除', '2101', '17', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:remove', '#', 'admin', sysdate(), '', null, '');
+-- 授权给超级管理员角色
+insert ignore into sys_role_menu values ('1', '2110');
+insert ignore into sys_role_menu values ('1', '2111');
+insert ignore into sys_role_menu values ('1', '2112');
+insert ignore into sys_role_menu values ('1', '2113');
+insert ignore into sys_role_menu values ('1', '2114');
+insert ignore into sys_role_menu values ('1', '2115');
+insert ignore into sys_role_menu values ('1', '2116');
+insert ignore into sys_role_menu values ('1', '2117');

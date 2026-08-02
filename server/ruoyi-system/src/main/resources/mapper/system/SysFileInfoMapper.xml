@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysFileInfoMapper">
+
+    <resultMap type="SysFileInfo" id="SysFileInfoResult">
+        <result property="fileId"       column="file_id"       />
+        <result property="originalName" column="original_name" />
+        <result property="fileName"     column="file_name"     />
+        <result property="url"          column="url"           />
+        <result property="fileSuffix"   column="file_suffix"   />
+        <result property="fileSize"     column="file_size"     />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <sql id="selectSysFileInfoVo">
+        select file_id, original_name, file_name, url, file_suffix, file_size, create_by, create_time, update_by, update_time, remark
+        from sys_file
+    </sql>
+
+    <select id="selectSysFileInfoById" parameterType="Long" resultMap="SysFileInfoResult">
+        <include refid="selectSysFileInfoVo"/>
+        where file_id = #{fileId}
+    </select>
+
+    <select id="selectSysFileInfoList" parameterType="SysFileInfo" resultMap="SysFileInfoResult">
+        <include refid="selectSysFileInfoVo"/>
+        <where>
+            <if test="originalName != null and originalName != ''">
+                AND original_name like concat('%', #{originalName}, '%')
+            </if>
+            <if test="fileSuffix != null and fileSuffix != ''">
+                AND file_suffix = #{fileSuffix}
+            </if>
+            <if test="params.imageOnly != null and params.imageOnly.toString() == 'true'">
+                AND lower(file_suffix) in ('jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp')
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by file_id desc
+    </select>
+
+    <select id="selectSysFileInfoByIds" resultMap="SysFileInfoResult">
+        <include refid="selectSysFileInfoVo"/>
+        where file_id in
+        <foreach item="fileId" collection="array" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </select>
+
+    <insert id="insertSysFileInfo" parameterType="SysFileInfo" useGeneratedKeys="true" keyProperty="fileId">
+        insert into sys_file (
+            <if test="originalName != null and originalName != ''">original_name,</if>
+            <if test="fileName != null and fileName != ''">file_name,</if>
+            <if test="url != null and url != ''">url,</if>
+            <if test="fileSuffix != null and fileSuffix != ''">file_suffix,</if>
+            <if test="fileSize != null">file_size,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        ) values (
+            <if test="originalName != null and originalName != ''">#{originalName},</if>
+            <if test="fileName != null and fileName != ''">#{fileName},</if>
+            <if test="url != null and url != ''">#{url},</if>
+            <if test="fileSuffix != null and fileSuffix != ''">#{fileSuffix},</if>
+            <if test="fileSize != null">#{fileSize},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+
+    <delete id="deleteSysFileInfoById" parameterType="Long">
+        delete from sys_file where file_id = #{fileId}
+    </delete>
+
+    <delete id="deleteSysFileInfoByIds" parameterType="Long">
+        delete from sys_file where file_id in
+        <foreach item="fileId" collection="array" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </delete>
+
+</mapper>

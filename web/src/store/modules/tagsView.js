@@ -43,6 +43,21 @@ const useTagsViewStore = defineStore(
         )
       },
       addVisitedView(view) {
+        const tagsGroup = view.meta && view.meta.tagsGroup
+        if (tagsGroup) {
+          const idx = this.visitedViews.findIndex(v => v.meta && v.meta.tagsGroup === tagsGroup)
+          const next = Object.assign({}, view, {
+            title: (view.meta && view.meta.title) || 'no-name'
+          })
+          if (idx > -1) {
+            this.visitedViews.splice(idx, 1, next)
+            saveVisitedViews(this.visitedViews)
+            return
+          }
+          this.visitedViews.push(next)
+          saveVisitedViews(this.visitedViews)
+          return
+        }
         if (this.visitedViews.some(v => v.path === view.path)) return
         this.visitedViews.push(
           Object.assign({}, view, {
@@ -158,12 +173,18 @@ const useTagsViewStore = defineStore(
         })
       },
       updateVisitedView(view) {
+        const tagsGroup = view.meta && view.meta.tagsGroup
         for (let v of this.visitedViews) {
-          if (v.path === view.path) {
-            v = Object.assign(v, view)
+          const samePath = v.path === view.path
+          const sameGroup = tagsGroup && v.meta && v.meta.tagsGroup === tagsGroup
+          if (samePath || sameGroup) {
+            Object.assign(v, view, {
+              title: (view.meta && view.meta.title) || v.title
+            })
             break
           }
         }
+        saveVisitedViews(this.visitedViews)
       },
       delRightTags(view) {
         return new Promise(resolve => {

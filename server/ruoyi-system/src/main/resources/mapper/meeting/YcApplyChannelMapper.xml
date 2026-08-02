@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcApplyChannelMapper">
+    <resultMap type="YcApplyChannel" id="YcApplyChannelResult">
+        <result property="channelId" column="channel_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="channelName" column="channel_name" />
+        <result property="isMain" column="is_main" />
+        <result property="parentId" column="parent_id" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="priceType" column="price_type" />
+        <result property="price" column="price" />
+        <result property="quota" column="quota" />
+        <result property="deadline" column="deadline" />
+        <result property="needInvite" column="need_invite" />
+        <result property="needAudit" column="need_audit" />
+        <result property="needInvoice" column="need_invoice" />
+        <result property="visible" column="visible" />
+        <result property="smsNotify" column="sms_notify" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectYcApplyChannelVo">
+        select channel_id, activity_id, channel_name, is_main, parent_id, sort_order, price_type, price, quota, deadline,
+               need_invite, need_audit, need_invoice, visible, sms_notify, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from yc_apply_channel
+    </sql>
+
+    <select id="selectYcApplyChannelById" parameterType="Long" resultMap="YcApplyChannelResult">
+        <include refid="selectYcApplyChannelVo"/>
+        where channel_id = #{channelId} and del_flag = '0'
+    </select>
+
+    <select id="selectYcApplyChannelList" parameterType="YcApplyChannel" resultMap="YcApplyChannelResult">
+        <include refid="selectYcApplyChannelVo"/>
+        <where>
+            del_flag = '0'
+            <if test="activityId != null">and activity_id = #{activityId}</if>
+            <if test="channelName != null and channelName != ''">and channel_name like concat('%', #{channelName}, '%')</if>
+            <if test="visible != null and visible != ''">and visible = #{visible}</if>
+        </where>
+        order by is_main desc, sort_order asc, channel_id asc
+    </select>
+
+    <update id="clearMainByActivityId" parameterType="Long">
+        update yc_apply_channel set is_main = '0' where activity_id = #{activityId} and del_flag = '0'
+    </update>
+
+    <insert id="insertYcApplyChannel" parameterType="YcApplyChannel" useGeneratedKeys="true" keyProperty="channelId">
+        insert into yc_apply_channel (
+            activity_id, channel_name, is_main, parent_id, sort_order, price_type, price, quota, deadline,
+            need_invite, need_audit, need_invoice, visible, sms_notify, del_flag,
+            create_by, create_time, remark
+        ) values (
+            #{activityId}, #{channelName}, #{isMain}, #{parentId}, #{sortOrder}, #{priceType}, #{price}, #{quota}, #{deadline},
+            #{needInvite}, #{needAudit}, #{needInvoice}, #{visible}, #{smsNotify}, '0',
+            #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateYcApplyChannel" parameterType="YcApplyChannel">
+        update yc_apply_channel
+        <set>
+            <if test="channelName != null">channel_name = #{channelName},</if>
+            <if test="isMain != null">is_main = #{isMain},</if>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="priceType != null">price_type = #{priceType},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="quota != null">quota = #{quota},</if>
+            <if test="deadline != null">deadline = #{deadline},</if>
+            <if test="needInvite != null">need_invite = #{needInvite},</if>
+            <if test="needAudit != null">need_audit = #{needAudit},</if>
+            <if test="needInvoice != null">need_invoice = #{needInvoice},</if>
+            <if test="visible != null">visible = #{visible},</if>
+            <if test="smsNotify != null">sms_notify = #{smsNotify},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where channel_id = #{channelId}
+    </update>
+
+    <delete id="deleteYcApplyChannelByIds" parameterType="Long">
+        update yc_apply_channel set del_flag = '2' where channel_id in
+        <foreach item="channelId" collection="array" open="(" separator="," close=")">
+            #{channelId}
+        </foreach>
+    </delete>
+</mapper>

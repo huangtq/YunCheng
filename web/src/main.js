@@ -39,6 +39,8 @@ import Editor from "@/components/Editor"
 import FileUpload from "@/components/FileUpload"
 // 图片上传组件
 import ImageUpload from "@/components/ImageUpload"
+// 素材库选择组件
+import MaterialSelect from "@/components/MaterialSelect"
 // 图片预览组件
 import ImagePreview from "@/components/ImagePreview"
 // 字典标签组件
@@ -62,6 +64,7 @@ app.component('DictTag', DictTag)
 app.component('Pagination', Pagination)
 app.component('FileUpload', FileUpload)
 app.component('ImageUpload', ImageUpload)
+app.component('MaterialSelect', MaterialSelect)
 app.component('ImagePreview', ImagePreview)
 app.component('RightToolbar', RightToolbar)
 app.component('Editor', Editor)

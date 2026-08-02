@@ -138,7 +138,11 @@ function handleKeyDown(event) {
 }
 
 function isActive(r) {
-  return r.path === route.path
+  if (r.path === route.path) {
+    return true
+  }
+  const group = route.meta && route.meta.tagsGroup
+  return !!(group && r.meta && r.meta.tagsGroup === group)
 }
 
 function tagActiveStyle(tag) {
@@ -156,7 +160,7 @@ function isAffix(tag) {
 function isFirstView() {
   try {
     const tag = selectedTag.value && selectedTag.value.fullPath ? selectedTag.value : selectedDropdownTag.value
-    return tag.fullPath === '/index' || tag.fullPath === visitedViews.value[1].fullPath
+    return tag.fullPath === '/meeting/activity' || tag.fullPath === visitedViews.value[1].fullPath
   } catch (err) {
     return false
   }
@@ -215,12 +219,16 @@ function addTags() {
 
 function moveToCurrentTag() {
   nextTick(() => {
+    const group = route.meta && route.meta.tagsGroup
     for (const r of visitedViews.value) {
-      if (r.path === route.path) {
+      const samePath = r.path === route.path
+      const sameGroup = group && r.meta && r.meta.tagsGroup === group
+      if (samePath || sameGroup) {
         scrollPaneRef.value.moveToTarget(r)
         if (r.fullPath !== route.fullPath) {
           useTagsViewStore().updateVisitedView(route)
         }
+        break
       }
     }
   })

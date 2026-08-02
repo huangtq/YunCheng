@@ -59,16 +59,7 @@ export const constantRoutes = [
   },
   {
     path: '',
-    component: Layout,
-    redirect: '/index',
-    children: [
-      {
-        path: '/index',
-        component: () => import('@/views/index'),
-        name: 'Index',
-        meta: { title: '首页', icon: 'dashboard', affix: true }
-      }
-    ]
+    redirect: '/meeting/activity'
   },
   {
     path: '/lock',
@@ -94,6 +85,68 @@ export const constantRoutes = [
 
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [
+  {
+    path: '/meeting/activity-form',
+    component: Layout,
+    hidden: true,
+    permissions: ['meeting:activity:add', 'meeting:activity:edit'],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/meeting/activity/form'),
+        name: 'MeetingActivityForm',
+        meta: { title: '会议编辑', activeMenu: '/meeting/activity', noCache: true }
+      }
+    ]
+  },
+  {
+    path: '/meeting/activity-config',
+    component: Layout,
+    hidden: true,
+    permissions: ['meeting:activity:query', 'meeting:activity:edit'],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/meeting/activity/ConfigLayout'),
+        meta: { title: '会议配置', activeMenu: '/meeting/activity', breadcrumb: false },
+        children: [
+          {
+            path: '',
+            name: 'MeetingActivityConfig',
+            component: () => import('@/views/meeting/activity/config'),
+            meta: {
+              title: '会议配置',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'grid',
+            name: 'MeetingGrid',
+            component: () => import('@/views/meeting/grid/index'),
+            meta: {
+              title: '九宫格配置',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'apply-channel',
+            name: 'MeetingApplyChannel',
+            component: () => import('@/views/meeting/apply/channel'),
+            meta: {
+              title: '报名通道配置',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          }
+        ]
+      }
+    ]
+  },
   {
     path: '/system/user-auth',
     component: Layout,
@@ -147,20 +200,6 @@ export const dynamicRoutes = [
         component: () => import('@/views/monitor/job/log'),
         name: 'JobLog',
         meta: { title: '调度日志', activeMenu: '/monitor/job' }
-      }
-    ]
-  },
-  {
-    path: '/tool/gen-edit',
-    component: Layout,
-    hidden: true,
-    permissions: ['tool:gen:edit'],
-    children: [
-      {
-        path: 'index/:tableId(\\d+)',
-        component: () => import('@/views/tool/gen/editTable'),
-        name: 'GenEdit',
-        meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
       }
     ]
   }

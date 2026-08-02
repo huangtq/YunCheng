@@ -10,6 +10,10 @@
             "cwd": "${workspaceFolder}/server/ruoyi-admin",
             "vmArgs": "-Dfile.encoding=UTF-8",
             "console": "integratedTerminal",
+            "env": {
+                "SPRING_PROFILES_ACTIVE": "druid,local",
+                "SPRING_CONFIG_ADDITIONAL_LOCATION": "${workspaceFolder}/server/ruoyi-admin/src/main/resources/"
+            },
             "preLaunchTask": "Start SSH Tunnel",
             "postDebugTask": "Stop SSH Tunnel"
         }

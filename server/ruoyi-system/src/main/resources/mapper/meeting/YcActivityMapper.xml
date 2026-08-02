@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcActivityMapper">
+
+    <resultMap type="YcActivity" id="YcActivityResult">
+        <result property="activityId"     column="activity_id"     />
+        <result property="activityCode"   column="activity_code"   />
+        <result property="activityName"   column="activity_name"   />
+        <result property="coverUrl"       column="cover_url"       />
+        <result property="startTime"      column="start_time"      />
+        <result property="endTime"        column="end_time"        />
+        <result property="province"       column="province"        />
+        <result property="city"           column="city"            />
+        <result property="address"        column="address"         />
+        <result property="thirdPartyUrl"  column="third_party_url" />
+        <result property="isShow"         column="is_show"         />
+        <result property="isHot"          column="is_hot"          />
+        <result property="isHome"         column="is_home"         />
+        <result property="registerCount"  column="register_count"  />
+        <result property="visitCount"     column="visit_count"     />
+        <result property="viewCount"      column="view_count"      />
+        <result property="delFlag"        column="del_flag"        />
+        <result property="createBy"       column="create_by"       />
+        <result property="createTime"     column="create_time"     />
+        <result property="updateBy"       column="update_by"       />
+        <result property="updateTime"     column="update_time"     />
+        <result property="remark"         column="remark"          />
+    </resultMap>
+
+    <sql id="selectYcActivityVo">
+        select activity_id, activity_code, activity_name, cover_url, start_time, end_time,
+               province, city, address, third_party_url, is_show, is_hot, is_home,
+               register_count, visit_count, view_count, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from yc_activity
+    </sql>
+
+    <select id="selectYcActivityById" parameterType="Long" resultMap="YcActivityResult">
+        <include refid="selectYcActivityVo"/>
+        where activity_id = #{activityId} and del_flag = '0'
+    </select>
+
+    <select id="selectYcActivityList" parameterType="YcActivity" resultMap="YcActivityResult">
+        <include refid="selectYcActivityVo"/>
+        <where>
+            del_flag = '0'
+            <if test="keyword != null and keyword != ''">
+                AND (activity_name like concat('%', #{keyword}, '%')
+                     or activity_code like concat('%', #{keyword}, '%'))
+            </if>
+            <if test="activityName != null and activityName != ''">
+                AND activity_name like concat('%', #{activityName}, '%')
+            </if>
+            <if test="activityCode != null and activityCode != ''">
+                AND activity_code like concat('%', #{activityCode}, '%')
+            </if>
+            <if test="isShow != null and isShow != ''">
+                AND is_show = #{isShow}
+            </if>
+            <if test="isHot != null and isHot != ''">
+                AND is_hot = #{isHot}
+            </if>
+            <if test="isHome != null and isHome != ''">
+                AND is_home = #{isHome}
+            </if>
+        </where>
+        order by activity_id desc
+    </select>
+
+    <select id="checkActivityCodeUnique" parameterType="String" resultMap="YcActivityResult">
+        <include refid="selectYcActivityVo"/>
+        where activity_code = #{activityCode} and del_flag = '0' limit 1
+    </select>
+
+    <insert id="insertYcActivity" parameterType="YcActivity" useGeneratedKeys="true" keyProperty="activityId">
+        insert into yc_activity (
+            <if test="activityCode != null and activityCode != ''">activity_code,</if>
+            <if test="activityName != null and activityName != ''">activity_name,</if>
+            <if test="coverUrl != null">cover_url,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="province != null">province,</if>
+            <if test="city != null">city,</if>
+            <if test="address != null">address,</if>
+            <if test="thirdPartyUrl != null">third_party_url,</if>
+            <if test="isShow != null">is_show,</if>
+            <if test="isHot != null">is_hot,</if>
+            <if test="isHome != null">is_home,</if>
+            <if test="registerCount != null">register_count,</if>
+            <if test="visitCount != null">visit_count,</if>
+            <if test="viewCount != null">view_count,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            del_flag,
+            create_time
+        ) values (
+            <if test="activityCode != null and activityCode != ''">#{activityCode},</if>
+            <if test="activityName != null and activityName != ''">#{activityName},</if>
+            <if test="coverUrl != null">#{coverUrl},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="province != null">#{province},</if>
+            <if test="city != null">#{city},</if>
+            <if test="address != null">#{address},</if>
+            <if test="thirdPartyUrl != null">#{thirdPartyUrl},</if>
+            <if test="isShow != null">#{isShow},</if>
+            <if test="isHot != null">#{isHot},</if>
+            <if test="isHome != null">#{isHome},</if>
+            <if test="registerCount != null">#{registerCount},</if>
+            <if test="visitCount != null">#{visitCount},</if>
+            <if test="viewCount != null">#{viewCount},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            '0',
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateYcActivity" parameterType="YcActivity">
+        update yc_activity
+        <set>
+            <if test="activityCode != null and activityCode != ''">activity_code = #{activityCode},</if>
+            <if test="activityName != null and activityName != ''">activity_name = #{activityName},</if>
+            <if test="coverUrl != null">cover_url = #{coverUrl},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="province != null">province = #{province},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="thirdPartyUrl != null">third_party_url = #{thirdPartyUrl},</if>
+            <if test="isShow != null">is_show = #{isShow},</if>
+            <if test="isHot != null">is_hot = #{isHot},</if>
+            <if test="isHome != null">is_home = #{isHome},</if>
+            <if test="registerCount != null">register_count = #{registerCount},</if>
+            <if test="visitCount != null">visit_count = #{visitCount},</if>
+            <if test="viewCount != null">view_count = #{viewCount},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where activity_id = #{activityId}
+    </update>
+
+    <delete id="deleteYcActivityById" parameterType="Long">
+        update yc_activity set del_flag = '2' where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deleteYcActivityByIds" parameterType="Long">
+        update yc_activity set del_flag = '2' where activity_id in
+        <foreach item="activityId" collection="array" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+
+</mapper>

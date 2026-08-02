@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcActivityGridMapper">
+    <resultMap type="YcActivityGrid" id="YcActivityGridResult">
+        <result property="gridId" column="grid_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="title" column="title" />
+        <result property="iconUrl" column="icon_url" />
+        <result property="linkType" column="link_type" />
+        <result property="moduleKey" column="module_key" />
+        <result property="externalUrl" column="external_url" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectYcActivityGridVo">
+        select grid_id, activity_id, title, icon_url, link_type, module_key, external_url, sort_order, status, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from yc_activity_grid
+    </sql>
+
+    <select id="selectYcActivityGridById" parameterType="Long" resultMap="YcActivityGridResult">
+        <include refid="selectYcActivityGridVo"/>
+        where grid_id = #{gridId} and del_flag = '0'
+    </select>
+
+    <select id="selectYcActivityGridList" parameterType="YcActivityGrid" resultMap="YcActivityGridResult">
+        <include refid="selectYcActivityGridVo"/>
+        <where>
+            del_flag = '0'
+            <if test="activityId != null">and activity_id = #{activityId}</if>
+            <if test="title != null and title != ''">and title like concat('%', #{title}, '%')</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+        order by sort_order asc, grid_id asc
+    </select>
+
+    <insert id="insertYcActivityGrid" parameterType="YcActivityGrid" useGeneratedKeys="true" keyProperty="gridId">
+        insert into yc_activity_grid (
+            activity_id, title, icon_url, link_type, module_key, external_url, sort_order, status, del_flag,
+            create_by, create_time, remark
+        ) values (
+            #{activityId}, #{title}, #{iconUrl}, #{linkType}, #{moduleKey}, #{externalUrl}, #{sortOrder}, #{status}, '0',
+            #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateYcActivityGrid" parameterType="YcActivityGrid">
+        update yc_activity_grid
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="iconUrl != null">icon_url = #{iconUrl},</if>
+            <if test="linkType != null">link_type = #{linkType},</if>
+            <if test="moduleKey != null">module_key = #{moduleKey},</if>
+            <if test="externalUrl != null">external_url = #{externalUrl},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where grid_id = #{gridId}
+    </update>
+
+    <delete id="deleteYcActivityGridByIds" parameterType="Long">
+        update yc_activity_grid set del_flag = '2' where grid_id in
+        <foreach item="gridId" collection="array" open="(" separator="," close=")">
+            #{gridId}
+        </foreach>
+    </delete>
+</mapper>

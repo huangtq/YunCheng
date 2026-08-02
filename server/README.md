@@ -8,7 +8,7 @@
 - Spring Boot 4.x
 - Spring Security + JWT
 - MyBatis / Redis
-- Maven 多模块：`ruoyi-admin`、`ruoyi-framework`、`ruoyi-system`、`ruoyi-common`、`ruoyi-quartz`、`ruoyi-generator`
+- Maven 多模块：`ruoyi-admin`、`ruoyi-framework`、`ruoyi-system`、`ruoyi-common`、`ruoyi-quartz`
 
 ## 内置功能
 
@@ -16,9 +16,7 @@
 2. 字典 / 参数 / 通知公告
 3. 操作日志 / 登录日志 / 在线用户
 4. 定时任务
-5. 代码生成
-6. 系统接口文档
-7. 服务监控 / 缓存监控 / 连接池监视
+5. 服务监控 / 缓存监控 / 连接池监视
 
 ## 本地运行
 
