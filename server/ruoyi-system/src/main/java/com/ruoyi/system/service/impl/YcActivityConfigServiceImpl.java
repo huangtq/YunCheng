@@ -45,6 +45,11 @@ public class YcActivityConfigServiceImpl implements IYcActivityConfigService
         config.setRegisterForceMobile("0");
         config.setGridTemplate("grid3x3");
         config.setQrUrl("");
+        config.setMobileTemplate("standard");
+        config.setMobileThemeColor("#1f6feb");
+        config.setMobileBackgroundUrl("");
+        config.setMobileBlocksJson("[]");
+        config.setMobileNotice("");
         config.setCreateBy(username);
         ycActivityConfigMapper.insertYcActivityConfig(config);
         return ycActivityConfigMapper.selectYcActivityConfigById(activityId);

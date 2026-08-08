@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 报名通道 yc_apply_channel
+ * Apply channel yc_apply_channel
  */
 public class YcApplyChannel extends BaseEntity
 {
@@ -31,6 +31,11 @@ public class YcApplyChannel extends BaseEntity
     private String visible;
     private String smsNotify;
     private String delFlag;
+
+    /** parent channel name (list only) */
+    private String parentName;
+    /** configured field count (list only) */
+    private Integer fieldCount;
 
     public Long getChannelId() { return channelId; }
     public void setChannelId(Long channelId) { this.channelId = channelId; }
@@ -64,6 +69,10 @@ public class YcApplyChannel extends BaseEntity
     public void setSmsNotify(String smsNotify) { this.smsNotify = smsNotify; }
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public String getParentName() { return parentName; }
+    public void setParentName(String parentName) { this.parentName = parentName; }
+    public Integer getFieldCount() { return fieldCount; }
+    public void setFieldCount(Integer fieldCount) { this.fieldCount = fieldCount; }
 
     @Override
     public String toString() {

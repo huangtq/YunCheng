@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcActivityNavMapper">
+  <resultMap type="YcActivityNav" id="YcActivityNavResult">
+    <result property="navId" column="nav_id"/><result property="activityId" column="activity_id"/>
+    <result property="title" column="title"/><result property="address" column="address"/>
+    <result property="longitude" column="longitude"/><result property="latitude" column="latitude"/>
+    <result property="phone" column="phone"/><result property="coverUrl" column="cover_url"/>
+    <result property="sortOrder" column="sort_order"/><result property="status" column="status"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+  </resultMap>
+  <sql id="selectVo">
+    select nav_id,activity_id,title,address,longitude,latitude,phone,cover_url,sort_order,status,del_flag,create_by,create_time,update_by,update_time,remark
+    from yc_activity_nav
+  </sql>
+  <select id="selectYcActivityNavById" resultMap="YcActivityNavResult"><include refid="selectVo"/> where nav_id=#{navId} and del_flag='0'</select>
+  <select id="selectYcActivityNavList" resultMap="YcActivityNavResult">
+    <include refid="selectVo"/>
+    <where>del_flag='0'
+      <if test="activityId!=null">and activity_id=#{activityId}</if>
+      <if test="title!=null and title!=''">and title like concat('%',#{title},'%')</if>
+      <if test="status!=null and status!=''">and status=#{status}</if>
+    </where>
+    order by sort_order asc, nav_id asc
+  </select>
+  <select id="selectNavStats" resultType="java.util.HashMap">
+    select count(1) as totalCount, ifnull(sum(case when status='1' then 1 else 0 end),0) as enabledCount
+    from yc_activity_nav where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcActivityNav" useGeneratedKeys="true" keyProperty="navId">
+    insert into yc_activity_nav(activity_id,title,address,longitude,latitude,phone,cover_url,sort_order,status,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{title},#{address},#{longitude},#{latitude},#{phone},#{coverUrl},#{sortOrder},#{status},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcActivityNav">
+    update yc_activity_nav
+    <set>
+      <if test="title!=null">title=#{title},</if>
+      <if test="address!=null">address=#{address},</if>
+      <if test="longitude!=null">longitude=#{longitude},</if>
+      <if test="latitude!=null">latitude=#{latitude},</if>
+      <if test="phone!=null">phone=#{phone},</if>
+      <if test="coverUrl!=null">cover_url=#{coverUrl},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="status!=null">status=#{status},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where nav_id=#{navId}
+  </update>
+  <delete id="deleteYcActivityNavByIds">
+    update yc_activity_nav set del_flag='2' where nav_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

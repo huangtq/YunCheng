@@ -28,6 +28,11 @@ public class YcActivityConfig extends BaseEntity
     private String registerForceMobile;
     private String gridTemplate;
     private String qrUrl;
+    private String mobileTemplate;
+    private String mobileThemeColor;
+    private String mobileBackgroundUrl;
+    private String mobileBlocksJson;
+    private String mobileNotice;
 
     public Long getActivityId() { return activityId; }
     public void setActivityId(Long activityId) { this.activityId = activityId; }
@@ -63,6 +68,16 @@ public class YcActivityConfig extends BaseEntity
     public void setGridTemplate(String gridTemplate) { this.gridTemplate = gridTemplate; }
     public String getQrUrl() { return qrUrl; }
     public void setQrUrl(String qrUrl) { this.qrUrl = qrUrl; }
+    public String getMobileTemplate() { return mobileTemplate; }
+    public void setMobileTemplate(String mobileTemplate) { this.mobileTemplate = mobileTemplate; }
+    public String getMobileThemeColor() { return mobileThemeColor; }
+    public void setMobileThemeColor(String mobileThemeColor) { this.mobileThemeColor = mobileThemeColor; }
+    public String getMobileBackgroundUrl() { return mobileBackgroundUrl; }
+    public void setMobileBackgroundUrl(String mobileBackgroundUrl) { this.mobileBackgroundUrl = mobileBackgroundUrl; }
+    public String getMobileBlocksJson() { return mobileBlocksJson; }
+    public void setMobileBlocksJson(String mobileBlocksJson) { this.mobileBlocksJson = mobileBlocksJson; }
+    public String getMobileNotice() { return mobileNotice; }
+    public void setMobileNotice(String mobileNotice) { this.mobileNotice = mobileNotice; }
 
     @Override
     public String toString() {
@@ -71,6 +86,8 @@ public class YcActivityConfig extends BaseEntity
             .append("mpShow", mpShow)
             .append("gridTemplate", gridTemplate)
             .append("qrUrl", qrUrl)
+            .append("mobileTemplate", mobileTemplate)
+            .append("mobileThemeColor", mobileThemeColor)
             .toString();
     }
 }

@@ -111,6 +111,11 @@ public class Constants
     public static final String LOGIN_USER_KEY = "login_user_key";
 
     /**
+     * 微信参会者令牌前缀
+     */
+    public static final String MP_LOGIN_USER_KEY = "mp_login_user_key";
+
+    /**
      * 用户ID
      */
     public static final String JWT_USERID = "userid";

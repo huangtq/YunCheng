@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcGuestTripMapper">
+  <resultMap type="YcGuestTrip" id="YcGuestTripResult">
+    <result property="tripId" column="trip_id"/><result property="activityId" column="activity_id"/>
+    <result property="guestId" column="guest_id"/><result property="tripType" column="trip_type"/>
+    <result property="transportType" column="transport_type"/><result property="transportNo" column="transport_no"/>
+    <result property="tripDate" column="trip_date"/><result property="fromPlace" column="from_place"/>
+    <result property="toPlace" column="to_place"/><result property="departTime" column="depart_time"/>
+    <result property="arriveTime" column="arrive_time"/><result property="price" column="price"/>
+    <result property="ticketStatus" column="ticket_status"/><result property="pickupStatus" column="pickup_status"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+    <result property="guestName" column="guest_name"/><result property="guestPhone" column="guest_phone"/>
+  </resultMap>
+  <sql id="selectVo">
+    select t.trip_id, t.activity_id, t.guest_id, t.trip_type, t.transport_type, t.transport_no, t.trip_date,
+           t.from_place, t.to_place, t.depart_time, t.arrive_time, t.price, t.ticket_status, t.pickup_status,
+           t.del_flag, t.create_by, t.create_time, t.update_by, t.update_time, t.remark,
+           g.guest_name, g.phone as guest_phone
+    from yc_guest_trip t
+    left join yc_guest g on g.guest_id=t.guest_id and g.del_flag='0'
+  </sql>
+  <select id="selectYcGuestTripById" resultMap="YcGuestTripResult"><include refid="selectVo"/> where t.trip_id=#{tripId} and t.del_flag='0'</select>
+  <select id="selectYcGuestTripList" resultMap="YcGuestTripResult">
+    <include refid="selectVo"/>
+    <where>t.del_flag='0'
+      <if test="activityId!=null">and t.activity_id=#{activityId}</if>
+      <if test="guestId!=null">and t.guest_id=#{guestId}</if>
+      <if test="tripType!=null and tripType!=''">and t.trip_type=#{tripType}</if>
+      <if test="transportType!=null and transportType!=''">and t.transport_type=#{transportType}</if>
+      <if test="ticketStatus!=null and ticketStatus!=''">and t.ticket_status=#{ticketStatus}</if>
+      <if test="guestName!=null and guestName!=''">and g.guest_name like concat('%',#{guestName},'%')</if>
+    </where>
+    order by t.trip_date desc, t.trip_id desc
+  </select>
+  <select id="selectTripStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(case when trip_type='come' then 1 else 0 end),0) as comeCount,
+      ifnull(sum(case when trip_type='return' then 1 else 0 end),0) as returnCount,
+      ifnull(sum(case when ticket_status='1' then 1 else 0 end),0) as issuedCount
+    from yc_guest_trip where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcGuestTrip" useGeneratedKeys="true" keyProperty="tripId">
+    insert into yc_guest_trip(activity_id,guest_id,trip_type,transport_type,transport_no,trip_date,from_place,to_place,depart_time,arrive_time,price,ticket_status,pickup_status,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{guestId},#{tripType},#{transportType},#{transportNo},#{tripDate},#{fromPlace},#{toPlace},#{departTime},#{arriveTime},#{price},#{ticketStatus},#{pickupStatus},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcGuestTrip">
+    update yc_guest_trip
+    <set>
+      <if test="guestId!=null">guest_id=#{guestId},</if>
+      <if test="tripType!=null">trip_type=#{tripType},</if>
+      <if test="transportType!=null">transport_type=#{transportType},</if>
+      <if test="transportNo!=null">transport_no=#{transportNo},</if>
+      <if test="tripDate!=null">trip_date=#{tripDate},</if>
+      <if test="fromPlace!=null">from_place=#{fromPlace},</if>
+      <if test="toPlace!=null">to_place=#{toPlace},</if>
+      <if test="departTime!=null">depart_time=#{departTime},</if>
+      <if test="arriveTime!=null">arrive_time=#{arriveTime},</if>
+      <if test="price!=null">price=#{price},</if>
+      <if test="ticketStatus!=null">ticket_status=#{ticketStatus},</if>
+      <if test="pickupStatus!=null">pickup_status=#{pickupStatus},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where trip_id=#{tripId}
+  </update>
+  <delete id="deleteYcGuestTripByIds">
+    update yc_guest_trip set del_flag='2' where trip_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

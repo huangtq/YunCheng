@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcStaffMapper">
+  <resultMap type="YcStaff" id="YcStaffResult">
+    <result property="staffId" column="staff_id"/><result property="activityId" column="activity_id"/>
+    <result property="staffName" column="staff_name"/><result property="phone" column="phone"/>
+    <result property="roleName" column="role_name"/><result property="sortOrder" column="sort_order"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+  </resultMap>
+  <sql id="selectVo">
+    select staff_id, activity_id, staff_name, phone, role_name, sort_order, del_flag,
+           create_by, create_time, update_by, update_time, remark
+    from yc_staff
+  </sql>
+  <select id="selectYcStaffById" resultMap="YcStaffResult"><include refid="selectVo"/> where staff_id=#{staffId} and del_flag='0'</select>
+  <select id="selectYcStaffList" resultMap="YcStaffResult">
+    <include refid="selectVo"/>
+    <where>del_flag='0'
+      <if test="activityId!=null">and activity_id=#{activityId}</if>
+      <if test="staffName!=null and staffName!=''">and staff_name like concat('%',#{staffName},'%')</if>
+      <if test="phone!=null and phone!=''">and phone like concat('%',#{phone},'%')</if>
+      <if test="roleName!=null and roleName!=''">and role_name like concat('%',#{roleName},'%')</if>
+    </where>
+    order by sort_order asc, staff_id asc
+  </select>
+  <select id="selectStaffStats" resultType="java.util.HashMap">
+    select count(1) as totalCount from yc_staff where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcStaff" useGeneratedKeys="true" keyProperty="staffId">
+    insert into yc_staff(activity_id,staff_name,phone,role_name,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{staffName},#{phone},#{roleName},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcStaff">
+    update yc_staff
+    <set>
+      <if test="staffName!=null">staff_name=#{staffName},</if>
+      <if test="phone!=null">phone=#{phone},</if>
+      <if test="roleName!=null">role_name=#{roleName},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where staff_id=#{staffId}
+  </update>
+  <delete id="deleteYcStaffByIds">
+    update yc_staff set del_flag='2' where staff_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

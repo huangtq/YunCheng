@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcGuestFeeMapper">
+  <resultMap type="YcGuestFee" id="YcGuestFeeResult">
+    <result property="feeId" column="fee_id"/><result property="activityId" column="activity_id"/>
+    <result property="guestId" column="guest_id"/><result property="feeAmount" column="fee_amount"/>
+    <result property="progressStatus" column="progress_status"/><result property="payStatus" column="pay_status"/>
+    <result property="bankName" column="bank_name"/><result property="bankAccount" column="bank_account"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+    <result property="guestName" column="guest_name"/><result property="guestPhone" column="guest_phone"/>
+  </resultMap>
+  <sql id="selectVo">
+    select f.fee_id, f.activity_id, f.guest_id, f.fee_amount, f.progress_status, f.pay_status,
+           f.bank_name, f.bank_account, f.del_flag, f.create_by, f.create_time, f.update_by, f.update_time, f.remark,
+           g.guest_name, g.phone as guest_phone
+    from yc_guest_fee f
+    left join yc_guest g on g.guest_id=f.guest_id and g.del_flag='0'
+  </sql>
+  <select id="selectYcGuestFeeById" resultMap="YcGuestFeeResult"><include refid="selectVo"/> where f.fee_id=#{feeId} and f.del_flag='0'</select>
+  <select id="selectYcGuestFeeList" resultMap="YcGuestFeeResult">
+    <include refid="selectVo"/>
+    <where>f.del_flag='0'
+      <if test="activityId!=null">and f.activity_id=#{activityId}</if>
+      <if test="guestId!=null">and f.guest_id=#{guestId}</if>
+      <if test="progressStatus!=null and progressStatus!=''">and f.progress_status=#{progressStatus}</if>
+      <if test="payStatus!=null and payStatus!=''">and f.pay_status=#{payStatus}</if>
+      <if test="guestName!=null and guestName!=''">and g.guest_name like concat('%',#{guestName},'%')</if>
+    </where>
+    order by f.fee_id desc
+  </select>
+  <select id="selectFeeStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(case when pay_status='1' then 1 else 0 end),0) as paidCount,
+      ifnull(sum(case when pay_status='0' then 1 else 0 end),0) as unpaidCount,
+      ifnull(sum(fee_amount),0) as totalAmount
+    from yc_guest_fee where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcGuestFee" useGeneratedKeys="true" keyProperty="feeId">
+    insert into yc_guest_fee(activity_id,guest_id,fee_amount,progress_status,pay_status,bank_name,bank_account,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{guestId},#{feeAmount},#{progressStatus},#{payStatus},#{bankName},#{bankAccount},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcGuestFee">
+    update yc_guest_fee
+    <set>
+      <if test="guestId!=null">guest_id=#{guestId},</if>
+      <if test="feeAmount!=null">fee_amount=#{feeAmount},</if>
+      <if test="progressStatus!=null">progress_status=#{progressStatus},</if>
+      <if test="payStatus!=null">pay_status=#{payStatus},</if>
+      <if test="bankName!=null">bank_name=#{bankName},</if>
+      <if test="bankAccount!=null">bank_account=#{bankAccount},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where fee_id=#{feeId}
+  </update>
+  <delete id="deleteYcGuestFeeByIds">
+    update yc_guest_fee set del_flag='2' where fee_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

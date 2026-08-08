@@ -23,29 +23,35 @@
         <result property="updateBy" column="update_by" />
         <result property="updateTime" column="update_time" />
         <result property="remark" column="remark" />
+        <result property="parentName" column="parent_name" />
+        <result property="fieldCount" column="field_count" />
     </resultMap>
 
     <sql id="selectYcApplyChannelVo">
-        select channel_id, activity_id, channel_name, is_main, parent_id, sort_order, price_type, price, quota, deadline,
-               need_invite, need_audit, need_invoice, visible, sms_notify, del_flag,
-               create_by, create_time, update_by, update_time, remark
-        from yc_apply_channel
+        select c.channel_id, c.activity_id, c.channel_name, c.is_main, c.parent_id, c.sort_order, c.price_type, c.price, c.quota, c.deadline,
+               c.need_invite, c.need_audit, c.need_invoice, c.visible, c.sms_notify, c.del_flag,
+               c.create_by, c.create_time, c.update_by, c.update_time, c.remark,
+               (select p.channel_name from yc_apply_channel p where p.channel_id = c.parent_id and p.del_flag = '0' limit 1) as parent_name,
+               (select count(1) from yc_apply_field f where f.channel_id = c.channel_id and f.del_flag = '0') as field_count
+        from yc_apply_channel c
     </sql>
 
     <select id="selectYcApplyChannelById" parameterType="Long" resultMap="YcApplyChannelResult">
         <include refid="selectYcApplyChannelVo"/>
-        where channel_id = #{channelId} and del_flag = '0'
+        where c.channel_id = #{channelId} and c.del_flag = '0'
     </select>
 
     <select id="selectYcApplyChannelList" parameterType="YcApplyChannel" resultMap="YcApplyChannelResult">
         <include refid="selectYcApplyChannelVo"/>
         <where>
-            del_flag = '0'
-            <if test="activityId != null">and activity_id = #{activityId}</if>
-            <if test="channelName != null and channelName != ''">and channel_name like concat('%', #{channelName}, '%')</if>
-            <if test="visible != null and visible != ''">and visible = #{visible}</if>
+            c.del_flag = '0'
+            <if test="activityId != null">and c.activity_id = #{activityId}</if>
+            <if test="channelName != null and channelName != ''">
+                and (c.channel_name like concat('%', #{channelName}, '%') or ifnull(c.remark,'') like concat('%', #{channelName}, '%'))
+            </if>
+            <if test="visible != null and visible != ''">and c.visible = #{visible}</if>
         </where>
-        order by is_main desc, sort_order asc, channel_id asc
+        order by c.is_main desc, c.sort_order asc, c.channel_id asc
     </select>
 
     <update id="clearMainByActivityId" parameterType="Long">

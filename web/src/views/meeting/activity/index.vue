@@ -186,8 +186,8 @@ function handleConfig(row) {
   proxy.$router.push({ path: "/meeting/activity-config", query: { id: row.activityId } })
 }
 
-function handleVenue() {
-  proxy.$modal.msgWarning("功能开发中")
+function handleVenue(row) {
+  proxy.$router.push({ path: "/meeting/activity-config/venue", query: { id: row.activityId } })
 }
 
 function handleDelete(row) {

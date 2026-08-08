@@ -1,64 +1,38 @@
 {
   "pages": [{
-    "path": "pages/login",
+    "path": "pages/meeting/index",
     "style": {
-      "navigationBarTitleText": "登录"
+      "navigationBarTitleText": "会议首页"
     }
   }, {
-    "path": "pages/register",
+    "path": "pages/meeting/home",
     "style": {
-      "navigationBarTitleText": "注册"
+      "navigationBarTitleText": "会议首页"
     }
   }, {
-    "path": "pages/index",
+    "path": "pages/meeting/oauth",
     "style": {
-      "navigationBarTitleText": "若依移动端框架",
-      "navigationStyle": "custom"
+      "navigationBarTitleText": "微信授权"
     }
   }, {
-    "path": "pages/work/index",
+    "path": "pages/meeting/module",
     "style": {
-      "navigationBarTitleText": "工作台"
+      "navigationBarTitleText": "会议模块"
     }
   }, {
-    "path": "pages/mine/index",
+    "path": "pages/meeting/apply/index",
     "style": {
-      "navigationBarTitleText": "我的"
+      "navigationBarTitleText": "参会报名"
     }
   }, {
-    "path": "pages/mine/avatar/index",
+    "path": "pages/meeting/apply/form",
     "style": {
-      "navigationBarTitleText": "修改头像"
+      "navigationBarTitleText": "填写报名信息"
     }
   }, {
-    "path": "pages/mine/info/index",
+    "path": "pages/meeting/apply/mine",
     "style": {
-      "navigationBarTitleText": "个人信息"
-    }
-  }, {
-    "path": "pages/mine/info/edit",
-    "style": {
-      "navigationBarTitleText": "编辑资料"
-    }
-  }, {
-    "path": "pages/mine/pwd/index",
-    "style": {
-      "navigationBarTitleText": "修改密码"
-    }
-  }, {
-    "path": "pages/mine/setting/index",
-    "style": {
-      "navigationBarTitleText": "应用设置"
-    }
-  }, {
-    "path": "pages/mine/help/index",
-    "style": {
-      "navigationBarTitleText": "常见问题"
-    }
-  }, {
-    "path": "pages/mine/about/index",
-    "style": {
-      "navigationBarTitleText": "关于我们"
+      "navigationBarTitleText": "我的报名"
     }
   }, {
     "path": "pages/common/webview/index",
@@ -71,32 +45,9 @@
       "navigationBarTitleText": "浏览文本"
     }
   }],
-  "tabBar": {
-    "color": "#000000",
-    "selectedColor": "#000000",
-    "borderStyle": "white",
-    "backgroundColor": "#ffffff",
-    "list": [{
-        "pagePath": "pages/index",
-        "iconPath": "static/images/tabbar/home.png",
-        "selectedIconPath": "static/images/tabbar/home_.png",
-        "text": "首页"
-      }, {
-        "pagePath": "pages/work/index",
-        "iconPath": "static/images/tabbar/work.png",
-        "selectedIconPath": "static/images/tabbar/work_.png",
-        "text": "工作台"
-      }, {
-        "pagePath": "pages/mine/index",
-        "iconPath": "static/images/tabbar/mine.png",
-        "selectedIconPath": "static/images/tabbar/mine_.png",
-        "text": "我的"
-      }
-    ]
-  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "RuoYi",
+    "navigationBarTitleText": "会议",
     "navigationBarBackgroundColor": "#FFFFFF"
   }
 }

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcApplyOrderMapper">
+    <resultMap type="YcApplyOrder" id="YcApplyOrderResult">
+        <result property="orderId" column="order_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="channelId" column="channel_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="contactName" column="contact_name" />
+        <result property="mobile" column="mobile" />
+        <result property="gender" column="gender" />
+        <result property="company" column="company" />
+        <result property="orderStatus" column="order_status" />
+        <result property="checkinStatus" column="checkin_status" />
+        <result property="checkinTime" column="checkin_time" />
+        <result property="formJson" column="form_json" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="channelName" column="channel_name" />
+    </resultMap>
+
+    <sql id="selectYcApplyOrderVo">
+        select o.order_id, o.activity_id, o.channel_id, o.order_no, o.contact_name, o.mobile, o.gender, o.company,
+               o.order_status, o.checkin_status, o.checkin_time, o.form_json, o.del_flag,
+               o.create_by, o.create_time, o.update_by, o.update_time, o.remark,
+               c.channel_name
+        from yc_apply_order o
+        left join yc_apply_channel c on c.channel_id = o.channel_id and c.del_flag = '0'
+    </sql>
+
+    <select id="selectYcApplyOrderById" parameterType="Long" resultMap="YcApplyOrderResult">
+        <include refid="selectYcApplyOrderVo"/>
+        where o.order_id = #{orderId} and o.del_flag = '0'
+    </select>
+
+    <select id="selectYcApplyOrderList" parameterType="YcApplyOrder" resultMap="YcApplyOrderResult">
+        <include refid="selectYcApplyOrderVo"/>
+        <where>
+            o.del_flag = '0'
+            <if test="activityId != null">and o.activity_id = #{activityId}</if>
+            <if test="channelId != null">and o.channel_id = #{channelId}</if>
+            <if test="contactName != null and contactName != ''">and o.contact_name like concat('%', #{contactName}, '%')</if>
+            <if test="mobile != null and mobile != ''">and o.mobile like concat('%', #{mobile}, '%')</if>
+            <if test="orderStatus != null and orderStatus != ''">and o.order_status = #{orderStatus}</if>
+            <if test="checkinStatus != null and checkinStatus != ''">and o.checkin_status = #{checkinStatus}</if>
+        </where>
+        order by o.create_time desc, o.order_id desc
+    </select>
+
+    <select id="selectOrderStats" parameterType="Long" resultType="java.util.HashMap">
+        select
+            count(1) as totalCount,
+            ifnull(sum(case when order_status = '0' then 1 else 0 end), 0) as registeredCount,
+            ifnull(sum(case when order_status = '2' then 1 else 0 end), 0) as cancelledCount,
+            ifnull(sum(case when checkin_status = '1' then 1 else 0 end), 0) as checkedCount,
+            ifnull(sum(case when checkin_status = '0' and order_status = '0' then 1 else 0 end), 0) as uncheckedCount
+        from yc_apply_order
+        where activity_id = #{activityId} and del_flag = '0'
+    </select>
+
+    <insert id="insertYcApplyOrder" parameterType="YcApplyOrder" useGeneratedKeys="true" keyProperty="orderId">
+        insert into yc_apply_order (
+            activity_id, channel_id, order_no, contact_name, mobile, gender, company,
+            order_status, checkin_status, checkin_time, form_json, del_flag,
+            create_by, create_time, remark
+        ) values (
+            #{activityId}, #{channelId}, #{orderNo}, #{contactName}, #{mobile}, #{gender}, #{company},
+            #{orderStatus}, #{checkinStatus}, #{checkinTime}, #{formJson}, '0',
+            #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateYcApplyOrder" parameterType="YcApplyOrder">
+        update yc_apply_order
+        <set>
+            <if test="channelId != null">channel_id = #{channelId},</if>
+            <if test="contactName != null">contact_name = #{contactName},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="company != null">company = #{company},</if>
+            <if test="orderStatus != null">order_status = #{orderStatus},</if>
+            <if test="checkinStatus != null">checkin_status = #{checkinStatus},</if>
+            <if test="checkinTime != null">checkin_time = #{checkinTime},</if>
+            <if test="formJson != null">form_json = #{formJson},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where order_id = #{orderId}
+    </update>
+
+    <delete id="deleteYcApplyOrderByIds" parameterType="Long">
+        update yc_apply_order set del_flag = '2' where order_id in
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+</mapper>

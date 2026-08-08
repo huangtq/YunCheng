@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcExhibitorMapper">
+  <resultMap type="YcExhibitor" id="YcExhibitorResult">
+    <result property="exhibitorId" column="exhibitor_id"/><result property="activityId" column="activity_id"/>
+    <result property="exhibitorName" column="exhibitor_name"/><result property="intro" column="intro"/>
+    <result property="contactName" column="contact_name"/><result property="phone" column="phone"/>
+    <result property="logoUrl" column="logo_url"/><result property="linkUrl" column="link_url"/>
+    <result property="boothNo" column="booth_no"/><result property="isFeatured" column="is_featured"/>
+    <result property="sortOrder" column="sort_order"/><result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/><result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/><result property="updateTime" column="update_time"/>
+    <result property="remark" column="remark"/>
+  </resultMap>
+  <sql id="selectVo">
+    select exhibitor_id, activity_id, exhibitor_name, intro, contact_name, phone, logo_url, link_url,
+           booth_no, is_featured, sort_order, del_flag, create_by, create_time, update_by, update_time, remark
+    from yc_exhibitor
+  </sql>
+  <select id="selectYcExhibitorById" resultMap="YcExhibitorResult"><include refid="selectVo"/> where exhibitor_id=#{exhibitorId} and del_flag='0'</select>
+  <select id="selectYcExhibitorList" resultMap="YcExhibitorResult">
+    <include refid="selectVo"/>
+    <where>del_flag='0'
+      <if test="activityId!=null">and activity_id=#{activityId}</if>
+      <if test="exhibitorName!=null and exhibitorName!=''">and exhibitor_name like concat('%',#{exhibitorName},'%')</if>
+      <if test="contactName!=null and contactName!=''">and contact_name like concat('%',#{contactName},'%')</if>
+      <if test="isFeatured!=null and isFeatured!=''">and is_featured=#{isFeatured}</if>
+    </where>
+    order by sort_order asc, exhibitor_id asc
+  </select>
+  <select id="selectExhibitorStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(case when is_featured='1' then 1 else 0 end),0) as featuredCount
+    from yc_exhibitor where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcExhibitor" useGeneratedKeys="true" keyProperty="exhibitorId">
+    insert into yc_exhibitor(activity_id,exhibitor_name,intro,contact_name,phone,logo_url,link_url,booth_no,is_featured,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{exhibitorName},#{intro},#{contactName},#{phone},#{logoUrl},#{linkUrl},#{boothNo},#{isFeatured},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcExhibitor">
+    update yc_exhibitor
+    <set>
+      <if test="exhibitorName!=null">exhibitor_name=#{exhibitorName},</if>
+      <if test="intro!=null">intro=#{intro},</if>
+      <if test="contactName!=null">contact_name=#{contactName},</if>
+      <if test="phone!=null">phone=#{phone},</if>
+      <if test="logoUrl!=null">logo_url=#{logoUrl},</if>
+      <if test="linkUrl!=null">link_url=#{linkUrl},</if>
+      <if test="boothNo!=null">booth_no=#{boothNo},</if>
+      <if test="isFeatured!=null">is_featured=#{isFeatured},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where exhibitor_id=#{exhibitorId}
+  </update>
+  <delete id="deleteYcExhibitorByIds">
+    update yc_exhibitor set del_flag='2' where exhibitor_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

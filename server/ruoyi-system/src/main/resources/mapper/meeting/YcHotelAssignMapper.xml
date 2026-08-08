@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcHotelAssignMapper">
+  <resultMap type="YcHotelAssign" id="YcHotelAssignResult">
+    <result property="assignId" column="assign_id"/><result property="activityId" column="activity_id"/>
+    <result property="hotelId" column="hotel_id"/><result property="orderId" column="order_id"/>
+    <result property="roomId" column="room_id"/><result property="guestName" column="guest_name"/>
+    <result property="phone" column="phone"/><result property="roomNumber" column="room_number"/>
+    <result property="checkInDate" column="check_in_date"/><result property="checkOutDate" column="check_out_date"/>
+    <result property="assignStatus" column="assign_status"/><result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/><result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/><result property="updateTime" column="update_time"/>
+    <result property="remark" column="remark"/>
+    <result property="hotelName" column="hotel_name"/><result property="roomName" column="room_name"/>
+  </resultMap>
+  <sql id="selectVo">
+    select a.assign_id,a.activity_id,a.hotel_id,a.order_id,a.room_id,a.guest_name,a.phone,a.room_number,
+           a.check_in_date,a.check_out_date,a.assign_status,a.del_flag,a.create_by,a.create_time,a.update_by,a.update_time,a.remark,
+           h.hotel_name,r.room_name
+    from yc_hotel_assign a
+    left join yc_hotel h on h.hotel_id=a.hotel_id and h.del_flag='0'
+    left join yc_hotel_room r on r.room_id=a.room_id and r.del_flag='0'
+  </sql>
+  <select id="selectYcHotelAssignById" resultMap="YcHotelAssignResult"><include refid="selectVo"/> where a.assign_id=#{assignId} and a.del_flag='0'</select>
+  <select id="selectYcHotelAssignList" resultMap="YcHotelAssignResult">
+    <include refid="selectVo"/>
+    <where>a.del_flag='0'
+      <if test="activityId!=null">and a.activity_id=#{activityId}</if>
+      <if test="hotelId!=null">and a.hotel_id=#{hotelId}</if>
+      <if test="orderId!=null">and a.order_id=#{orderId}</if>
+      <if test="guestName!=null and guestName!=''">and a.guest_name like concat('%',#{guestName},'%')</if>
+      <if test="roomNumber!=null and roomNumber!=''">and a.room_number like concat('%',#{roomNumber},'%')</if>
+      <if test="assignStatus!=null and assignStatus!=''">and a.assign_status=#{assignStatus}</if>
+    </where>
+    order by a.assign_id desc
+  </select>
+  <select id="selectAssignStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(case when assign_status='1' then 1 else 0 end),0) as checkedInCount,
+      ifnull(sum(case when assign_status='2' then 1 else 0 end),0) as checkedOutCount
+    from yc_hotel_assign where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcHotelAssign" useGeneratedKeys="true" keyProperty="assignId">
+    insert into yc_hotel_assign(activity_id,hotel_id,order_id,room_id,guest_name,phone,room_number,check_in_date,check_out_date,assign_status,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{hotelId},#{orderId},#{roomId},#{guestName},#{phone},#{roomNumber},#{checkInDate},#{checkOutDate},#{assignStatus},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcHotelAssign">
+    update yc_hotel_assign
+    <set>
+      <if test="hotelId!=null">hotel_id=#{hotelId},</if>
+      <if test="orderId!=null">order_id=#{orderId},</if>
+      <if test="roomId!=null">room_id=#{roomId},</if>
+      <if test="guestName!=null">guest_name=#{guestName},</if>
+      <if test="phone!=null">phone=#{phone},</if>
+      <if test="roomNumber!=null">room_number=#{roomNumber},</if>
+      <if test="checkInDate!=null">check_in_date=#{checkInDate},</if>
+      <if test="checkOutDate!=null">check_out_date=#{checkOutDate},</if>
+      <if test="assignStatus!=null">assign_status=#{assignStatus},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where assign_id=#{assignId}
+  </update>
+  <delete id="deleteYcHotelAssignByIds">
+    update yc_hotel_assign set del_flag='2' where assign_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

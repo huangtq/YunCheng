@@ -56,6 +56,10 @@ spring:
     active: druid,local
   # 文件上传
   servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
     multipart:
       # 单个文件大小
       max-file-size: 10MB
@@ -102,6 +106,19 @@ token:
   secret: abcdefghijklmnopqrstuvwxyz
   # 令牌有效期（默认30分钟）
   expireTime: 30
+
+# 微信服务号（H5门户）
+wechat:
+  mp:
+    app-id: ${WECHAT_MP_APP_ID:}
+    app-secret: ${WECHAT_MP_SECRET:}
+    # 微信授权回调到后端的地址，需在公众号后台配置为同一域名
+    oauth-redirect-uri: ${WECHAT_MP_OAUTH_REDIRECT:}
+    # H5会议首页模板，{activityId} 会被替换
+    h5-home-url: ${WECHAT_MP_H5_HOME:http://localhost:9090/#/pages/meeting/home?activityId={activityId}}
+    # 本地调试无公网时可开启 mock 授权
+    mock-enabled: true
+    token-expire-minutes: 10080
 
 # MyBatis配置
 mybatis:

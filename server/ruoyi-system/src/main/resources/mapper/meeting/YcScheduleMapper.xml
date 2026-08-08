@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcScheduleMapper">
+  <resultMap type="YcSchedule" id="YcScheduleResult">
+    <result property="scheduleId" column="schedule_id"/><result property="activityId" column="activity_id"/>
+    <result property="topicId" column="topic_id"/><result property="scheduleName" column="schedule_name"/>
+    <result property="scheduleDate" column="schedule_date"/><result property="startTime" column="start_time"/>
+    <result property="endTime" column="end_time"/><result property="durationMin" column="duration_min"/>
+    <result property="speakerNames" column="speaker_names"/><result property="hostNames" column="host_names"/>
+    <result property="discussNames" column="discuss_names"/><result property="sortOrder" column="sort_order"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+    <result property="topicName" column="topic_name"/><result property="venueName" column="venue_name"/>
+    <result property="venueId" column="venue_id"/>
+  </resultMap>
+  <sql id="selectVo">
+    select s.schedule_id, s.activity_id, s.topic_id, s.schedule_name, s.schedule_date, s.start_time, s.end_time,
+           s.duration_min, s.speaker_names, s.host_names, s.discuss_names, s.sort_order, s.del_flag,
+           s.create_by, s.create_time, s.update_by, s.update_time, s.remark,
+           t.topic_name, t.venue_id, v.venue_name
+    from yc_schedule s
+    left join yc_topic t on t.topic_id=s.topic_id and t.del_flag='0'
+    left join yc_venue v on v.venue_id=t.venue_id and v.del_flag='0'
+  </sql>
+  <select id="selectYcScheduleById" resultMap="YcScheduleResult"><include refid="selectVo"/> where s.schedule_id=#{scheduleId} and s.del_flag='0'</select>
+  <select id="selectYcScheduleList" resultMap="YcScheduleResult">
+    <include refid="selectVo"/>
+    <where>s.del_flag='0'
+      <if test="activityId!=null">and s.activity_id=#{activityId}</if>
+      <if test="topicId!=null">and s.topic_id=#{topicId}</if>
+      <if test="venueId!=null">and t.venue_id=#{venueId}</if>
+      <if test="scheduleName!=null and scheduleName!=''">and s.schedule_name like concat('%',#{scheduleName},'%')</if>
+    </where>
+    order by s.schedule_date asc, s.start_time asc, s.sort_order asc, s.schedule_id asc
+  </select>
+  <select id="selectScheduleForExpert" resultMap="YcScheduleResult">
+    <include refid="selectVo"/>
+    where s.del_flag='0' and s.activity_id=#{activityId}
+    order by s.start_time asc, s.schedule_id asc
+  </select>
+  <select id="selectScheduleStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(ifnull(duration_min,0)),0) as totalDuration
+    from yc_schedule where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcSchedule" useGeneratedKeys="true" keyProperty="scheduleId">
+    insert into yc_schedule(activity_id,topic_id,schedule_name,schedule_date,start_time,end_time,duration_min,speaker_names,host_names,discuss_names,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{topicId},#{scheduleName},#{scheduleDate},#{startTime},#{endTime},#{durationMin},#{speakerNames},#{hostNames},#{discussNames},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcSchedule">
+    update yc_schedule
+    <set>
+      <if test="topicId!=null">topic_id=#{topicId},</if>
+      <if test="scheduleName!=null">schedule_name=#{scheduleName},</if>
+      <if test="scheduleDate!=null">schedule_date=#{scheduleDate},</if>
+      <if test="startTime!=null">start_time=#{startTime},</if>
+      <if test="endTime!=null">end_time=#{endTime},</if>
+      <if test="durationMin!=null">duration_min=#{durationMin},</if>
+      <if test="speakerNames!=null">speaker_names=#{speakerNames},</if>
+      <if test="hostNames!=null">host_names=#{hostNames},</if>
+      <if test="discussNames!=null">discuss_names=#{discussNames},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where schedule_id=#{scheduleId}
+  </update>
+  <delete id="deleteYcScheduleByIds">
+    update yc_schedule set del_flag='2' where schedule_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

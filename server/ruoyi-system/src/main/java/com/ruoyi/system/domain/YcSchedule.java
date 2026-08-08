@@ -1,0 +1,70 @@
+package com.ruoyi.system.domain;
+
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import com.ruoyi.common.core.domain.BaseEntity;
+
+public class YcSchedule extends BaseEntity
+{
+    private static final long serialVersionUID = 1L;
+    private Long scheduleId;
+    private Long activityId;
+    private Long topicId;
+    private String scheduleName;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date scheduleDate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date startTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date endTime;
+    private Integer durationMin;
+    private String speakerNames;
+    private String hostNames;
+    private String discussNames;
+    private Integer sortOrder;
+    private String delFlag;
+    private String topicName;
+    private String venueName;
+    private Long venueId;
+
+    public Long getScheduleId() { return scheduleId; }
+    public void setScheduleId(Long scheduleId) { this.scheduleId = scheduleId; }
+    public Long getActivityId() { return activityId; }
+    public void setActivityId(Long activityId) { this.activityId = activityId; }
+    public Long getTopicId() { return topicId; }
+    public void setTopicId(Long topicId) { this.topicId = topicId; }
+    public String getScheduleName() { return scheduleName; }
+    public void setScheduleName(String scheduleName) { this.scheduleName = scheduleName; }
+    public Date getScheduleDate() { return scheduleDate; }
+    public void setScheduleDate(Date scheduleDate) { this.scheduleDate = scheduleDate; }
+    public Date getStartTime() { return startTime; }
+    public void setStartTime(Date startTime) { this.startTime = startTime; }
+    public Date getEndTime() { return endTime; }
+    public void setEndTime(Date endTime) { this.endTime = endTime; }
+    public Integer getDurationMin() { return durationMin; }
+    public void setDurationMin(Integer durationMin) { this.durationMin = durationMin; }
+    public String getSpeakerNames() { return speakerNames; }
+    public void setSpeakerNames(String speakerNames) { this.speakerNames = speakerNames; }
+    public String getHostNames() { return hostNames; }
+    public void setHostNames(String hostNames) { this.hostNames = hostNames; }
+    public String getDiscussNames() { return discussNames; }
+    public void setDiscussNames(String discussNames) { this.discussNames = discussNames; }
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public String getTopicName() { return topicName; }
+    public void setTopicName(String topicName) { this.topicName = topicName; }
+    public String getVenueName() { return venueName; }
+    public void setVenueName(String venueName) { this.venueName = venueName; }
+    public Long getVenueId() { return venueId; }
+    public void setVenueId(Long venueId) { this.venueId = venueId; }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+            .append("scheduleId", scheduleId).append("scheduleName", scheduleName).toString();
+    }
+}

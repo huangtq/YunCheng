@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcGuestMapper">
+  <resultMap type="YcGuest" id="YcGuestResult">
+    <result property="guestId" column="guest_id"/><result property="activityId" column="activity_id"/>
+    <result property="guestName" column="guest_name"/><result property="phone" column="phone"/>
+    <result property="orgName" column="org_name"/><result property="title" column="title"/>
+    <result property="englishName" column="english_name"/><result property="guestType" column="guest_type"/>
+    <result property="avatar" column="avatar"/><result property="intro" column="intro"/>
+    <result property="needHotel" column="need_hotel"/><result property="checkInDate" column="check_in_date"/>
+    <result property="checkOutDate" column="check_out_date"/><result property="idCard" column="id_card"/>
+    <result property="attendFlag" column="attend_flag"/><result property="sortOrder" column="sort_order"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+    <result property="tripCount" column="trip_count"/><result property="feeCount" column="fee_count"/>
+  </resultMap>
+  <sql id="selectVo">
+    select g.guest_id, g.activity_id, g.guest_name, g.phone, g.org_name, g.title, g.english_name, g.guest_type,
+           g.avatar, g.intro, g.need_hotel, g.check_in_date, g.check_out_date, g.id_card, g.attend_flag,
+           g.sort_order, g.del_flag, g.create_by, g.create_time, g.update_by, g.update_time, g.remark,
+           (select count(1) from yc_guest_trip t where t.guest_id=g.guest_id and t.del_flag='0') as trip_count,
+           (select count(1) from yc_guest_fee f where f.guest_id=g.guest_id and f.del_flag='0') as fee_count
+    from yc_guest g
+  </sql>
+  <select id="selectYcGuestById" resultMap="YcGuestResult"><include refid="selectVo"/> where g.guest_id=#{guestId} and g.del_flag='0'</select>
+  <select id="selectYcGuestList" resultMap="YcGuestResult">
+    <include refid="selectVo"/>
+    <where>g.del_flag='0'
+      <if test="activityId!=null">and g.activity_id=#{activityId}</if>
+      <if test="guestName!=null and guestName!=''">and g.guest_name like concat('%',#{guestName},'%')</if>
+      <if test="phone!=null and phone!=''">and g.phone like concat('%',#{phone},'%')</if>
+      <if test="guestType!=null and guestType!=''">and g.guest_type=#{guestType}</if>
+      <if test="needHotel!=null and needHotel!=''">and g.need_hotel=#{needHotel}</if>
+      <if test="attendFlag!=null and attendFlag!=''">and g.attend_flag=#{attendFlag}</if>
+    </where>
+    order by g.sort_order asc, g.guest_id asc
+  </select>
+  <select id="selectGuestStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(case when attend_flag='1' then 1 else 0 end),0) as attendCount,
+      ifnull(sum(case when need_hotel='1' then 1 else 0 end),0) as hotelCount
+    from yc_guest where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcGuest" useGeneratedKeys="true" keyProperty="guestId">
+    insert into yc_guest(activity_id,guest_name,phone,org_name,title,english_name,guest_type,avatar,intro,need_hotel,check_in_date,check_out_date,id_card,attend_flag,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{guestName},#{phone},#{orgName},#{title},#{englishName},#{guestType},#{avatar},#{intro},#{needHotel},#{checkInDate},#{checkOutDate},#{idCard},#{attendFlag},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcGuest">
+    update yc_guest
+    <set>
+      <if test="guestName!=null">guest_name=#{guestName},</if>
+      <if test="phone!=null">phone=#{phone},</if>
+      <if test="orgName!=null">org_name=#{orgName},</if>
+      <if test="title!=null">title=#{title},</if>
+      <if test="englishName!=null">english_name=#{englishName},</if>
+      <if test="guestType!=null">guest_type=#{guestType},</if>
+      <if test="avatar!=null">avatar=#{avatar},</if>
+      <if test="intro!=null">intro=#{intro},</if>
+      <if test="needHotel!=null">need_hotel=#{needHotel},</if>
+      <if test="checkInDate!=null">check_in_date=#{checkInDate},</if>
+      <if test="checkOutDate!=null">check_out_date=#{checkOutDate},</if>
+      <if test="idCard!=null">id_card=#{idCard},</if>
+      <if test="attendFlag!=null">attend_flag=#{attendFlag},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where guest_id=#{guestId}
+  </update>
+  <delete id="deleteYcGuestByIds">
+    update yc_guest set del_flag='2' where guest_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+  <delete id="deleteTripsByGuestIds">
+    update yc_guest_trip set del_flag='2' where guest_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+  <delete id="deleteFeesByGuestIds">
+    update yc_guest_fee set del_flag='2' where guest_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

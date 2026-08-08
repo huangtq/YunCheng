@@ -742,10 +742,13 @@ create table yc_activity_grid (
   grid_id           bigint(20)      not null auto_increment    comment '九宫格项ID',
   activity_id       bigint(20)      not null                   comment '会议ID',
   title             varchar(100)    not null                   comment '标题',
+  icon_type         varchar(20)     default 'image'             comment '图标类型 image/icon',
+  icon_key          varchar(100)    default ''                 comment '图标编码',
   icon_url          varchar(500)    default ''                 comment '图标地址',
   link_type         varchar(20)     default 'none'             comment '链接类型 none/module/url',
   module_key        varchar(64)     default 'none'             comment '内置模块键',
   external_url      varchar(500)    default ''                 comment '外部链接',
+  content           text                                       comment '内容页内容',
   sort_order        int(11)         default 0                  comment '排序',
   status            char(1)         default '1'                comment '状态（0停用 1启用）',
   del_flag          char(1)         default '0'                comment '删除标志（0存在 2删除）',
@@ -785,6 +788,32 @@ create table yc_apply_channel (
   key idx_channel_activity (activity_id)
 ) engine=innodb auto_increment=1 comment = '会议报名通道表';
 
+drop table if exists yc_apply_field;
+create table yc_apply_field (
+  field_id          bigint(20)      not null auto_increment    comment '字段ID',
+  channel_id        bigint(20)      not null                   comment '通道ID',
+  activity_id       bigint(20)      not null                   comment '会议ID',
+  field_scope       varchar(20)     default 'standard'         comment '字段范围 standard/extend',
+  field_key         varchar(64)     default ''                 comment '标准字段键',
+  field_name        varchar(100)    not null                   comment '展示名称',
+  field_type        varchar(20)     default 'input'            comment '字段类型 input/radio/checkbox/upload/system/date',
+  placeholder       varchar(200)    default ''                 comment '提示文案',
+  options_json      varchar(1000)   default ''                 comment '选项内容',
+  show_condition    varchar(500)    default null               comment '显示条件JSON',
+  required_flag     char(1)         default '0'                comment '是否必填',
+  enabled_flag      char(1)         default '0'                comment '是否启用',
+  sort_order        int(11)         default 100                comment '排序',
+  del_flag          char(1)         default '0'                comment '删除标志',
+  create_by         varchar(64)     default ''                 comment '创建者',
+  create_time       datetime                                   comment '创建时间',
+  update_by         varchar(64)     default ''                 comment '更新者',
+  update_time       datetime                                   comment '更新时间',
+  remark            varchar(500)    default null               comment '备注',
+  primary key (field_id),
+  key idx_apply_field_channel (channel_id),
+  key idx_apply_field_activity (activity_id)
+) engine=innodb auto_increment=1 comment = '会议报名字段配置表';
+
 -- 权限按钮（挂在会议列表下）
 insert into sys_menu values('2110', '九宫格查询', '2101', '10', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:grid:list', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('2111', '九宫格新增', '2101', '11', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:grid:add', '#', 'admin', sysdate(), '', null, '');
@@ -794,6 +823,10 @@ insert into sys_menu values('2114', '报名通道查询', '2101', '14', '', '', 
 insert into sys_menu values('2115', '报名通道新增', '2101', '15', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:add', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('2116', '报名通道修改', '2101', '16', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:edit', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('2117', '报名通道删除', '2101', '17', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:remove', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2118', '报名字段查询', '2101', '18', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:field:list', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2119', '报名字段新增', '2101', '19', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:field:add', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2120', '报名字段修改', '2101', '20', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:field:edit', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('2121', '报名字段删除', '2101', '21', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:apply:field:remove', '#', 'admin', sysdate(), '', null, '');
 -- 授权给超级管理员角色
 insert ignore into sys_role_menu values ('1', '2110');
 insert ignore into sys_role_menu values ('1', '2111');
@@ -803,3 +836,7 @@ insert ignore into sys_role_menu values ('1', '2114');
 insert ignore into sys_role_menu values ('1', '2115');
 insert ignore into sys_role_menu values ('1', '2116');
 insert ignore into sys_role_menu values ('1', '2117');
+insert ignore into sys_role_menu values ('1', '2118');
+insert ignore into sys_role_menu values ('1', '2119');
+insert ignore into sys_role_menu values ('1', '2120');
+insert ignore into sys_role_menu values ('1', '2121');

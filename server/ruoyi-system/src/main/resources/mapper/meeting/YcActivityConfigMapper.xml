@@ -19,6 +19,11 @@
         <result property="registerForceMobile" column="register_force_mobile" />
         <result property="gridTemplate" column="grid_template" />
         <result property="qrUrl" column="qr_url" />
+        <result property="mobileTemplate" column="mobile_template" />
+        <result property="mobileThemeColor" column="mobile_theme_color" />
+        <result property="mobileBackgroundUrl" column="mobile_background_url" />
+        <result property="mobileBlocksJson" column="mobile_blocks_json" />
+        <result property="mobileNotice" column="mobile_notice" />
         <result property="createBy" column="create_by" />
         <result property="createTime" column="create_time" />
         <result property="updateBy" column="update_by" />
@@ -35,11 +40,13 @@
             activity_id, mp_show, home_banner, hot_show, show_countdown, countdown_style, show_register_count,
             hotel_need_register, live_need_register, register_show_live, register_show_hotel, hotel_once,
             cancel_register_cancel_hotel, login_sms, register_force_mobile, grid_template, qr_url,
+            mobile_template, mobile_theme_color, mobile_background_url, mobile_blocks_json, mobile_notice,
             create_by, create_time, remark
         ) values (
             #{activityId}, #{mpShow}, #{homeBanner}, #{hotShow}, #{showCountdown}, #{countdownStyle}, #{showRegisterCount},
             #{hotelNeedRegister}, #{liveNeedRegister}, #{registerShowLive}, #{registerShowHotel}, #{hotelOnce},
             #{cancelRegisterCancelHotel}, #{loginSms}, #{registerForceMobile}, #{gridTemplate}, #{qrUrl},
+            #{mobileTemplate}, #{mobileThemeColor}, #{mobileBackgroundUrl}, #{mobileBlocksJson}, #{mobileNotice},
             #{createBy}, sysdate(), #{remark}
         )
     </insert>
@@ -63,6 +70,11 @@
             <if test="registerForceMobile != null">register_force_mobile = #{registerForceMobile},</if>
             <if test="gridTemplate != null">grid_template = #{gridTemplate},</if>
             <if test="qrUrl != null">qr_url = #{qrUrl},</if>
+            <if test="mobileTemplate != null">mobile_template = #{mobileTemplate},</if>
+            <if test="mobileThemeColor != null">mobile_theme_color = #{mobileThemeColor},</if>
+            <if test="mobileBackgroundUrl != null">mobile_background_url = #{mobileBackgroundUrl},</if>
+            <if test="mobileBlocksJson != null">mobile_blocks_json = #{mobileBlocksJson},</if>
+            <if test="mobileNotice != null">mobile_notice = #{mobileNotice},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="remark != null">remark = #{remark},</if>
             update_time = sysdate()

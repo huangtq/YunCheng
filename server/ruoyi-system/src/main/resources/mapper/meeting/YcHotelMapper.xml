@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcHotelMapper">
+  <resultMap type="YcHotel" id="YcHotelResult">
+    <result property="hotelId" column="hotel_id"/><result property="activityId" column="activity_id"/>
+    <result property="hotelName" column="hotel_name"/><result property="phone" column="phone"/>
+    <result property="address" column="address"/><result property="coverUrl" column="cover_url"/>
+    <result property="saleStatus" column="sale_status"/><result property="sortOrder" column="sort_order"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+    <result property="roomCount" column="room_count"/><result property="orderCount" column="order_count"/>
+  </resultMap>
+  <sql id="selectVo">
+    select h.hotel_id,h.activity_id,h.hotel_name,h.phone,h.address,h.cover_url,h.sale_status,h.sort_order,
+           h.del_flag,h.create_by,h.create_time,h.update_by,h.update_time,h.remark,
+           (select count(1) from yc_hotel_room r where r.hotel_id=h.hotel_id and r.del_flag='0') as room_count,
+           (select count(1) from yc_hotel_order o where o.hotel_id=h.hotel_id and o.del_flag='0') as order_count
+    from yc_hotel h
+  </sql>
+  <select id="selectYcHotelById" resultMap="YcHotelResult"><include refid="selectVo"/> where h.hotel_id=#{hotelId} and h.del_flag='0'</select>
+  <select id="selectYcHotelList" resultMap="YcHotelResult">
+    <include refid="selectVo"/>
+    <where>h.del_flag='0'
+      <if test="activityId!=null">and h.activity_id=#{activityId}</if>
+      <if test="hotelName!=null and hotelName!=''">and h.hotel_name like concat('%',#{hotelName},'%')</if>
+      <if test="saleStatus!=null and saleStatus!=''">and h.sale_status=#{saleStatus}</if>
+    </where>
+    order by h.sort_order asc, h.hotel_id asc
+  </select>
+  <select id="selectHotelStats" resultType="java.util.HashMap">
+    select count(1) as totalCount, ifnull(sum(case when sale_status='1' then 1 else 0 end),0) as openCount
+    from yc_hotel where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcHotel" useGeneratedKeys="true" keyProperty="hotelId">
+    insert into yc_hotel(activity_id,hotel_name,phone,address,cover_url,sale_status,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{hotelName},#{phone},#{address},#{coverUrl},#{saleStatus},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcHotel">
+    update yc_hotel
+    <set>
+      <if test="hotelName!=null">hotel_name=#{hotelName},</if>
+      <if test="phone!=null">phone=#{phone},</if>
+      <if test="address!=null">address=#{address},</if>
+      <if test="coverUrl!=null">cover_url=#{coverUrl},</if>
+      <if test="saleStatus!=null">sale_status=#{saleStatus},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where hotel_id=#{hotelId}
+  </update>
+  <delete id="deleteYcHotelByIds">
+    update yc_hotel set del_flag='2' where hotel_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

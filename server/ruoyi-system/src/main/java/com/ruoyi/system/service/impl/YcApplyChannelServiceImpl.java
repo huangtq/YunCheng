@@ -9,12 +9,16 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.YcApplyChannel;
 import com.ruoyi.system.mapper.YcApplyChannelMapper;
 import com.ruoyi.system.service.IYcApplyChannelService;
+import com.ruoyi.system.service.IYcApplyFieldService;
 
 @Service
 public class YcApplyChannelServiceImpl implements IYcApplyChannelService
 {
     @Autowired
     private YcApplyChannelMapper ycApplyChannelMapper;
+
+    @Autowired
+    private IYcApplyFieldService ycApplyFieldService;
 
     @Override
     public YcApplyChannel selectYcApplyChannelById(Long channelId)
@@ -42,38 +46,21 @@ public class YcApplyChannelServiceImpl implements IYcApplyChannelService
         {
             channel.setSortOrder(0);
         }
-        if (StringUtils.isEmpty(channel.getPriceType()))
-        {
-            channel.setPriceType("free");
-        }
-        if (channel.getPrice() == null)
-        {
-            channel.setPrice(BigDecimal.ZERO);
-        }
+        // 当前报名配置不启用支付、审核、邀请码和短信能力，统一写入关闭状态。
+        channel.setPriceType("free");
+        channel.setPrice(BigDecimal.ZERO);
         if (channel.getQuota() == null)
         {
             channel.setQuota(0);
         }
-        if (StringUtils.isEmpty(channel.getNeedInvite()))
-        {
-            channel.setNeedInvite("0");
-        }
-        if (StringUtils.isEmpty(channel.getNeedAudit()))
-        {
-            channel.setNeedAudit("0");
-        }
-        if (StringUtils.isEmpty(channel.getNeedInvoice()))
-        {
-            channel.setNeedInvoice("0");
-        }
+        channel.setNeedInvite("0");
+        channel.setNeedAudit("0");
+        channel.setNeedInvoice("0");
         if (StringUtils.isEmpty(channel.getVisible()))
         {
             channel.setVisible("1");
         }
-        if (StringUtils.isEmpty(channel.getSmsNotify()))
-        {
-            channel.setSmsNotify("0");
-        }
+        channel.setSmsNotify("0");
     }
 
     @Override
@@ -85,13 +72,19 @@ public class YcApplyChannelServiceImpl implements IYcApplyChannelService
         {
             ycApplyChannelMapper.clearMainByActivityId(channel.getActivityId());
         }
-        return ycApplyChannelMapper.insertYcApplyChannel(channel);
+        int rows = ycApplyChannelMapper.insertYcApplyChannel(channel);
+        if (rows > 0)
+        {
+            ycApplyFieldService.ensureStandardFields(channel.getChannelId(), channel.getActivityId(), channel.getCreateBy());
+        }
+        return rows;
     }
 
     @Override
     @Transactional
     public int updateYcApplyChannel(YcApplyChannel channel)
     {
+        fillDefaults(channel);
         if ("1".equals(channel.getIsMain()) && channel.getActivityId() != null)
         {
             ycApplyChannelMapper.clearMainByActivityId(channel.getActivityId());

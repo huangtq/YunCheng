@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcMpUserMapper">
+  <resultMap type="YcMpUser" id="YcMpUserResult">
+    <result property="userId" column="user_id"/>
+    <result property="openid" column="openid"/>
+    <result property="unionid" column="unionid"/>
+    <result property="phone" column="phone"/>
+    <result property="nickname" column="nickname"/>
+    <result property="avatar" column="avatar"/>
+    <result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/>
+    <result property="remark" column="remark"/>
+  </resultMap>
+
+  <sql id="selectVo">
+    select user_id, openid, unionid, phone, nickname, avatar, del_flag,
+           create_by, create_time, update_by, update_time, remark
+    from yc_mp_user
+  </sql>
+
+  <select id="selectYcMpUserById" resultMap="YcMpUserResult">
+    <include refid="selectVo"/> where user_id=#{userId} and del_flag='0'
+  </select>
+
+  <select id="selectYcMpUserByOpenid" resultMap="YcMpUserResult">
+    <include refid="selectVo"/> where openid=#{openid} and del_flag='0' limit 1
+  </select>
+
+  <insert id="insertYcMpUser" useGeneratedKeys="true" keyProperty="userId">
+    insert into yc_mp_user(openid, unionid, phone, nickname, avatar, del_flag, create_by, create_time, remark)
+    values(#{openid}, #{unionid}, #{phone}, #{nickname}, #{avatar}, '0', #{createBy}, sysdate(), #{remark})
+  </insert>
+
+  <update id="updateYcMpUser">
+    update yc_mp_user
+    <set>
+      <if test="unionid != null">unionid=#{unionid},</if>
+      <if test="phone != null">phone=#{phone},</if>
+      <if test="nickname != null">nickname=#{nickname},</if>
+      <if test="avatar != null">avatar=#{avatar},</if>
+      <if test="updateBy != null">update_by=#{updateBy},</if>
+      update_time=sysdate()
+    </set>
+    where user_id=#{userId}
+  </update>
+</mapper>

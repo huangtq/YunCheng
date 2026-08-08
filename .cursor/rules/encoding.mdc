@@ -1,0 +1,15 @@
+---
+description: Enforce UTF-8 and prevent garbled Chinese text
+alwaysApply: true
+---
+
+# Encoding Rules
+
+- Save all Vue, JS, Java, XML, SQL, YAML, JSON, and Markdown files as UTF-8.
+- Never use GBK, ANSI, or UTF-16 for source files containing Chinese text.
+- Read an existing file before modifying it.
+- When writing files from PowerShell, explicitly specify UTF-8 encoding.
+- Do not use default-encoding Out-File or Set-Content for Chinese text.
+- After adding or changing Chinese text, check for replacement characters or mojibake.
+- Keep Chinese text in source code, SQL, API responses, and UI unchanged.
+- After changes, verify both static page text and API response text.

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcGuestTaskRuleMapper">
+  <resultMap type="YcGuestTaskRule" id="YcGuestTaskRuleResult">
+    <result property="ruleId" column="rule_id"/><result property="activityId" column="activity_id"/>
+    <result property="ruleName" column="rule_name"/><result property="roleType" column="role_type"/>
+    <result property="feeAmount" column="fee_amount"/><result property="enabled" column="enabled"/>
+    <result property="sortOrder" column="sort_order"/><result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/><result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/><result property="updateTime" column="update_time"/>
+    <result property="remark" column="remark"/>
+  </resultMap>
+  <sql id="selectVo">
+    select rule_id, activity_id, rule_name, role_type, fee_amount, enabled, sort_order, del_flag,
+           create_by, create_time, update_by, update_time, remark
+    from yc_guest_task_rule
+  </sql>
+  <select id="selectYcGuestTaskRuleById" resultMap="YcGuestTaskRuleResult"><include refid="selectVo"/> where rule_id=#{ruleId} and del_flag='0'</select>
+  <select id="selectYcGuestTaskRuleList" resultMap="YcGuestTaskRuleResult">
+    <include refid="selectVo"/>
+    <where>del_flag='0'
+      <if test="activityId!=null">and activity_id=#{activityId}</if>
+      <if test="ruleName!=null and ruleName!=''">and rule_name like concat('%',#{ruleName},'%')</if>
+      <if test="roleType!=null and roleType!=''">and role_type=#{roleType}</if>
+      <if test="enabled!=null and enabled!=''">and enabled=#{enabled}</if>
+    </where>
+    order by sort_order asc, rule_id asc
+  </select>
+  <select id="selectRuleStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      ifnull(sum(case when enabled='1' then 1 else 0 end),0) as enabledCount
+    from yc_guest_task_rule where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcGuestTaskRule" useGeneratedKeys="true" keyProperty="ruleId">
+    insert into yc_guest_task_rule(activity_id,rule_name,role_type,fee_amount,enabled,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{ruleName},#{roleType},#{feeAmount},#{enabled},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcGuestTaskRule">
+    update yc_guest_task_rule
+    <set>
+      <if test="ruleName!=null">rule_name=#{ruleName},</if>
+      <if test="roleType!=null">role_type=#{roleType},</if>
+      <if test="feeAmount!=null">fee_amount=#{feeAmount},</if>
+      <if test="enabled!=null">enabled=#{enabled},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where rule_id=#{ruleId}
+  </update>
+  <delete id="deleteYcGuestTaskRuleByIds">
+    update yc_guest_task_rule set del_flag='2' where rule_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

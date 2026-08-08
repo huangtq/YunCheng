@@ -33,6 +33,18 @@ public class YcActivityGridServiceImpl implements IYcActivityGridService
         {
             grid.setLinkType("none");
         }
+        if (StringUtils.isEmpty(grid.getIconType()))
+        {
+            grid.setIconType(StringUtils.isNotEmpty(grid.getIconKey()) ? "icon" : "image");
+        }
+        if (StringUtils.isEmpty(grid.getIconUrl()))
+        {
+            grid.setIconUrl("");
+        }
+        if (StringUtils.isEmpty(grid.getIconKey()))
+        {
+            grid.setIconKey("");
+        }
         if (StringUtils.isEmpty(grid.getModuleKey()))
         {
             grid.setModuleKey("none");

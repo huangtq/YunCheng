@@ -142,6 +142,204 @@ export const dynamicRoutes = [
               noCache: true,
               tagsGroup: 'meeting-config'
             }
+          },
+          {
+            path: 'apply-field',
+            name: 'MeetingApplyField',
+            component: () => import('@/views/meeting/apply/field'),
+            meta: {
+              title: '报名字段配置',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'apply-order',
+            name: 'MeetingApplyOrder',
+            component: () => import('@/views/meeting/apply/order'),
+            meta: {
+              title: '报名订单',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'venue',
+            name: 'MeetingVenue',
+            component: () => import('@/views/meeting/place/venue'),
+            meta: {
+              title: '会场管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'topic',
+            name: 'MeetingTopic',
+            component: () => import('@/views/meeting/place/topic'),
+            meta: {
+              title: '主题管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'schedule',
+            name: 'MeetingSchedule',
+            component: () => import('@/views/meeting/place/schedule'),
+            meta: {
+              title: '日程管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'expert',
+            name: 'MeetingExpert',
+            component: () => import('@/views/meeting/place/expert'),
+            meta: {
+              title: '专家任务排期',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'guest',
+            name: 'MeetingGuest',
+            component: () => import('@/views/meeting/guest/index'),
+            meta: {
+              title: '嘉宾管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'guest-trip',
+            name: 'MeetingGuestTrip',
+            component: () => import('@/views/meeting/guest/trip'),
+            meta: {
+              title: '嘉宾行程',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'guest-rule',
+            name: 'MeetingGuestRule',
+            component: () => import('@/views/meeting/guest/rule'),
+            meta: {
+              title: '任务规则配置',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'guest-fee',
+            name: 'MeetingGuestFee',
+            component: () => import('@/views/meeting/guest/fee'),
+            meta: {
+              title: '劳务费管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'staff',
+            name: 'MeetingStaff',
+            component: () => import('@/views/meeting/guest/staff'),
+            meta: {
+              title: '工作人员',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'exhibitor',
+            name: 'MeetingExhibitor',
+            component: () => import('@/views/meeting/feature/exhibitor'),
+            meta: {
+              title: '展商管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'meal',
+            name: 'MeetingMeal',
+            component: () => import('@/views/meeting/feature/meal'),
+            meta: {
+              title: '餐票管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'hotel',
+            name: 'MeetingHotel',
+            component: () => import('@/views/meeting/hotel/index'),
+            meta: {
+              title: '会议酒店',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'hotel-order',
+            name: 'MeetingHotelOrder',
+            component: () => import('@/views/meeting/hotel/order'),
+            meta: {
+              title: '酒店订单',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'hotel-assign',
+            name: 'MeetingHotelAssign',
+            component: () => import('@/views/meeting/hotel/assign'),
+            meta: {
+              title: '分房管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'nav',
+            name: 'MeetingNav',
+            component: () => import('@/views/meeting/nav/index'),
+            meta: {
+              title: '导航管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
+            path: 'grid-bottom',
+            name: 'MeetingGridBottom',
+            component: () => import('@/views/meeting/grid/bottom'),
+            meta: {
+              title: '九宫格底部配置',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
           }
         ]
       }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcTopicMapper">
+  <resultMap type="YcTopic" id="YcTopicResult">
+    <result property="topicId" column="topic_id"/><result property="activityId" column="activity_id"/>
+    <result property="venueId" column="venue_id"/><result property="topicName" column="topic_name"/>
+    <result property="startTime" column="start_time"/><result property="endTime" column="end_time"/>
+    <result property="chairNames" column="chair_names"/><result property="hostNames" column="host_names"/>
+    <result property="discussNames" column="discuss_names"/><result property="sortOrder" column="sort_order"/>
+    <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
+    <result property="venueName" column="venue_name"/><result property="scheduleCount" column="schedule_count"/>
+  </resultMap>
+  <sql id="selectVo">
+    select t.topic_id, t.activity_id, t.venue_id, t.topic_name, t.start_time, t.end_time,
+           t.chair_names, t.host_names, t.discuss_names, t.sort_order, t.del_flag,
+           t.create_by, t.create_time, t.update_by, t.update_time, t.remark,
+           v.venue_name,
+           (select count(1) from yc_schedule s where s.topic_id=t.topic_id and s.del_flag='0') as schedule_count
+    from yc_topic t
+    left join yc_venue v on v.venue_id=t.venue_id and v.del_flag='0'
+  </sql>
+  <select id="selectYcTopicById" resultMap="YcTopicResult"><include refid="selectVo"/> where t.topic_id=#{topicId} and t.del_flag='0'</select>
+  <select id="selectYcTopicList" resultMap="YcTopicResult">
+    <include refid="selectVo"/>
+    <where>t.del_flag='0'
+      <if test="activityId!=null">and t.activity_id=#{activityId}</if>
+      <if test="venueId!=null">and t.venue_id=#{venueId}</if>
+      <if test="topicName!=null and topicName!=''">and t.topic_name like concat('%',#{topicName},'%')</if>
+    </where>
+    order by t.sort_order asc, t.start_time asc, t.topic_id asc
+  </select>
+  <select id="selectTopicStats" resultType="java.util.HashMap">
+    select count(1) as totalCount,
+      (select count(1) from yc_schedule s where s.activity_id=#{activityId} and s.del_flag='0') as scheduleCount
+    from yc_topic where activity_id=#{activityId} and del_flag='0'
+  </select>
+  <insert id="insertYcTopic" useGeneratedKeys="true" keyProperty="topicId">
+    insert into yc_topic(activity_id,venue_id,topic_name,start_time,end_time,chair_names,host_names,discuss_names,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{venueId},#{topicName},#{startTime},#{endTime},#{chairNames},#{hostNames},#{discussNames},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcTopic">
+    update yc_topic
+    <set>
+      <if test="venueId!=null">venue_id=#{venueId},</if>
+      <if test="topicName!=null">topic_name=#{topicName},</if>
+      <if test="startTime!=null">start_time=#{startTime},</if>
+      <if test="endTime!=null">end_time=#{endTime},</if>
+      <if test="chairNames!=null">chair_names=#{chairNames},</if>
+      <if test="hostNames!=null">host_names=#{hostNames},</if>
+      <if test="discussNames!=null">discuss_names=#{discussNames},</if>
+      <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
+      <if test="updateBy!=null">update_by=#{updateBy},</if>
+      <if test="remark!=null">remark=#{remark},</if>
+      update_time=sysdate()
+    </set>
+    where topic_id=#{topicId}
+  </update>
+  <delete id="deleteYcTopicByIds">
+    update yc_topic set del_flag='2' where topic_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+  </delete>
+</mapper>

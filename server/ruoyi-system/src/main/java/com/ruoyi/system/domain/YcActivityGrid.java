@@ -14,10 +14,13 @@ public class YcActivityGrid extends BaseEntity
     private Long gridId;
     private Long activityId;
     private String title;
+    private String iconType;
+    private String iconKey;
     private String iconUrl;
     private String linkType;
     private String moduleKey;
     private String externalUrl;
+    private String content;
     private Integer sortOrder;
     private String status;
     private String delFlag;
@@ -28,6 +31,10 @@ public class YcActivityGrid extends BaseEntity
     public void setActivityId(Long activityId) { this.activityId = activityId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public String getIconType() { return iconType; }
+    public void setIconType(String iconType) { this.iconType = iconType; }
+    public String getIconKey() { return iconKey; }
+    public void setIconKey(String iconKey) { this.iconKey = iconKey; }
     public String getIconUrl() { return iconUrl; }
     public void setIconUrl(String iconUrl) { this.iconUrl = iconUrl; }
     public String getLinkType() { return linkType; }
@@ -36,6 +43,8 @@ public class YcActivityGrid extends BaseEntity
     public void setModuleKey(String moduleKey) { this.moduleKey = moduleKey; }
     public String getExternalUrl() { return externalUrl; }
     public void setExternalUrl(String externalUrl) { this.externalUrl = externalUrl; }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public String getStatus() { return status; }
@@ -49,6 +58,7 @@ public class YcActivityGrid extends BaseEntity
             .append("gridId", gridId)
             .append("activityId", activityId)
             .append("title", title)
+            .append("content", content)
             .toString();
     }
 }

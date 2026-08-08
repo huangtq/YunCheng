@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcApplyFieldMapper">
+    <resultMap type="YcApplyField" id="YcApplyFieldResult">
+        <result property="fieldId" column="field_id" />
+        <result property="channelId" column="channel_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="fieldScope" column="field_scope" />
+        <result property="fieldKey" column="field_key" />
+        <result property="fieldName" column="field_name" />
+        <result property="fieldType" column="field_type" />
+        <result property="placeholder" column="placeholder" />
+        <result property="optionsJson" column="options_json" />
+        <result property="showCondition" column="show_condition" />
+        <result property="requiredFlag" column="required_flag" />
+        <result property="enabledFlag" column="enabled_flag" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectYcApplyFieldVo">
+        select field_id, channel_id, activity_id, field_scope, field_key, field_name, field_type, placeholder,
+               options_json, show_condition, required_flag, enabled_flag, sort_order, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from yc_apply_field
+    </sql>
+
+    <select id="selectYcApplyFieldById" parameterType="Long" resultMap="YcApplyFieldResult">
+        <include refid="selectYcApplyFieldVo"/>
+        where field_id = #{fieldId} and del_flag = '0'
+    </select>
+
+    <select id="selectYcApplyFieldList" parameterType="YcApplyField" resultMap="YcApplyFieldResult">
+        <include refid="selectYcApplyFieldVo"/>
+        <where>
+            del_flag = '0'
+            <if test="channelId != null">and channel_id = #{channelId}</if>
+            <if test="activityId != null">and activity_id = #{activityId}</if>
+            <if test="fieldScope != null and fieldScope != ''">and field_scope = #{fieldScope}</if>
+            <if test="fieldName != null and fieldName != ''">and field_name like concat('%', #{fieldName}, '%')</if>
+            <if test="enabledFlag != null and enabledFlag != ''">and enabled_flag = #{enabledFlag}</if>
+        </where>
+        order by field_scope asc, sort_order asc, field_id asc
+    </select>
+
+    <select id="countByChannelId" parameterType="Long" resultType="int">
+        select count(1) from yc_apply_field where channel_id = #{channelId} and del_flag = '0'
+    </select>
+
+    <insert id="insertYcApplyField" parameterType="YcApplyField" useGeneratedKeys="true" keyProperty="fieldId">
+        insert into yc_apply_field (
+            channel_id, activity_id, field_scope, field_key, field_name, field_type, placeholder, options_json, show_condition,
+            required_flag, enabled_flag, sort_order, del_flag, create_by, create_time, remark
+        ) values (
+            #{channelId}, #{activityId}, #{fieldScope}, #{fieldKey}, #{fieldName}, #{fieldType}, #{placeholder}, #{optionsJson}, #{showCondition},
+            #{requiredFlag}, #{enabledFlag}, #{sortOrder}, '0', #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <insert id="batchInsertYcApplyField" parameterType="java.util.List">
+        insert into yc_apply_field (
+            channel_id, activity_id, field_scope, field_key, field_name, field_type, placeholder, options_json, show_condition,
+            required_flag, enabled_flag, sort_order, del_flag, create_by, create_time, remark
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.channelId}, #{item.activityId}, #{item.fieldScope}, #{item.fieldKey}, #{item.fieldName},
+                #{item.fieldType}, #{item.placeholder}, #{item.optionsJson}, #{item.showCondition}, #{item.requiredFlag}, #{item.enabledFlag},
+                #{item.sortOrder}, '0', #{item.createBy}, sysdate(), #{item.remark}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateYcApplyField" parameterType="YcApplyField">
+        update yc_apply_field
+        <set>
+            <if test="fieldName != null">field_name = #{fieldName},</if>
+            <if test="fieldType != null">field_type = #{fieldType},</if>
+            <if test="placeholder != null">placeholder = #{placeholder},</if>
+            <if test="optionsJson != null">options_json = #{optionsJson},</if>
+            <if test="showCondition != null">show_condition = #{showCondition},</if>
+            <if test="requiredFlag != null">required_flag = #{requiredFlag},</if>
+            <if test="enabledFlag != null">enabled_flag = #{enabledFlag},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where field_id = #{fieldId}
+    </update>
+
+    <update id="updateEnabledByIds" parameterType="YcApplyField">
+        update yc_apply_field
+        set enabled_flag = #{enabledFlag}, update_by = #{updateBy}, update_time = sysdate()
+        where del_flag = '0' and field_id in
+        <foreach item="fieldId" collection="params.fieldIds" open="(" separator="," close=")">
+            #{fieldId}
+        </foreach>
+    </update>
+
+    <delete id="deleteYcApplyFieldByIds" parameterType="Long">
+        update yc_apply_field set del_flag = '2' where field_id in
+        <foreach item="fieldId" collection="array" open="(" separator="," close=")">
+            #{fieldId}
+        </foreach>
+    </delete>
+</mapper>
