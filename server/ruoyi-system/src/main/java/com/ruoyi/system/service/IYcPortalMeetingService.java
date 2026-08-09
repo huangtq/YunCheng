@@ -13,6 +13,8 @@ public interface IYcPortalMeetingService
 
     List<?> listGrid(Long activityId);
 
+    List<?> listMenu(Long activityId);
+
     List<?> listBottom(Long activityId);
 
     List<?> listModule(String moduleKey, Long activityId);

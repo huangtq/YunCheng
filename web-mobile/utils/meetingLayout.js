@@ -27,6 +27,7 @@ export function resolveGridStyle(gridTemplate) {
 
 export function buildHomeLayout(rawLayout = {}, config = {}) {
   const gridTemplate = normalizeGridTemplate(rawLayout.gridTemplate || config.gridTemplate || '1')
+  const rawFooter = rawLayout.footer || {}
   return {
     template: rawLayout.template || config.mobileTemplate || 'standard',
     themeColor: rawLayout.themeColor || config.mobileThemeColor || '#1f6feb',
@@ -36,6 +37,17 @@ export function buildHomeLayout(rawLayout = {}, config = {}) {
     gridTemplate,
     gridColumns: Number(rawLayout.gridColumns) || resolveGridColumns(gridTemplate),
     gridStyle: rawLayout.gridStyle || resolveGridStyle(gridTemplate),
+    audioUrl: rawLayout.audioUrl || config.audioUrl || '',
+    audioAutoplay: rawLayout.audioAutoplay === true || String(config.audioAutoplay) === '1',
+    audioLoop: rawLayout.audioLoop !== false && String(config.audioLoop) !== '0',
+    sideMenu: rawLayout.sideMenu || { enabled: true, source: 'grid' },
+    footer: {
+      enabled: rawFooter.enabled === true || String(config.footerEnabled) === '1',
+      text: rawFooter.text || config.footerText || '',
+      company: rawFooter.company || config.footerCompany || '',
+      logoUrl: rawFooter.logoUrl || config.footerLogoUrl || '',
+      linkUrl: rawFooter.linkUrl || config.footerLinkUrl || ''
+    },
     showCountdown: rawLayout.showCountdown === true || String(config.showCountdown) === '1',
     countdownStyle: rawLayout.countdownStyle || config.countdownStyle || 'classic',
     showRegisterCount: rawLayout.showRegisterCount === true || String(config.showRegisterCount) === '1'

@@ -12,7 +12,13 @@
         <result property="moduleKey" column="module_key" />
         <result property="externalUrl" column="external_url" />
         <result property="content" column="content" />
+        <result property="contentType" column="content_type" />
+        <result property="contentUrl" column="content_url" />
         <result property="sortOrder" column="sort_order" />
+        <result property="tileRow" column="tile_row" />
+        <result property="tileCol" column="tile_col" />
+        <result property="tileRowSpan" column="tile_row_span" />
+        <result property="tileColSpan" column="tile_col_span" />
         <result property="status" column="status" />
         <result property="delFlag" column="del_flag" />
         <result property="createBy" column="create_by" />
@@ -23,7 +29,8 @@
     </resultMap>
 
     <sql id="selectYcActivityGridVo">
-        select grid_id, activity_id, title, icon_type, icon_key, icon_url, link_type, module_key, external_url, content, sort_order, status, del_flag,
+        select grid_id, activity_id, title, icon_type, icon_key, icon_url, link_type, module_key, external_url, content,
+               content_type, content_url, sort_order, tile_row, tile_col, tile_row_span, tile_col_span, status, del_flag,
                create_by, create_time, update_by, update_time, remark
         from yc_activity_grid
     </sql>
@@ -46,10 +53,12 @@
 
     <insert id="insertYcActivityGrid" parameterType="YcActivityGrid" useGeneratedKeys="true" keyProperty="gridId">
         insert into yc_activity_grid (
-            activity_id, title, icon_type, icon_key, icon_url, link_type, module_key, external_url, content, sort_order, status, del_flag,
+            activity_id, title, icon_type, icon_key, icon_url, link_type, module_key, external_url, content,
+            content_type, content_url, sort_order, tile_row, tile_col, tile_row_span, tile_col_span, status, del_flag,
             create_by, create_time, remark
         ) values (
-            #{activityId}, #{title}, #{iconType}, #{iconKey}, #{iconUrl}, #{linkType}, #{moduleKey}, #{externalUrl}, #{content}, #{sortOrder}, #{status}, '0',
+            #{activityId}, #{title}, #{iconType}, #{iconKey}, #{iconUrl}, #{linkType}, #{moduleKey}, #{externalUrl}, #{content},
+            #{contentType}, #{contentUrl}, #{sortOrder}, #{tileRow}, #{tileCol}, #{tileRowSpan}, #{tileColSpan}, #{status}, '0',
             #{createBy}, sysdate(), #{remark}
         )
     </insert>
@@ -65,7 +74,13 @@
             <if test="moduleKey != null">module_key = #{moduleKey},</if>
             <if test="externalUrl != null">external_url = #{externalUrl},</if>
             <if test="content != null">content = #{content},</if>
+            <if test="contentType != null">content_type = #{contentType},</if>
+            <if test="contentUrl != null">content_url = #{contentUrl},</if>
             <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="tileRow != null">tile_row = #{tileRow},</if>
+            <if test="tileCol != null">tile_col = #{tileCol},</if>
+            <if test="tileRowSpan != null">tile_row_span = #{tileRowSpan},</if>
+            <if test="tileColSpan != null">tile_col_span = #{tileColSpan},</if>
             <if test="status != null">status = #{status},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="remark != null">remark = #{remark},</if>

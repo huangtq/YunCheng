@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MeetingResourceMigrationMapper">
+    <update id="replaceActivityCover">
+        update yc_activity
+        set cover_url = replace(cover_url, #{oldPrefix}, #{newPrefix})
+        where cover_url like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceActivityConfigMedia">
+        update yc_activity_config
+        <set>
+            mobile_background_url = replace(mobile_background_url, #{oldPrefix}, #{newPrefix}),
+            audio_url = replace(audio_url, #{oldPrefix}, #{newPrefix}),
+            footer_logo_url = replace(footer_logo_url, #{oldPrefix}, #{newPrefix}),
+            mobile_blocks_json = replace(mobile_blocks_json, #{oldPrefix}, #{newPrefix})
+        </set>
+        where mobile_background_url like concat(#{oldPrefix}, '%')
+           or audio_url like concat(#{oldPrefix}, '%')
+           or footer_logo_url like concat(#{oldPrefix}, '%')
+           or mobile_blocks_json like concat('%', #{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceActivityGridMedia">
+        update yc_activity_grid
+        set icon_url = replace(icon_url, #{oldPrefix}, #{newPrefix}),
+            content_url = replace(content_url, #{oldPrefix}, #{newPrefix})
+        where icon_url like concat(#{oldPrefix}, '%')
+           or content_url like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceGridBottomIcon">
+        update yc_grid_bottom
+        set icon_url = replace(icon_url, #{oldPrefix}, #{newPrefix})
+        where icon_url like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceActivityNavCover">
+        update yc_activity_nav
+        set cover_url = replace(cover_url, #{oldPrefix}, #{newPrefix})
+        where cover_url like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceVenueCover">
+        update yc_venue
+        set cover_url = replace(cover_url, #{oldPrefix}, #{newPrefix})
+        where cover_url like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceHotelCover">
+        update yc_hotel
+        set cover_url = replace(cover_url, #{oldPrefix}, #{newPrefix})
+        where cover_url like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceGuestAvatar">
+        update yc_guest
+        set avatar = replace(avatar, #{oldPrefix}, #{newPrefix})
+        where avatar like concat(#{oldPrefix}, '%')
+    </update>
+
+    <update id="replaceExhibitorLogo">
+        update yc_exhibitor
+        set logo_url = replace(logo_url, #{oldPrefix}, #{newPrefix})
+        where logo_url like concat(#{oldPrefix}, '%')
+    </update>
+</mapper>

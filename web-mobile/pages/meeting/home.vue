@@ -1,5 +1,8 @@
 <template>
   <view class="home-page" :style="pageThemeStyle">
+    <view v-if="audioUrl" class="audio-toggle" @click="toggleAudio">
+      {{ audioPlaying ? '暂停音乐' : '播放音乐' }}
+    </view>
     <view v-if="loading" class="state">加载中...</view>
     <template v-else>
       <view v-if="isImageMap" class="image-map-page" :style="imageMapStyle">
@@ -15,6 +18,39 @@
         </view>
       </view>
 
+      <view v-else-if="isTile" class="tile-page" :style="tilePageStyle">
+        <view class="cover tile-cover" :style="coverStyle"></view>
+        <view v-if="layout.showCountdown && countdown" class="tile-countdown">
+          <CountdownBoard :countdown="countdown" :theme-color="layout.themeColor" />
+        </view>
+        <view v-if="layout.notice" class="notice" @click="showNotice">{{ layout.notice }}</view>
+        <view class="tile-grid">
+          <view
+            v-for="item in gridList"
+            :key="item.gridId"
+            class="tile-item"
+            :style="tileStyle(item)"
+            @click="onGridClick(item)"
+          >
+            <text v-if="!item.iconUrl" class="tile-title">{{ item.title }}</text>
+          </view>
+        </view>
+        <view
+          v-if="layout.footer.enabled"
+          class="tile-footer"
+          @click="onFooterClick"
+        >
+          <image
+            v-if="layout.footer.logoUrl"
+            class="tile-footer-logo"
+            :src="resolveUrl(layout.footer.logoUrl)"
+            mode="aspectFit"
+          />
+          <text v-if="layout.footer.text">{{ layout.footer.text }}</text>
+          <text v-if="layout.footer.company" class="tile-footer-name">{{ layout.footer.company }}</text>
+        </view>
+      </view>
+
       <view v-else class="standard-page">
         <view class="cover" :style="coverStyle">
           <view class="cover-mask">
@@ -24,11 +60,12 @@
             </view>
             <view v-if="layout.showCountdown && countdown" class="countdown-wrap">
               <view v-if="countdown.ended" class="countdown-ended">会议进行中</view>
-              <view v-else-if="layout.countdownStyle === 'digital'" class="countdown-digital">
-                <view class="digit-box"><text class="digit">{{ pad(countdown.days) }}</text><text class="digit-label">天</text></view>
-                <view class="digit-box"><text class="digit">{{ pad(countdown.hours) }}</text><text class="digit-label">时</text></view>
-                <view class="digit-box"><text class="digit">{{ pad(countdown.minutes) }}</text><text class="digit-label">分</text></view>
-                <view class="digit-box"><text class="digit">{{ pad(countdown.seconds) }}</text><text class="digit-label">秒</text></view>
+              <view v-else-if="layout.countdownStyle === 'digital'">
+                <CountdownBoard
+                  :countdown="countdown"
+                  :theme-color="layout.themeColor"
+                  :show-title="false"
+                />
               </view>
               <view v-else-if="layout.countdownStyle === 'simple'" class="countdown-simple">
                 距开始 {{ countdown.days }}天 {{ countdown.hours }}时 {{ countdown.minutes }}分
@@ -116,6 +153,7 @@
 import { computed, ref } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import MeetingIcon from '@/components/MeetingIcon/MeetingIcon.vue'
+import CountdownBoard from '@/components/CountdownBoard/CountdownBoard.vue'
 import { getPortalActivity, getPortalGrid, getPortalBottom } from '@/api/portal/meeting'
 import { getOauthUrl, buildMockOauthJump } from '@/api/portal/wx'
 import { captureMpTokenFromQuery, hasMpToken } from '@/utils/mpAuth'
@@ -134,7 +172,9 @@ const now = ref(Date.now())
 let timer = null
 
 const pageThemeStyle = computed(() => ({
-  '--theme-color': layout.value.themeColor || '#1f6feb'
+  '--theme-color': layout.value.themeColor || '#1f6feb',
+  backgroundColor: layout.value.gridTemplate === 'tile' ? '#000' : '#f5f7fa',
+  paddingBottom: layout.value.gridTemplate === 'tile' ? '0' : undefined
 }))
 
 const coverStyle = computed(() => {
@@ -145,19 +185,39 @@ const coverStyle = computed(() => {
     }
   }
   const full = url.startsWith('http') ? url : (config.baseUrl + url)
+  const isPcViewport = typeof window !== 'undefined' && window.innerWidth >= 750
   return {
     backgroundImage: `url(${full})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center'
+    backgroundSize: isTile.value ? 'contain' : 'cover',
+    backgroundPosition: isTile.value ? 'top center' : 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor: isTile.value ? '#061a74' : 'transparent',
+    height: isTile.value ? (isPcViewport ? '421.875px' : '56.25vw') : undefined
   }
 })
 
 const isImageMap = computed(() => layout.value.template === 'image-map')
+const isTile = computed(() => layout.value.template === 'standard' && layout.value.gridTemplate === 'tile')
 const isIconOnly = computed(() => layout.value.gridStyle === 'icon')
 const gridClass = computed(() => `cols-${layout.value.gridColumns || 3}`)
+const audioUrl = computed(() => layout.value.audioUrl ? resolveUrl(layout.value.audioUrl) : '')
+const audioPlaying = ref(false)
+let audioContext = null
 const gridIconWrapStyle = computed(() => ({
   background: `${layout.value.themeColor || '#1f6feb'}14`
 }))
+
+const tilePageStyle = computed(() => {
+  const background = layout.value.backgroundUrl
+  return {
+    backgroundColor: '#1100ab',
+    backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
+    backgroundSize: '100% 100%',
+    backgroundPosition: '50% 100%',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed'
+  }
+})
 
 const imageMapStyle = computed(() => {
   const background = layout.value.backgroundUrl
@@ -198,6 +258,11 @@ onShow(() => {
 
 onUnload(() => {
   if (timer) clearInterval(timer)
+  if (audioContext) {
+    audioContext.stop()
+    audioContext.destroy()
+    audioContext = null
+  }
 })
 
 async function ensureLogin() {
@@ -236,17 +301,50 @@ async function loadHome() {
     if (layout.value.notice) {
       setTimeout(showNotice, 200)
     }
+    initAudio()
   } finally {
     loading.value = false
   }
 }
 
-function pad(num) {
-  return String(num ?? 0).padStart(2, '0')
-}
-
 function isImageCard(item) {
   return item && item.iconType === 'image' && !!item.iconUrl && Number(layout.value.gridColumns) === 2
+}
+
+function tileStyle(item) {
+  const style = {
+    gridColumn: `${item.tileCol || 'auto'} / span ${item.tileColSpan || 1}`,
+    gridRow: `${item.tileRow || 'auto'} / span ${item.tileRowSpan || 1}`
+  }
+  if (item.iconUrl) {
+    style.backgroundImage = `url(${resolveUrl(item.iconUrl)})`
+  }
+  return style
+}
+
+function initAudio() {
+  if (!audioUrl.value || typeof uni.createInnerAudioContext !== 'function') return
+  audioContext = uni.createInnerAudioContext()
+  audioContext.src = audioUrl.value
+  audioContext.loop = layout.value.audioLoop
+  audioContext.onPlay(() => { audioPlaying.value = true })
+  audioContext.onPause(() => { audioPlaying.value = false })
+  audioContext.onStop(() => { audioPlaying.value = false })
+  if (layout.value.audioAutoplay) {
+    audioContext.play()
+  }
+}
+
+function toggleAudio() {
+  if (!audioContext) {
+    initAudio()
+  }
+  if (!audioContext) return
+  if (audioPlaying.value) {
+    audioContext.pause()
+  } else {
+    audioContext.play()
+  }
 }
 
 function guessBottomIcon(moduleKey) {
@@ -270,9 +368,15 @@ function onGridClick(item) {
     })
     return
   }
+  if (item.linkType === 'content' && item.contentType === 'image' && (item.contentUrl || item.iconUrl)) {
+    uni.navigateTo({
+      url: `/pages/common/imageview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title)}&url=${encodeURIComponent(item.contentUrl || item.iconUrl)}`
+    })
+    return
+  }
   if (item.linkType === 'content' && item.content) {
     uni.navigateTo({
-      url: `/pages/common/textview/index?title=${encodeURIComponent(item.title)}&content=${encodeURIComponent(item.content)}`
+      url: `/pages/common/textview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title)}&content=${encodeURIComponent(item.content)}`
     })
     return
   }
@@ -345,6 +449,14 @@ function onBottomClick(item) {
     uni.showModal({ title: item.bottomName, content: item.remark || item.linkUrl || '暂无内容', showCancel: false })
   }
 }
+
+function onFooterClick() {
+  if (layout.value.footer.linkUrl) {
+    uni.navigateTo({
+      url: `/pages/common/webview/index?title=${encodeURIComponent(layout.value.footer.company || layout.value.footer.text || '会务支持')}&url=${encodeURIComponent(layout.value.footer.linkUrl)}`
+    })
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -353,7 +465,123 @@ function onBottomClick(item) {
   background: #f5f7fa;
   padding-bottom: 120rpx;
 }
+:global(html),
+:global(body),
+:global(#app),
+:global(uni-app),
+:global(uni-page),
+:global(uni-page-wrapper),
+:global(uni-page-body) {
+  min-height: 100%;
+  overflow: visible !important;
+}
+.audio-toggle {
+  position: fixed;
+  top: 24rpx;
+  right: 24rpx;
+  z-index: 30;
+  width: 58rpx;
+  height: 58rpx;
+  padding: 0;
+  border: 2rpx solid rgba(255, 255, 255, 0.88);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.42);
+  font-size: 0;
+}
+.audio-toggle::before {
+  content: '♫';
+  font-size: 30rpx;
+  line-height: 1;
+}
 .standard-page { min-height: 100vh; }
+.tile-page {
+  min-height: 100vh;
+  background: #061a74;
+}
+.tile-cover {
+  height: 56.25vw;
+  min-height: 0;
+  background-color: #061a74;
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+.tile-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx 18rpx;
+  background: #061a74;
+}
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: 18vw repeat(3, 20.7vw);
+  gap: 0;
+  padding: 18rpx;
+  background: #061a74;
+}
+.tile-item {
+  min-width: 0;
+  margin: 6rpx;
+  border-radius: 19.2px;
+  background-color: #0b2c9c;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+.tile-title {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+}
+@media screen and (min-width: 750px) {
+  .tile-page {
+    width: 768px;
+    margin: 0 auto;
+  }
+  .tile-cover {
+    height: 432px;
+  }
+  .tile-grid {
+    gap: 0;
+    padding: 16px 20px 0;
+    grid-template-rows: 147px 167px 167px 167px;
+  }
+  .tile-item {
+    margin: 6px;
+  }
+}
+.tile-footer {
+  min-height: 92px;
+  box-sizing: border-box;
+  margin-top: 15px;
+  padding: 24rpx 0;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 24rpx;
+  text-align: center;
+}
+.tile-footer-name {
+  margin-left: 12rpx;
+  font-weight: 600;
+}
+.tile-footer-logo {
+  width: 42rpx;
+  height: 34rpx;
+  margin-right: 10rpx;
+  vertical-align: middle;
+}
 .cover { height: 380rpx; position: relative; }
 .cover-mask {
   position: absolute;
@@ -384,27 +612,6 @@ function onBottomClick(item) {
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.2);
   font-size: 24rpx;
-}
-.countdown-digital { display: flex; gap: 12rpx; }
-.digit-box {
-  min-width: 72rpx;
-  padding: 10rpx 8rpx;
-  border-radius: 12rpx;
-  background: rgba(255, 255, 255, 0.92);
-  text-align: center;
-}
-.digit {
-  display: block;
-  color: var(--theme-color, #1f6feb);
-  font-size: 30rpx;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.digit-label {
-  display: block;
-  margin-top: 2rpx;
-  color: #909399;
-  font-size: 18rpx;
 }
 .notice {
   margin: 20rpx 24rpx 0;

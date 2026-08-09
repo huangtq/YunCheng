@@ -151,10 +151,34 @@
                 已报名 {{ activityInfo.registerCount || 0 }} 人
               </div>
               <div v-if="String(configForm.showCountdown) === '1'" class="phone-cover-countdown">
-                {{ countdownPreviewText }}
+                <div v-if="configForm.countdownStyle === 'digital'" class="phone-countdown-board">
+                  <div class="phone-countdown-heading">距会议开始还有</div>
+                  <div class="phone-countdown-groups">
+                    <div v-for="item in previewCountdownParts" :key="item.label" class="phone-countdown-group">
+                      <div class="phone-flip-pair">
+                        <span class="phone-flip-card">{{ item.value[0] }}</span>
+                        <span class="phone-flip-card">{{ item.value[1] }}</span>
+                      </div>
+                      <span>{{ item.label }}</span>
+                    </div>
+                  </div>
+                </div>
+                <span v-else>{{ countdownPreviewText }}</span>
               </div>
             </div>
-            <div class="phone-grid" :class="[previewGridClass, previewGridStyleClass]">
+            <div v-if="isTilePreview" class="phone-tile-preview">
+              <div
+                v-for="item in previewItems"
+                :key="item.gridId"
+                class="phone-tile-item"
+                :style="previewTileStyle(item)"
+              >
+                <img v-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
+                <span v-else>{{ item.title }}</span>
+              </div>
+              <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
+            </div>
+            <div v-else class="phone-grid" :class="[previewGridClass, previewGridStyleClass]">
               <div v-for="item in previewItems" :key="item.gridId" class="phone-grid-item">
                 <div class="phone-grid-icon" :style="{ background: `${themeColor}22` }">
                   <MeetingIcon
@@ -247,7 +271,16 @@
               <el-input v-model="form.externalUrl" maxlength="500" placeholder="https://" style="max-width: 620px" />
             </el-form-item>
             <el-form-item v-if="form.linkType === 'content'" label="内容">
-              <editor v-model="form.content" :min-height="220" />
+              <el-select v-model="form.contentType" style="width: 180px; margin-bottom: 10px">
+                <el-option label="文字内容" value="text" />
+                <el-option label="长图内容" value="image" />
+              </el-select>
+              <material-select
+                v-if="form.contentType === 'image'"
+                v-model="form.contentUrl"
+                :show-tip="false"
+              />
+              <editor v-else v-model="form.content" :min-height="220" />
             </el-form-item>
           </section>
 
@@ -275,6 +308,29 @@
             <el-form-item label="隐藏">
               <el-switch v-model="form.hidden" active-text="隐藏此菜单" />
             </el-form-item>
+            <el-divider content-position="left">Tile 布局（仅选择不规则 Tile 宫格时生效）</el-divider>
+            <el-row :gutter="24">
+              <el-col :span="6">
+                <el-form-item label="行">
+                  <el-input-number v-model="form.tileRow" :min="0" :max="20" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="列">
+                  <el-input-number v-model="form.tileCol" :min="0" :max="6" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="跨行">
+                  <el-input-number v-model="form.tileRowSpan" :min="1" :max="6" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="跨列">
+                  <el-input-number v-model="form.tileColSpan" :min="1" :max="6" />
+                </el-form-item>
+              </el-col>
+            </el-row>
           </section>
         </el-form>
       </el-scrollbar>
@@ -359,6 +415,12 @@ const templateOptions = [
     description: "2-2-2-2-2布局，每行2个item，统一高度100px，支持自定义渐变色和图标"
   },
   {
+    value: "tile",
+    label: "不规则 Tile 宫格",
+    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png",
+    description: "支持每个入口配置背景图、行列位置和跨行跨列，适合参考站38569布局"
+  },
+  {
     value: "681",
     label: "(描边)模板68-2-2-2-2-2布局",
     preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png",
@@ -404,6 +466,18 @@ const previewGridClass = computed(() => {
 
 const isIconOnlyPreview = computed(() => ["5", "71"].includes(String(configForm.value.gridTemplate)))
 const previewGridStyleClass = computed(() => (isIconOnlyPreview.value ? "grid-icon-only" : ""))
+const isTilePreview = computed(() => String(configForm.value.gridTemplate) === "tile")
+
+function previewTileStyle(item) {
+  const style = {
+    gridColumn: `${item.tileCol || "auto"} / span ${item.tileColSpan || 1}`,
+    gridRow: `${item.tileRow || "auto"} / span ${item.tileRowSpan || 1}`
+  }
+  if (item.iconUrl) {
+    style.backgroundImage = `url("${resolveUrl(item.iconUrl)}")`
+  }
+  return style
+}
 
 const countdownPreviewText = computed(() => {
   const style = configForm.value.countdownStyle || "classic"
@@ -411,6 +485,13 @@ const countdownPreviewText = computed(() => {
   if (style === "simple") return "倒计时 · 简洁样式"
   return "倒计时 · 经典样式"
 })
+
+const previewCountdownParts = [
+  { label: "Days", value: "00" },
+  { label: "Hours", value: "00" },
+  { label: "Minutes", value: "00" },
+  { label: "Seconds", value: "00" }
+]
 
 const previewCoverStyle = computed(() => {
   const coverUrl = resolveUrl(activityInfo.value.coverUrl)
@@ -520,6 +601,12 @@ function restoreForm(data) {
     iconKey: data.iconKey || "",
     parentId: options.parentId || 0,
     content: data.content || options.content || "",
+    contentType: data.contentType || "text",
+    contentUrl: data.contentUrl || "",
+    tileRow: data.tileRow || 0,
+    tileCol: data.tileCol || 0,
+    tileRowSpan: data.tileRowSpan || 1,
+    tileColSpan: data.tileColSpan || 1,
     animation: options.animation || "none",
     gradientColor: options.gradientColor || "",
     opacity: options.opacity ?? 1,
@@ -541,6 +628,8 @@ function buildPayload() {
   payload.iconType = form.value.iconType || "image"
   payload.iconUrl = payload.iconType === "image" ? (form.value.iconUrl || "") : ""
   payload.iconKey = payload.iconType === "icon" ? (form.value.iconKey || "") : ""
+  payload.contentType = form.value.contentType || "text"
+  payload.contentUrl = payload.contentType === "image" ? (form.value.contentUrl || "") : ""
   payload.remark = JSON.stringify({
     __gridForm: true,
     parentId: form.value.parentId || 0,
@@ -565,6 +654,12 @@ function reset() {
     moduleKey: "none",
     externalUrl: undefined,
     content: "",
+    contentType: "text",
+    contentUrl: "",
+    tileRow: 0,
+    tileCol: 0,
+    tileRowSpan: 1,
+    tileColSpan: 1,
     animation: "none",
     gradientColor: "",
     opacity: 1,
@@ -889,6 +984,42 @@ onMounted(() => {
   font-size: 12px;
   line-height: 1.4;
 }
+.phone-countdown-board {
+  width: 100%;
+  padding-top: 8px;
+  text-align: center;
+}
+.phone-countdown-heading {
+  margin-bottom: 8px;
+  color: #fff;
+  font-size: 11px;
+}
+.phone-countdown-groups {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+.phone-countdown-group {
+  color: #fff;
+  font-size: 8px;
+  text-align: center;
+}
+.phone-flip-pair {
+  display: flex;
+  gap: 1px;
+}
+.phone-flip-card {
+  display: inline-flex;
+  width: 16px;
+  height: 23px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: #687078;
+  background: linear-gradient(180deg, #fff 0%, #e8ebee 48%, #bfc4c9 50%, #f8f9fa 52%, #d8dce0 100%);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+}
 .phone-grid {
   display: grid;
   gap: 1px;
@@ -943,6 +1074,32 @@ onMounted(() => {
 }
 .phone-grid-item .el-icon {
   color: inherit;
+}
+.phone-tile-preview {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: 42px 48px 48px 48px;
+  gap: 2px;
+  padding: 6px;
+  background: #061a74;
+}
+.phone-tile-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #fff;
+  background-color: #0b2c9c;
+  background-position: center;
+  background-size: cover;
+  font-size: 11px;
+  text-align: center;
+}
+.phone-tile-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .phone-empty {
   grid-column: 1 / -1;

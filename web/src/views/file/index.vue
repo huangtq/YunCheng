@@ -65,8 +65,10 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
+      :page="queryParams.pageNum"
+      :limit="queryParams.pageSize"
+      @update:page="queryParams.pageNum = $event"
+      @update:limit="queryParams.pageSize = $event"
       @pagination="getList"
     />
 
@@ -101,11 +103,12 @@
 </template>
 
 <script setup name="File">
-import { listFile, delFile } from "@/api/system/file"
+import { delActivityFile, delFile, listActivityFile, listFile } from "@/api/system/file"
 import { getToken } from "@/utils/auth"
 import { UploadFilled } from "@element-plus/icons-vue"
 
 const { proxy } = getCurrentInstance()
+const route = useRoute()
 
 const fileList = ref([])
 const open = ref(false)
@@ -115,7 +118,10 @@ const multiple = ref(true)
 const total = ref(0)
 const uploadList = ref([])
 const baseUrl = import.meta.env.VITE_APP_BASE_API
-const uploadUrl = import.meta.env.VITE_APP_BASE_API + "/system/file/upload"
+const activityId = computed(() => route.query.id || "")
+const uploadUrl = computed(() => activityId.value
+  ? `${baseUrl}/meeting/activity/${activityId.value}/file/upload`
+  : `${baseUrl}/system/file/upload`)
 const uploadHeaders = ref({ Authorization: "Bearer " + getToken() })
 const imageSuffixes = ["jpg", "jpeg", "png", "gif", "bmp", "webp"]
 
@@ -150,7 +156,10 @@ function resolveUrl(row) {
 /** 查询文件列表 */
 function getList() {
   loading.value = true
-  listFile(queryParams.value).then(response => {
+  const request = activityId.value
+    ? listActivityFile(activityId.value, queryParams.value)
+    : listFile(queryParams.value)
+  request.then(response => {
     fileList.value = response.rows
     total.value = response.total
     loading.value = false
@@ -214,7 +223,9 @@ function handleExceed() {
 function handleDelete(row) {
   const fileIds = row?.fileId || ids.value
   proxy.$modal.confirm('是否确认删除选中的文件？').then(function() {
-    return delFile(fileIds)
+    return activityId.value
+      ? delActivityFile(activityId.value, fileIds)
+      : delFile(fileIds)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("删除成功")

@@ -24,6 +24,14 @@
         <result property="mobileBackgroundUrl" column="mobile_background_url" />
         <result property="mobileBlocksJson" column="mobile_blocks_json" />
         <result property="mobileNotice" column="mobile_notice" />
+        <result property="audioUrl" column="audio_url" />
+        <result property="audioAutoplay" column="audio_autoplay" />
+        <result property="audioLoop" column="audio_loop" />
+        <result property="footerEnabled" column="footer_enabled" />
+        <result property="footerText" column="footer_text" />
+        <result property="footerCompany" column="footer_company" />
+        <result property="footerLogoUrl" column="footer_logo_url" />
+        <result property="footerLinkUrl" column="footer_link_url" />
         <result property="createBy" column="create_by" />
         <result property="createTime" column="create_time" />
         <result property="updateBy" column="update_by" />
@@ -41,12 +49,16 @@
             hotel_need_register, live_need_register, register_show_live, register_show_hotel, hotel_once,
             cancel_register_cancel_hotel, login_sms, register_force_mobile, grid_template, qr_url,
             mobile_template, mobile_theme_color, mobile_background_url, mobile_blocks_json, mobile_notice,
+            audio_url, audio_autoplay, audio_loop,
+            footer_enabled, footer_text, footer_company, footer_logo_url, footer_link_url,
             create_by, create_time, remark
         ) values (
             #{activityId}, #{mpShow}, #{homeBanner}, #{hotShow}, #{showCountdown}, #{countdownStyle}, #{showRegisterCount},
             #{hotelNeedRegister}, #{liveNeedRegister}, #{registerShowLive}, #{registerShowHotel}, #{hotelOnce},
             #{cancelRegisterCancelHotel}, #{loginSms}, #{registerForceMobile}, #{gridTemplate}, #{qrUrl},
             #{mobileTemplate}, #{mobileThemeColor}, #{mobileBackgroundUrl}, #{mobileBlocksJson}, #{mobileNotice},
+            #{audioUrl}, #{audioAutoplay}, #{audioLoop},
+            #{footerEnabled}, #{footerText}, #{footerCompany}, #{footerLogoUrl}, #{footerLinkUrl},
             #{createBy}, sysdate(), #{remark}
         )
     </insert>
@@ -75,6 +87,14 @@
             <if test="mobileBackgroundUrl != null">mobile_background_url = #{mobileBackgroundUrl},</if>
             <if test="mobileBlocksJson != null">mobile_blocks_json = #{mobileBlocksJson},</if>
             <if test="mobileNotice != null">mobile_notice = #{mobileNotice},</if>
+            <if test="audioUrl != null">audio_url = #{audioUrl},</if>
+            <if test="audioAutoplay != null">audio_autoplay = #{audioAutoplay},</if>
+            <if test="audioLoop != null">audio_loop = #{audioLoop},</if>
+            <if test="footerEnabled != null">footer_enabled = #{footerEnabled},</if>
+            <if test="footerText != null">footer_text = #{footerText},</if>
+            <if test="footerCompany != null">footer_company = #{footerCompany},</if>
+            <if test="footerLogoUrl != null">footer_logo_url = #{footerLogoUrl},</if>
+            <if test="footerLinkUrl != null">footer_link_url = #{footerLinkUrl},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="remark != null">remark = #{remark},</if>
             update_time = sysdate()

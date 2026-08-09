@@ -38,10 +38,30 @@ public interface ISysFileInfoService
     public SysFileInfo uploadFile(MultipartFile file, String createBy) throws Exception;
 
     /**
+     * 上传会议文件并保存元数据。
+     *
+     * @param file 文件
+     * @param createBy 创建者
+     * @param activityId 会议ID
+     * @return 文件信息
+     * @throws Exception 上传异常
+     */
+    public SysFileInfo uploadFile(MultipartFile file, String createBy, Long activityId) throws Exception;
+
+    /**
      * 批量删除文件（数据库 + 本地磁盘）
      *
      * @param fileIds 需要删除的文件ID
      * @return 结果
      */
     public int deleteSysFileInfoByIds(Long[] fileIds);
+
+    /**
+     * 删除指定会议下的文件。
+     *
+     * @param fileIds 文件ID集合
+     * @param activityId 会议ID
+     * @return 结果
+     */
+    public int deleteSysFileInfoByIds(Long[] fileIds, Long activityId);
 }

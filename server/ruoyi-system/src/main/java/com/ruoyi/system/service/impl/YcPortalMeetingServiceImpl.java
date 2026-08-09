@@ -138,6 +138,14 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     }
 
     @Override
+    public List<?> listMenu(Long activityId)
+    {
+        // 参考站点的内容页侧栏与首页入口使用同一组会议九宫格配置。
+        // 保留此接口作为旧客户端兼容入口，但不再读取独立菜单表。
+        return listGrid(activityId);
+    }
+
+    @Override
     public List<?> listBottom(Long activityId)
     {
         requireActivity(activityId);
@@ -252,6 +260,9 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             row.put("price", channel.getPrice());
             row.put("quota", channel.getQuota());
             row.put("deadline", channel.getDeadline());
+            boolean closed = channel.getDeadline() != null && channel.getDeadline().before(new Date());
+            row.put("closed", closed);
+            row.put("closedMessage", closed ? "本次报名已截止，欢迎下次参会" : "");
             row.put("sortOrder", channel.getSortOrder());
             row.put("fields", fieldMap.getOrDefault(channel.getChannelId(), new ArrayList<>()));
             if (channel.getQuota() != null && channel.getQuota() > 0)
@@ -436,6 +447,20 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         layout.put("showCountdown", "1".equals(config.getShowCountdown()));
         layout.put("countdownStyle", countdownStyle);
         layout.put("showRegisterCount", "1".equals(config.getShowRegisterCount()));
+        layout.put("audioUrl", config.getAudioUrl());
+        layout.put("audioAutoplay", "1".equals(config.getAudioAutoplay()));
+        layout.put("audioLoop", !"0".equals(config.getAudioLoop()));
+        Map<String, Object> sideMenu = new HashMap<>();
+        sideMenu.put("enabled", true);
+        sideMenu.put("source", "grid");
+        layout.put("sideMenu", sideMenu);
+        Map<String, Object> footer = new HashMap<>();
+        footer.put("enabled", "1".equals(config.getFooterEnabled()));
+        footer.put("text", config.getFooterText());
+        footer.put("company", config.getFooterCompany());
+        footer.put("logoUrl", config.getFooterLogoUrl());
+        footer.put("linkUrl", config.getFooterLinkUrl());
+        layout.put("footer", footer);
         List<?> blocks = new ArrayList<>();
         if (StringUtils.isNotEmpty(config.getMobileBlocksJson()))
         {
@@ -464,6 +489,10 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     private int resolveGridColumns(String gridTemplate)
     {
         String value = normalizeGridTemplate(gridTemplate);
+        if ("tile".equals(value))
+        {
+            return 6;
+        }
         if ("7".equals(value) || "71".equals(value))
         {
             return 1;

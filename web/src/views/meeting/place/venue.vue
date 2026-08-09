@@ -50,7 +50,7 @@
         </el-form-item>
         <el-form-item v-if="form.isLive==='1'" label="直播开始"><el-date-picker v-model="form.liveStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" /></el-form-item>
         <el-form-item v-if="form.isLive==='1'" label="直播结束"><el-date-picker v-model="form.liveEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" /></el-form-item>
-        <el-form-item label="封面地址"><el-input v-model="form.coverUrl" placeholder="图片URL，可选" /></el-form-item>
+        <el-form-item label="封面"><material-select v-model="form.coverUrl" :show-tip="false" /></el-form-item>
         <el-form-item label="排序"><el-input-number v-model="form.sortOrder" :min="0" controls-position="right" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="2" /></el-form-item>
       </el-form>
@@ -61,6 +61,7 @@
 <script setup name="MeetingVenue">
 import PlaceTabs from './PlaceTabs'
 import { listVenue, getVenueStats, getVenue, addVenue, updateVenue, delVenue } from '@/api/meeting/venue'
+import MaterialSelect from '@/components/MaterialSelect'
 const { proxy } = getCurrentInstance()
 const route = useRoute()
 const activityId = computed(() => route.query.id)

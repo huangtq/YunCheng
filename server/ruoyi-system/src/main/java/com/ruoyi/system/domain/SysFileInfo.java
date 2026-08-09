@@ -16,6 +16,9 @@ public class SysFileInfo extends BaseEntity
     /** 文件ID */
     private Long fileId;
 
+    /** 所属会议ID，为空表示全局文件 */
+    private Long activityId;
+
     /** 原始文件名 */
     private String originalName;
 
@@ -39,6 +42,16 @@ public class SysFileInfo extends BaseEntity
     public void setFileId(Long fileId)
     {
         this.fileId = fileId;
+    }
+
+    public Long getActivityId()
+    {
+        return activityId;
+    }
+
+    public void setActivityId(Long activityId)
+    {
+        this.activityId = activityId;
     }
 
     public String getOriginalName()
@@ -96,6 +109,7 @@ public class SysFileInfo extends BaseEntity
     {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
             .append("fileId", getFileId())
+            .append("activityId", getActivityId())
             .append("originalName", getOriginalName())
             .append("fileName", getFileName())
             .append("url", getUrl())

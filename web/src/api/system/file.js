@@ -9,6 +9,15 @@ export function listFile(query) {
   })
 }
 
+// 查询指定会议的文件列表
+export function listActivityFile(activityId, query) {
+  return request({
+    url: '/meeting/activity/' + activityId + '/file/list',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询文件详细
 export function getFile(fileId) {
   return request({
@@ -21,6 +30,14 @@ export function getFile(fileId) {
 export function delFile(fileId) {
   return request({
     url: '/system/file/' + fileId,
+    method: 'delete'
+  })
+}
+
+// 删除指定会议的文件
+export function delActivityFile(activityId, fileId) {
+  return request({
+    url: '/meeting/activity/' + activityId + '/file/' + fileId,
     method: 'delete'
   })
 }

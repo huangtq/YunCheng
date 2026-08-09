@@ -33,6 +33,14 @@ public class YcActivityConfig extends BaseEntity
     private String mobileBackgroundUrl;
     private String mobileBlocksJson;
     private String mobileNotice;
+    private String audioUrl;
+    private String audioAutoplay;
+    private String audioLoop;
+    private String footerEnabled;
+    private String footerText;
+    private String footerCompany;
+    private String footerLogoUrl;
+    private String footerLinkUrl;
 
     public Long getActivityId() { return activityId; }
     public void setActivityId(Long activityId) { this.activityId = activityId; }
@@ -78,6 +86,22 @@ public class YcActivityConfig extends BaseEntity
     public void setMobileBlocksJson(String mobileBlocksJson) { this.mobileBlocksJson = mobileBlocksJson; }
     public String getMobileNotice() { return mobileNotice; }
     public void setMobileNotice(String mobileNotice) { this.mobileNotice = mobileNotice; }
+    public String getAudioUrl() { return audioUrl; }
+    public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
+    public String getAudioAutoplay() { return audioAutoplay; }
+    public void setAudioAutoplay(String audioAutoplay) { this.audioAutoplay = audioAutoplay; }
+    public String getAudioLoop() { return audioLoop; }
+    public void setAudioLoop(String audioLoop) { this.audioLoop = audioLoop; }
+    public String getFooterEnabled() { return footerEnabled; }
+    public void setFooterEnabled(String footerEnabled) { this.footerEnabled = footerEnabled; }
+    public String getFooterText() { return footerText; }
+    public void setFooterText(String footerText) { this.footerText = footerText; }
+    public String getFooterCompany() { return footerCompany; }
+    public void setFooterCompany(String footerCompany) { this.footerCompany = footerCompany; }
+    public String getFooterLogoUrl() { return footerLogoUrl; }
+    public void setFooterLogoUrl(String footerLogoUrl) { this.footerLogoUrl = footerLogoUrl; }
+    public String getFooterLinkUrl() { return footerLinkUrl; }
+    public void setFooterLinkUrl(String footerLinkUrl) { this.footerLinkUrl = footerLinkUrl; }
 
     @Override
     public String toString() {

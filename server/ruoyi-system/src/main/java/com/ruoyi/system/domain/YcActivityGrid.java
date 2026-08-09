@@ -21,7 +21,13 @@ public class YcActivityGrid extends BaseEntity
     private String moduleKey;
     private String externalUrl;
     private String content;
+    private String contentType;
+    private String contentUrl;
     private Integer sortOrder;
+    private Integer tileRow;
+    private Integer tileCol;
+    private Integer tileRowSpan;
+    private Integer tileColSpan;
     private String status;
     private String delFlag;
 
@@ -45,8 +51,20 @@ public class YcActivityGrid extends BaseEntity
     public void setExternalUrl(String externalUrl) { this.externalUrl = externalUrl; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
+    public String getContentUrl() { return contentUrl; }
+    public void setContentUrl(String contentUrl) { this.contentUrl = contentUrl; }
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+    public Integer getTileRow() { return tileRow; }
+    public void setTileRow(Integer tileRow) { this.tileRow = tileRow; }
+    public Integer getTileCol() { return tileCol; }
+    public void setTileCol(Integer tileCol) { this.tileCol = tileCol; }
+    public Integer getTileRowSpan() { return tileRowSpan; }
+    public void setTileRowSpan(Integer tileRowSpan) { this.tileRowSpan = tileRowSpan; }
+    public Integer getTileColSpan() { return tileColSpan; }
+    public void setTileColSpan(Integer tileColSpan) { this.tileColSpan = tileColSpan; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getDelFlag() { return delFlag; }

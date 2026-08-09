@@ -643,6 +643,7 @@ create table sys_notice_read (
 drop table if exists sys_file;
 create table sys_file (
   file_id           bigint(20)      not null auto_increment    comment '文件ID',
+  activity_id       bigint(20)      default null               comment '所属会议ID，为空表示全局文件',
   original_name     varchar(255)    default ''                 comment '原始文件名',
   file_name         varchar(500)    default ''                 comment '存储相对路径（含 /profile 前缀）',
   url               varchar(500)    default ''                 comment '访问地址',
@@ -653,7 +654,8 @@ create table sys_file (
   update_by         varchar(64)     default ''                 comment '更新者',
   update_time       datetime                                   comment '更新时间',
   remark            varchar(500)    default null               comment '备注',
-  primary key (file_id)
+  primary key (file_id),
+  key idx_sys_file_activity_id (activity_id)
 ) engine=innodb auto_increment=1 comment = '文件管理表';
 
 -- 文件管理菜单（紧挨首页之后）

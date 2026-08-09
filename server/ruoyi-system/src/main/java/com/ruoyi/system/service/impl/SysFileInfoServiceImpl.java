@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.constant.Constants;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.FileTypeUtils;
@@ -60,6 +61,12 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
     @Override
     public SysFileInfo uploadFile(MultipartFile file, String createBy) throws Exception
     {
+        return uploadFile(file, createBy, null);
+    }
+
+    @Override
+    public SysFileInfo uploadFile(MultipartFile file, String createBy, Long activityId) throws Exception
+    {
         String filePath = RuoYiConfig.getUploadPath();
         String fileName = FileUploadUtils.upload(filePath, file);
 
@@ -67,6 +74,7 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
         String originalName = file.getOriginalFilename();
         sysFileInfo.setOriginalName(originalName);
         sysFileInfo.setFileName(fileName);
+        sysFileInfo.setActivityId(activityId);
         // 存相对路径，前端用 baseApi 拼接；Controller 可再补全绝对地址返回
         sysFileInfo.setUrl(fileName);
         sysFileInfo.setFileSuffix(StringUtils.isNotEmpty(originalName) ? FileTypeUtils.getFileType(originalName) : "");
@@ -87,6 +95,24 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
     public int deleteSysFileInfoByIds(Long[] fileIds)
     {
         List<SysFileInfo> fileList = sysFileInfoMapper.selectSysFileInfoByIds(fileIds);
+        for (SysFileInfo fileInfo : fileList)
+        {
+            deleteLocalFile(fileInfo.getFileName());
+        }
+        return sysFileInfoMapper.deleteSysFileInfoByIds(fileIds);
+    }
+
+    @Override
+    public int deleteSysFileInfoByIds(Long[] fileIds, Long activityId)
+    {
+        List<SysFileInfo> fileList = sysFileInfoMapper.selectSysFileInfoByIds(fileIds);
+        for (SysFileInfo fileInfo : fileList)
+        {
+            if (fileInfo.getActivityId() == null || !activityId.equals(fileInfo.getActivityId()))
+            {
+                throw new ServiceException("不能删除其他范围的文件");
+            }
+        }
         for (SysFileInfo fileInfo : fileList)
         {
             deleteLocalFile(fileInfo.getFileName());

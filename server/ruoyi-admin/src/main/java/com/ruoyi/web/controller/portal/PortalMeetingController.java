@@ -37,6 +37,13 @@ public class PortalMeetingController extends BaseController
         return success(portalMeetingService.listGrid(activityId));
     }
 
+    @GetMapping("/menu/{activityId}")
+    public AjaxResult menu(@PathVariable Long activityId)
+    {
+        // 兼容旧客户端；会议内容页导航与首页入口统一读取九宫格。
+        return success(portalMeetingService.listMenu(activityId));
+    }
+
     @GetMapping("/bottom/{activityId}")
     public AjaxResult bottom(@PathVariable Long activityId)
     {

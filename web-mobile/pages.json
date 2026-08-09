@@ -7,6 +7,7 @@
   }, {
     "path": "pages/meeting/home",
     "style": {
+      "navigationStyle": "custom",
       "navigationBarTitleText": "会议首页"
     }
   }, {
@@ -43,6 +44,12 @@
     "path": "pages/common/textview/index",
     "style": {
       "navigationBarTitleText": "浏览文本"
+    }
+  }, {
+    "path": "pages/common/imageview/index",
+    "style": {
+      "navigationStyle": "custom",
+      "navigationBarTitleText": "浏览图片"
     }
   }],
   "globalStyle": {

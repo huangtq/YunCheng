@@ -6,6 +6,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <resultMap type="SysFileInfo" id="SysFileInfoResult">
         <result property="fileId"       column="file_id"       />
+        <result property="activityId"   column="activity_id"   />
         <result property="originalName" column="original_name" />
         <result property="fileName"     column="file_name"     />
         <result property="url"          column="url"           />
@@ -19,7 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectSysFileInfoVo">
-        select file_id, original_name, file_name, url, file_suffix, file_size, create_by, create_time, update_by, update_time, remark
+        select file_id, activity_id, original_name, file_name, url, file_suffix, file_size, create_by, create_time, update_by, update_time, remark
         from sys_file
     </sql>
 
@@ -31,15 +32,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectSysFileInfoList" parameterType="SysFileInfo" resultMap="SysFileInfoResult">
         <include refid="selectSysFileInfoVo"/>
         <where>
+            <if test="activityId != null">
+                AND activity_id = #{activityId}
+            </if>
             <if test="originalName != null and originalName != ''">
                 AND original_name like concat('%', #{originalName}, '%')
             </if>
             <if test="fileSuffix != null and fileSuffix != ''">
                 AND file_suffix = #{fileSuffix}
             </if>
-            <if test="params.imageOnly != null and params.imageOnly.toString() == 'true'">
-                AND lower(file_suffix) in ('jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp')
-            </if>
+            <choose>
+                <when test="params.mediaType != null and params.mediaType.toString() == 'image'">
+                    AND lower(file_suffix) in ('jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp')
+                </when>
+                <when test="params.mediaType != null and params.mediaType.toString() == 'audio'">
+                    AND lower(file_suffix) in ('mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac')
+                </when>
+                <when test="params.imageOnly != null and params.imageOnly.toString() == 'true'">
+                    AND lower(file_suffix) in ('jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp')
+                </when>
+            </choose>
             <if test="params.beginTime != null and params.beginTime != ''">
                 AND create_time &gt;= #{params.beginTime}
             </if>
@@ -49,6 +61,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
         order by file_id desc
     </select>
+
+    <select id="selectSysFileInfoByFileName" parameterType="String" resultMap="SysFileInfoResult">
+        <include refid="selectSysFileInfoVo"/>
+        where file_name = #{fileName}
+        limit 1
+    </select>
+
+    <update id="updateSysFileInfoActivityIdByFileName">
+        update sys_file
+        set activity_id = #{activityId}
+        where file_name = #{fileName}
+          and activity_id is null
+    </update>
 
     <select id="selectSysFileInfoByIds" resultMap="SysFileInfoResult">
         <include refid="selectSysFileInfoVo"/>
@@ -60,6 +85,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="insertSysFileInfo" parameterType="SysFileInfo" useGeneratedKeys="true" keyProperty="fileId">
         insert into sys_file (
+            <if test="activityId != null">activity_id,</if>
             <if test="originalName != null and originalName != ''">original_name,</if>
             <if test="fileName != null and fileName != ''">file_name,</if>
             <if test="url != null and url != ''">url,</if>
@@ -69,6 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time
         ) values (
+            <if test="activityId != null">#{activityId},</if>
             <if test="originalName != null and originalName != ''">#{originalName},</if>
             <if test="fileName != null and fileName != ''">#{fileName},</if>
             <if test="url != null and url != ''">#{url},</if>

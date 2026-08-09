@@ -32,6 +32,7 @@ const activityId = computed(() => route.query.id)
 const isChildPage = computed(() => {
   return [
     'MeetingGrid',
+    'MeetingFile',
     'MeetingApplyChannel',
     'MeetingApplyField',
     'MeetingApplyOrder',

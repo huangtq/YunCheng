@@ -1,5 +1,5 @@
 <template>
-  <view class="content-page">
+  <view class="image-page">
     <view class="sub-header">
       <view class="breadcrumb" @click="goHome">
         <text class="home-icon">⌂</text>
@@ -11,10 +11,14 @@
     </view>
 
     <view class="sub-content">
-      <view class="content-card">
-        <text class="content-title">{{ title }}</text>
-        <text class="content-body">{{ content }}</text>
-      </view>
+      <image
+        v-if="url"
+        class="content-image"
+        :src="resolveUrl(url)"
+        mode="widthFix"
+        @error="onError"
+      />
+      <view v-else class="state">暂无图片内容</view>
     </view>
 
     <view v-if="drawerOpen" class="drawer-mask" @click="drawerOpen = false">
@@ -35,24 +39,29 @@
 <script setup>
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import config from '@/config'
 import { getPortalGrid } from '@/api/portal/meeting'
 import { openMeetingItem } from '@/utils/meetingNavigation'
 
-const title = ref('内容')
-const content = ref('')
+const url = ref('')
+const title = ref('图片内容')
 const activityId = ref('')
 const drawerOpen = ref(false)
 const gridItems = ref([])
 
 onLoad(options => {
-  title.value = decodeURIComponent(options?.title || '内容')
-  content.value = decodeURIComponent(options?.content || '')
+  url.value = options?.url || ''
+  title.value = decodeURIComponent(options?.title || '图片内容')
   activityId.value = options?.activityId || ''
   if (!activityId.value) return
   getPortalGrid(activityId.value)
     .then(res => { gridItems.value = res.data || [] })
     .catch(() => { gridItems.value = [] })
 })
+
+function resolveUrl(value) {
+  return value && value.startsWith('http') ? value : config.baseUrl + (value || '')
+}
 
 function goHome() {
   if (activityId.value) {
@@ -66,10 +75,14 @@ function selectMenu(item) {
   drawerOpen.value = false
   openMeetingItem(activityId.value, item, { replace: true })
 }
+
+function onError() {
+  uni.showToast({ title: '图片加载失败', icon: 'none' })
+}
 </script>
 
 <style lang="scss" scoped>
-.content-page {
+.image-page {
   min-height: 100vh;
   background: #fff;
 }
@@ -95,10 +108,24 @@ function selectMenu(item) {
   font-size: 26px;
   white-space: nowrap;
 }
-.home-icon { margin-right: 8px; font-size: 24px; }
-.separator { margin: 0 10px; opacity: 0.9; }
-.current-title { overflow: hidden; text-overflow: ellipsis; }
-.menu-button { padding: 8px; font-size: 28px; line-height: 1; }
+.home-icon {
+  margin-right: 8px;
+  font-size: 24px;
+}
+.separator {
+  margin: 0 10px;
+  opacity: 0.9;
+}
+.current-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-button {
+  flex: 0 0 auto;
+  padding: 8px;
+  font-size: 28px;
+  line-height: 1;
+}
 .sub-content {
   box-sizing: border-box;
   width: 500px;
@@ -106,24 +133,18 @@ function selectMenu(item) {
   min-height: 100vh;
   margin: 0 auto;
   padding: 100px 20px 60px;
-}
-.content-card {
-  padding: 24px;
   background: #fff;
+  text-align: center;
 }
-.content-title {
+.content-image {
+  width: 100%;
   display: block;
-  margin-bottom: 20px;
-  color: #303133;
-  font-size: 22px;
-  font-weight: 600;
+  height: auto;
 }
-.content-body {
-  display: block;
-  color: #303133;
-  font-size: 17px;
-  line-height: 1.8;
-  white-space: pre-wrap;
+.state {
+  padding-top: 240rpx;
+  color: #fff;
+  font-size: 28rpx;
 }
 .drawer-mask {
   position: fixed;
@@ -158,11 +179,26 @@ function selectMenu(item) {
   border-top: 1px solid #ebeef5;
 }
 @media screen and (max-width: 750px) {
-  .sub-header { height: 56px; padding: 0 16px; }
-  .breadcrumb { font-size: 18px; }
-  .home-icon { font-size: 18px; }
-  .menu-button { font-size: 22px; }
-  .drawer-mask { top: 56px; }
-  .sub-content { padding-top: 72px; padding-right: 12px; padding-left: 12px; }
+  .sub-header {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .breadcrumb {
+    font-size: 18px;
+  }
+  .home-icon {
+    font-size: 18px;
+  }
+  .menu-button {
+    font-size: 22px;
+  }
+  .drawer-mask {
+    top: 56px;
+  }
+  .sub-content {
+    padding-top: 72px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
 }
 </style>

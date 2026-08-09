@@ -1,14 +1,31 @@
 <template>
   <div class="material-select">
     <div class="material-preview" v-if="displayUrl">
-      <el-image :src="displayUrl" fit="cover" style="width: 120px; height: 120px" :preview-src-list="[displayUrl]" preview-teleported />
+      <el-image
+        v-if="mediaType === 'image'"
+        :src="displayUrl"
+        fit="cover"
+        style="width: 120px; height: 120px"
+        :preview-src-list="[displayUrl]"
+        preview-teleported
+      />
+      <audio v-else controls :src="displayUrl" class="material-audio" />
       <div class="material-actions">
         <el-button type="primary" link @click="openDialog">重新选择</el-button>
         <el-button type="danger" link @click="clearValue">清除</el-button>
       </div>
     </div>
-    <el-button v-else type="primary" plain icon="Picture" @click="openDialog">从素材库选择</el-button>
-    <div class="el-upload__tip" v-if="showTip">请从「文件管理」素材库选择图片；如需上传请先到文件管理上传</div>
+    <el-button
+      v-else
+      type="primary"
+      plain
+      :icon="mediaType === 'audio' ? 'Headset' : 'Picture'"
+      @click="openDialog"
+    >从素材库选择</el-button>
+    <div class="el-upload__tip" v-if="showTip">
+      请从「文件管理」素材库选择{{ mediaType === "audio" ? "音频" : "图片" }}；如需上传请先到文件管理上传
+    </div>
+    <div v-if="isLegacyPath" class="material-legacy-tip">当前素材为旧静态资源，重新选择后将切换为文件管理资源</div>
 
     <el-dialog title="选择素材" v-model="visible" width="820px" append-to-body destroy-on-close @opened="loadList">
       <el-form :inline="true" class="mb8">
@@ -29,7 +46,16 @@
           :class="{ active: selected && selected.fileId === item.fileId }"
           @click="selected = item"
         >
-          <el-image :src="resolveUrl(item)" fit="cover" style="width: 100%; height: 110px" />
+          <el-image
+            v-if="mediaType === 'image'"
+            :src="resolveUrl(item)"
+            fit="cover"
+            style="width: 100%; height: 110px"
+          />
+          <div v-else class="material-audio-item">
+            <el-icon :size="36"><Headset /></el-icon>
+            <span>{{ item.fileSuffix?.toUpperCase() || "音频" }}</span>
+          </div>
           <div class="material-name" :title="item.originalName">{{ item.originalName || item.fileName }}</div>
         </div>
       </div>
@@ -38,9 +64,12 @@
       <pagination
         v-show="total > 0"
         :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="loadList"
+        :page-sizes="[12, 24, 48]"
+        :page="queryParams.pageNum"
+        :limit="queryParams.pageSize"
+        @update:page="queryParams.pageNum = $event"
+        @update:limit="queryParams.pageSize = $event"
+        @pagination="handlePagination"
       />
 
       <template #footer>
@@ -52,7 +81,8 @@
 </template>
 
 <script setup>
-import { listFile } from "@/api/system/file"
+import { listActivityFile, listFile } from "@/api/system/file"
+import { Headset } from "@element-plus/icons-vue"
 
 const props = defineProps({
   modelValue: {
@@ -62,11 +92,21 @@ const props = defineProps({
   showTip: {
     type: Boolean,
     default: true
+  },
+  mediaType: {
+    type: String,
+    default: "image",
+    validator: value => ["image", "audio"].includes(value)
+  },
+  activityId: {
+    type: [String, Number],
+    default: ""
   }
 })
 
 const emit = defineEmits(["update:modelValue"])
 const baseUrl = import.meta.env.VITE_APP_BASE_API
+const route = useRoute()
 
 const visible = ref(false)
 const loading = ref(false)
@@ -77,10 +117,15 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 12,
   originalName: undefined,
+  activityId: undefined,
   params: {
-    imageOnly: 'true'
+    mediaType: "image"
   }
 })
+
+const mediaType = computed(() => props.mediaType)
+const currentActivityId = computed(() => props.activityId || route.query.id || "")
+const isLegacyPath = computed(() => props.modelValue.startsWith("/reference/"))
 
 const displayUrl = computed(() => {
   if (!props.modelValue) return ""
@@ -99,12 +144,19 @@ function resolveUrl(row) {
 
 function openDialog() {
   selected.value = null
+  queryParams.value.pageNum = 1
+  queryParams.value.originalName = undefined
   visible.value = true
 }
 
 function loadList() {
   loading.value = true
-  listFile(queryParams.value).then(res => {
+  queryParams.value.activityId = currentActivityId.value || undefined
+  queryParams.value.params.mediaType = mediaType.value
+  const request = currentActivityId.value
+    ? listActivityFile(currentActivityId.value, queryParams.value)
+    : listFile(queryParams.value)
+  request.then(res => {
     fileList.value = res.rows || []
     total.value = res.total || 0
     loading.value = false
@@ -115,6 +167,16 @@ function loadList() {
 
 function handleQuery() {
   queryParams.value.pageNum = 1
+  loadList()
+}
+
+function handlePagination({ page, limit } = {}) {
+  if (page) {
+    queryParams.value.pageNum = page
+  }
+  if (limit) {
+    queryParams.value.pageSize = limit
+  }
   loadList()
 }
 
@@ -141,6 +203,10 @@ function clearValue() {
   align-items: flex-end;
   gap: 12px;
 }
+.material-audio {
+  width: 300px;
+  max-width: 100%;
+}
 .material-actions {
   display: flex;
   flex-direction: column;
@@ -159,6 +225,15 @@ function clearValue() {
   cursor: pointer;
   background: var(--el-fill-color-light);
 }
+.material-audio-item {
+  display: flex;
+  height: 110px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--el-color-primary);
+}
 .material-item.active {
   border-color: var(--el-color-primary);
 }
@@ -172,6 +247,11 @@ function clearValue() {
 .el-upload__tip {
   margin-top: 8px;
   color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.material-legacy-tip {
+  margin-top: 6px;
+  color: var(--el-color-warning);
   font-size: 12px;
 }
 </style>

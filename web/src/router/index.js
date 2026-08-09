@@ -133,6 +133,17 @@ export const dynamicRoutes = [
             }
           },
           {
+            path: 'file',
+            name: 'MeetingFile',
+            component: () => import('@/views/file/index'),
+            meta: {
+              title: '文件管理',
+              activeMenu: '/meeting/activity',
+              noCache: true,
+              tagsGroup: 'meeting-config'
+            }
+          },
+          {
             path: 'apply-channel',
             name: 'MeetingApplyChannel',
             component: () => import('@/views/meeting/apply/channel'),
