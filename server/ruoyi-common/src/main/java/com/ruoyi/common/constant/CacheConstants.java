@@ -46,4 +46,14 @@ public class CacheConstants
      * 微信参会者登录 redis key
      */
     public static final String MP_LOGIN_TOKEN_KEY = "mp_login_tokens:";
+
+    /**
+     * 微信公众号 access_token redis key
+     */
+    public static final String WX_MP_ACCESS_TOKEN_KEY = "wx_mp_access_token:";
+
+    /**
+     * 微信公众号 jsapi_ticket redis key
+     */
+    public static final String WX_MP_JSAPI_TICKET_KEY = "wx_mp_jsapi_ticket:";
 }

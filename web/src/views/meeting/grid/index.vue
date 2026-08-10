@@ -57,7 +57,7 @@
           </el-form-item>
         </el-form>
         <div class="template-tip">
-          一期标准九宫格已对接移动端：模板会控制 C 端列数（1/2/3列）与纯图标/图文样式，保存后扫码预览即可验证。
+          当前移动端实际生效的模板：列数（1/2/3）、纯图标/图文，以及「不规则 Tile 宫格」。保存模板后右侧预览会同步。
         </div>
           </div>
         </div>
@@ -84,12 +84,12 @@
                 :size="40"
                 color="#4f46e5"
               />
-              <el-image
-                v-else-if="scope.row.iconUrl"
-                style="width: 40px; height: 40px"
-                :src="resolveUrl(scope.row.iconUrl)"
-                fit="cover"
-              />
+              <div v-else-if="scope.row.iconUrl" class="grid-icon-thumb">
+                <el-image
+                  :src="resolveUrl(scope.row.iconUrl)"
+                  fit="contain"
+                />
+              </div>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -138,19 +138,16 @@
       </div>
 
       <aside class="phone-preview-panel">
-        <div class="preview-scan">
-          <img class="preview-qrcode" :src="qrImageUrl" alt="会议预览二维码" />
-          <div class="preview-scan-title">扫码通过手机预览</div>
-        </div>
         <div class="phone-frame">
-          <div class="phone-screen">
-            <div class="phone-status-bar">会议预览</div>
-            <div class="phone-cover" :style="previewCoverStyle">
-              <div class="phone-cover-title">{{ activityInfo.activityName || "会议名称" }}</div>
-              <div v-if="String(configForm.showRegisterCount) === '1'" class="phone-cover-meta">
-                已报名 {{ activityInfo.registerCount || 0 }} 人
-              </div>
-              <div v-if="String(configForm.showCountdown) === '1'" class="phone-cover-countdown">
+          <div class="phone-screen" :class="{ 'is-tile-screen': isTilePreview }">
+            <div
+              v-if="isTilePreview"
+              class="phone-tile-page"
+              :class="{ 'is-light-tile': isLightTilePreview }"
+              :style="previewTilePageStyle"
+            >
+              <div class="phone-tile-cover" :style="previewTileCoverStyle"></div>
+              <div v-if="String(configForm.showCountdown) === '1'" class="phone-tile-countdown">
                 <div v-if="configForm.countdownStyle === 'digital'" class="phone-countdown-board">
                   <div class="phone-countdown-heading">距会议开始还有</div>
                   <div class="phone-countdown-groups">
@@ -163,37 +160,80 @@
                     </div>
                   </div>
                 </div>
-                <span v-else>{{ countdownPreviewText }}</span>
+                <span v-else class="phone-tile-countdown-text">{{ countdownPreviewText }}</span>
               </div>
-            </div>
-            <div v-if="isTilePreview" class="phone-tile-preview">
-              <div
-                v-for="item in previewItems"
-                :key="item.gridId"
-                class="phone-tile-item"
-                :style="previewTileStyle(item)"
-              >
-                <img v-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
-                <span v-else>{{ item.title }}</span>
-              </div>
-              <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
-            </div>
-            <div v-else class="phone-grid" :class="[previewGridClass, previewGridStyleClass]">
-              <div v-for="item in previewItems" :key="item.gridId" class="phone-grid-item">
-                <div class="phone-grid-icon" :style="{ background: `${themeColor}22` }">
-                  <MeetingIcon
-                    v-if="item.iconType === 'icon' && item.iconKey"
-                    :icon-key="item.iconKey"
-                    :size="34"
-                    :color="themeColor"
+              <div class="phone-tile-preview">
+                <div
+                  v-for="item in previewItems"
+                  :key="item.gridId"
+                  class="phone-tile-item"
+                  :class="{
+                    'is-color-tile': isColorTile(item),
+                    'is-tall-color-tile': isTallColorTile(item)
+                  }"
+                  :style="previewTileStyle(item)"
+                >
+                  <span v-if="!item.iconUrl || isColorTile(item)" class="phone-tile-title">{{ item.title }}</span>
+                  <img
+                    v-if="isColorTile(item) && item.iconUrl"
+                    class="phone-tile-icon"
+                    :src="resolveUrl(item.iconUrl)"
+                    alt=""
                   />
-                  <img v-else-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
-                  <el-icon v-else :size="28"><Grid /></el-icon>
                 </div>
-                <span v-if="!isIconOnlyPreview">{{ item.title }}</span>
+                <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
               </div>
-              <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
+              <div v-if="previewFooter.enabled" class="phone-tile-footer">
+                <img
+                  v-if="previewFooter.logoUrl"
+                  class="phone-tile-footer-logo"
+                  :src="resolveUrl(previewFooter.logoUrl)"
+                  alt=""
+                />
+                <span v-if="previewFooter.text">{{ previewFooter.text }}</span>
+                <span v-if="previewFooter.company" class="phone-tile-footer-name">{{ previewFooter.company }}</span>
+              </div>
             </div>
+
+            <template v-else>
+              <div class="phone-cover" :style="previewCoverStyle">
+                <div class="phone-cover-title">{{ activityInfo.activityName || "会议名称" }}</div>
+                <div v-if="String(configForm.showRegisterCount) === '1'" class="phone-cover-meta">
+                  已报名 {{ activityInfo.registerCount || 0 }} 人
+                </div>
+                <div v-if="String(configForm.showCountdown) === '1'" class="phone-cover-countdown">
+                  <div v-if="configForm.countdownStyle === 'digital'" class="phone-countdown-board">
+                    <div class="phone-countdown-heading">距会议开始还有</div>
+                    <div class="phone-countdown-groups">
+                      <div v-for="item in previewCountdownParts" :key="item.label" class="phone-countdown-group">
+                        <div class="phone-flip-pair">
+                          <span class="phone-flip-card">{{ item.value[0] }}</span>
+                          <span class="phone-flip-card">{{ item.value[1] }}</span>
+                        </div>
+                        <span>{{ item.label }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span v-else>{{ countdownPreviewText }}</span>
+                </div>
+              </div>
+              <div class="phone-grid" :class="[previewGridClass, previewGridStyleClass]">
+                <div v-for="item in previewItems" :key="item.gridId" class="phone-grid-item">
+                  <div class="phone-grid-icon" :style="{ background: `${themeColor}22` }">
+                    <MeetingIcon
+                      v-if="item.iconType === 'icon' && item.iconKey"
+                      :icon-key="item.iconKey"
+                      :size="34"
+                      :color="themeColor"
+                    />
+                    <img v-else-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
+                    <el-icon v-else :size="28"><Grid /></el-icon>
+                  </div>
+                  <span v-if="!isIconOnlyPreview">{{ item.title }}</span>
+                </div>
+                <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
+              </div>
+            </template>
           </div>
         </div>
       </aside>
@@ -205,25 +245,12 @@
           <section class="grid-form-section">
             <h3>基础信息</h3>
             <el-row :gutter="24">
-              <el-col :span="10">
+              <el-col :span="14">
                 <el-form-item label="标题" prop="title">
                   <el-input v-model="form.title" maxlength="100" placeholder="标题" />
                 </el-form-item>
               </el-col>
-              <el-col :span="7">
-                <el-form-item label="父节点">
-                  <el-select v-model="form.parentId" placeholder="无" style="width: 100%">
-                    <el-option label="无" :value="0" />
-                    <el-option
-                      v-for="item in parentOptions"
-                      :key="item.gridId"
-                      :label="item.title"
-                      :value="item.gridId"
-                    />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="7">
+              <el-col :span="10">
                 <el-form-item label="排序" prop="sortOrder">
                   <el-input-number v-model="form.sortOrder" :min="0" :max="9999" controls-position="right" />
                 </el-form-item>
@@ -286,51 +313,58 @@
 
           <section class="grid-form-section">
             <h3>展示设置</h3>
-            <el-row :gutter="24">
-              <el-col :span="8">
-                <el-form-item label="动画效果">
-                  <el-select v-model="form.animation" style="width: 100%">
-                    <el-option v-for="item in animationOptions" :key="item.value" :label="item.label" :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="渐变色">
-                  <el-color-picker v-model="form.gradientColor" show-alpha />
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="透明度">
-                  <el-input-number v-model="form.opacity" :min="0" :max="1" :step="0.1" :precision="1" />
-                </el-form-item>
-              </el-col>
-            </el-row>
             <el-form-item label="隐藏">
               <el-switch v-model="form.hidden" active-text="隐藏此菜单" />
             </el-form-item>
-            <el-divider content-position="left">Tile 布局（仅选择不规则 Tile 宫格时生效）</el-divider>
-            <el-row :gutter="24">
-              <el-col :span="6">
-                <el-form-item label="行">
-                  <el-input-number v-model="form.tileRow" :min="0" :max="20" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item label="列">
-                  <el-input-number v-model="form.tileCol" :min="0" :max="6" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item label="跨行">
-                  <el-input-number v-model="form.tileRowSpan" :min="1" :max="6" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item label="跨列">
-                  <el-input-number v-model="form.tileColSpan" :min="1" :max="6" />
-                </el-form-item>
-              </el-col>
-            </el-row>
+            <template v-if="isTilePreview">
+              <el-divider content-position="left">Tile 色块与布局</el-divider>
+              <el-form-item label="色块背景">
+                <div class="tile-bg-editor">
+                  <div class="tile-bg-toolbar">
+                    <el-color-picker
+                      :model-value="solidColorValue"
+                      show-alpha
+                      @change="onSolidColorPick"
+                    />
+                    <span class="tile-bg-tip">点选写入纯色；渐变请直接改右侧 CSS</span>
+                  </div>
+                  <el-input
+                    v-model="form.gradientColor"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="例：#e91e63 或 linear-gradient(to right, rgb(240, 98, 146), rgb(194, 24, 91))"
+                    @change="onGradientColorChange"
+                  />
+                  <div
+                    v-if="form.gradientColor || form.tileBg"
+                    class="tile-bg-swatch"
+                    :style="tileBgPreviewStyle"
+                  />
+                </div>
+              </el-form-item>
+              <el-row :gutter="24">
+                <el-col :span="6">
+                  <el-form-item label="行">
+                    <el-input-number v-model="form.tileRow" :min="0" :max="20" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item label="列">
+                    <el-input-number v-model="form.tileCol" :min="0" :max="6" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item label="跨行">
+                    <el-input-number v-model="form.tileRowSpan" :min="1" :max="6" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item label="跨列">
+                    <el-input-number v-model="form.tileColSpan" :min="1" :max="6" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
           </section>
         </el-form>
       </el-scrollbar>
@@ -349,7 +383,7 @@ import { getActivityConfig, updateActivityConfig } from "@/api/meeting/config"
 import MaterialSelect from "@/components/MaterialSelect"
 import MeetingIcon from "@/components/MeetingIcon"
 import MeetingIconSelect from "@/components/MeetingIconSelect"
-import { MEETING_MODULE_OPTIONS, getMeetingModule, meetingModuleLabel, buildMeetingH5HomeUrl } from "@/utils/meetingModules"
+import { MEETING_MODULE_OPTIONS, getMeetingModule, meetingModuleLabel } from "@/utils/meetingModules"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -370,67 +404,39 @@ const configForm = ref({ gridTemplate: "1" })
 const templateOptions = [
   {
     value: "1",
-    label: "传统九宫格",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231225/3181354ccb4b44f0984581f5401a18fc.jpg"
+    label: "三列图文宫格",
+    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231225/3181354ccb4b44f0984581f5401a18fc.jpg",
+    description: "每行 3 个入口，图标 + 标题"
   },
   {
     value: "5",
-    label: "纯图标九宫格",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231225/00ed86c2392449e28046363a8327bbb4.jpg"
-  },
-  {
-    value: "62",
-    label: "3-3(1-2)-2布局",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231224/5091f4f1293a4780976a89aebef85967.jpg"
-  },
-  {
-    value: "63",
-    label: "3-3(1-2)-2-2-2布局",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231224/5091f4f1293a4780976a89aebef85967.jpg"
-  },
-  {
-    value: "65",
-    label: "3-3(1-2)-2图标+文字布局",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20240528/74e3f8808e9c4f1a9f2ef6e406a03632.jpg"
-  },
-  {
-    value: "7",
-    label: "一列布局",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20240528/f372efc58bfe4b93900b0dd93c113f6e.jpg"
-  },
-  {
-    value: "64",
-    label: "3-3(1-2)-3布局",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231224/5091f4f1293a4780976a89aebef85967.jpg"
-  },
-  {
-    value: "71",
-    label: "一列布局（纯图标）",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20240528/f372efc58bfe4b93900b0dd93c113f6e.jpg"
+    label: "三列纯图标",
+    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20231225/00ed86c2392449e28046363a8327bbb4.jpg",
+    description: "每行 3 个入口，仅展示图标"
   },
   {
     value: "68",
-    label: "模板68-2-2-2-2-2布局",
+    label: "两列图文宫格",
     preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png",
-    description: "2-2-2-2-2布局，每行2个item，统一高度100px，支持自定义渐变色和图标"
+    description: "每行 2 个入口，图标 + 标题"
+  },
+  {
+    value: "7",
+    label: "一列图文列表",
+    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20240528/f372efc58bfe4b93900b0dd93c113f6e.jpg",
+    description: "单列列表，图标 + 标题"
+  },
+  {
+    value: "71",
+    label: "一列纯图标",
+    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20240528/f372efc58bfe4b93900b0dd93c113f6e.jpg",
+    description: "单列列表，仅展示图标"
   },
   {
     value: "tile",
     label: "不规则 Tile 宫格",
     preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png",
-    description: "支持每个入口配置背景图、行列位置和跨行跨列，适合参考站38569布局"
-  },
-  {
-    value: "681",
-    label: "(描边)模板68-2-2-2-2-2布局",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png",
-    description: "九宫格透明背景，使用渐变色控制文字、边框和图标色调"
-  },
-  {
-    value: "651",
-    label: "(描边)3-3(1-2)-2图标",
-    preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/cac2a41b385d44419af9505cc64d4894.png",
-    description: "按 3-3(1-2)-2 模板布局展示，透明背景，白色文字、边框和图标"
+    description: "支持色块背景、行列位置和跨行跨列，适合活动首页定制布局"
   }
 ]
 
@@ -438,16 +444,6 @@ const moduleOptions = MEETING_MODULE_OPTIONS
 function moduleLabel(v) {
   return meetingModuleLabel(v)
 }
-
-const animationOptions = [
-  { label: "无", value: "none" },
-  { label: "快速翻转", value: "flip" },
-  { label: "快速翻转-X", value: "flipX" },
-  { label: "快速翻转-Y", value: "flipY" },
-  { label: "旋转进入", value: "rotateIn" },
-  { label: "中心放大", value: "zoomIn" },
-  { label: "淡入", value: "fadeIn" }
-]
 
 const previewItems = computed(() => {
   return gridList.value
@@ -467,13 +463,123 @@ const previewGridClass = computed(() => {
 const isIconOnlyPreview = computed(() => ["5", "71"].includes(String(configForm.value.gridTemplate)))
 const previewGridStyleClass = computed(() => (isIconOnlyPreview.value ? "grid-icon-only" : ""))
 const isTilePreview = computed(() => String(configForm.value.gridTemplate) === "tile")
+const isLightTilePreview = computed(() => isTilePreview.value && isLightColor(themeColor.value))
+const tileSurfaceColor = computed(() => (isLightTilePreview.value ? (themeColor.value || "#f6f6f6") : "#061a74"))
+const solidColorValue = computed(() => {
+  const value = String(form.value.gradientColor || form.value.tileBg || "").trim()
+  if (!value || /gradient|url\(/i.test(value)) return ""
+  return value
+})
+const tileBgPreviewStyle = computed(() => {
+  const value = String(form.value.gradientColor || form.value.tileBg || "").trim()
+  if (!value) return {}
+  if (/gradient|url\(/i.test(value)) {
+    return { backgroundImage: value }
+  }
+  return { backgroundColor: value }
+})
+
+const previewFooter = computed(() => ({
+  enabled: String(configForm.value.footerEnabled) === "1",
+  text: configForm.value.footerText || "",
+  company: configForm.value.footerCompany || "",
+  logoUrl: configForm.value.footerLogoUrl || "",
+  linkUrl: configForm.value.footerLinkUrl || ""
+}))
+
+const previewTilePageStyle = computed(() => {
+  const background = configForm.value.mobileBackgroundUrl
+  return {
+    backgroundColor: isLightTilePreview.value ? tileSurfaceColor.value : "#1100ab",
+    backgroundImage: background ? `url("${resolveUrl(background)}")` : "none",
+    backgroundSize: "100% 100%",
+    backgroundPosition: "50% 100%",
+    backgroundRepeat: "no-repeat"
+  }
+})
+
+const previewTileCoverStyle = computed(() => {
+  const coverUrl = resolveUrl(activityInfo.value.coverUrl)
+  if (!coverUrl) {
+    return {
+      background: `linear-gradient(135deg, ${themeColor.value}, #0b3d91)`
+    }
+  }
+  return {
+    backgroundImage: `url("${coverUrl}")`,
+    backgroundSize: "contain",
+    backgroundPosition: "top center",
+    backgroundRepeat: "no-repeat",
+    backgroundColor: tileSurfaceColor.value
+  }
+})
+
+function isLightColor(color) {
+  if (!color || typeof color !== "string") return false
+  const value = color.trim().toLowerCase()
+  let r = 0
+  let g = 0
+  let b = 0
+  if (value.startsWith("#")) {
+    const hex = value.slice(1)
+    const full = hex.length === 3
+      ? hex.split("").map(ch => ch + ch).join("")
+      : hex
+    if (full.length < 6) return false
+    r = parseInt(full.slice(0, 2), 16)
+    g = parseInt(full.slice(2, 4), 16)
+    b = parseInt(full.slice(4, 6), 16)
+  } else {
+    const match = value.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/)
+    if (!match) return false
+    r = Number(match[1])
+    g = Number(match[2])
+    b = Number(match[3])
+  }
+  if ([r, g, b].some(n => Number.isNaN(n))) return false
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance >= 0.72
+}
+
+function parseTileMeta(item) {
+  const raw = (item && item.remark) || ""
+  if (!raw) return {}
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== "object") return {}
+    const bg = resolveTileBg(parsed)
+    return {
+      ...parsed,
+      bg: bg || undefined
+    }
+  } catch {
+    if (raw.startsWith("tile-bg:")) {
+      return { bg: raw.slice(8) }
+    }
+    return {}
+  }
+}
+
+function isColorTile(item) {
+  const meta = parseTileMeta(item)
+  return !!(meta.bg || meta.background || meta.tileBg || meta.gradientColor)
+}
+
+function isTallColorTile(item) {
+  return isColorTile(item) && Number(item.tileRowSpan || 1) >= 2
+}
 
 function previewTileStyle(item) {
+  const meta = parseTileMeta(item)
   const style = {
     gridColumn: `${item.tileCol || "auto"} / span ${item.tileColSpan || 1}`,
     gridRow: `${item.tileRow || "auto"} / span ${item.tileRowSpan || 1}`
   }
-  if (item.iconUrl) {
+  const gradient = meta.bg || meta.background || meta.tileBg || meta.gradientColor
+  if (gradient) {
+    style.backgroundImage = gradient
+    style.backgroundColor = "transparent"
+  } else if (item.iconUrl) {
     style.backgroundImage = `url("${resolveUrl(item.iconUrl)}")`
   }
   return style
@@ -505,11 +611,6 @@ const previewCoverStyle = computed(() => {
   }
 })
 
-const qrImageUrl = computed(() => {
-  const target = configForm.value.qrUrl || buildMeetingH5HomeUrl(activityId.value)
-  return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(target)}`
-})
-
 const queryParams = ref({
   pageNum: 1,
   pageSize: 10,
@@ -518,9 +619,6 @@ const queryParams = ref({
 
 const form = ref({})
 const selectedModule = computed(() => getMeetingModule(form.value.moduleKey))
-const parentOptions = computed(() => {
-  return gridList.value.filter(item => item.gridId !== form.value.gridId)
-})
 const rules = {
   title: [{ required: true, message: "标题不能为空", trigger: "blur" }]
 }
@@ -565,7 +663,13 @@ function normalizeTemplate(value) {
   const legacyMap = {
     grid3x3: "1",
     grid2x2: "5",
-    list: "7"
+    list: "7",
+    "62": "1",
+    "63": "1",
+    "64": "1",
+    "65": "1",
+    "651": "1",
+    "681": "68"
   }
   const normalized = legacyMap[value] || String(value || "")
   return templateOptions.some(item => item.value === normalized) ? normalized : "1"
@@ -587,19 +691,53 @@ function parseGridOptions(remark) {
   if (!remark) return {}
   try {
     const options = JSON.parse(remark)
-    return options && options.__gridForm ? options : {}
+    if (!options || typeof options !== "object") return {}
+    const tileBg = resolveTileBg(options)
+    if (options.__gridForm) {
+      return {
+        ...options,
+        gradientColor: options.gradientColor || tileBg || "",
+        tileBg
+      }
+    }
+    return {
+      gradientColor: tileBg || "",
+      tileBg
+    }
   } catch {
+    if (String(remark).startsWith("tile-bg:")) {
+      const tileBg = String(remark).slice(8)
+      return { gradientColor: tileBg, tileBg }
+    }
     return {}
   }
 }
 
+function resolveTileBg(options = {}, depth = 0) {
+  if (!options || typeof options !== "object" || depth > 3) return ""
+  const direct = options.bg || options.background || options.tileBg || options.gradientColor || ""
+  if (direct) return direct
+  if (typeof options.remark !== "string" || !options.remark) return ""
+  try {
+    const nested = JSON.parse(options.remark)
+    if (nested && typeof nested === "object") {
+      return resolveTileBg(nested, depth + 1)
+    }
+  } catch {
+    if (options.remark.startsWith("tile-bg:")) {
+      return options.remark.slice(8)
+    }
+  }
+  return ""
+}
+
 function restoreForm(data) {
   const options = parseGridOptions(data.remark)
+  const tileBg = options.tileBg || ""
   return {
     ...data,
     iconType: data.iconType || (data.iconKey ? "icon" : "image"),
     iconKey: data.iconKey || "",
-    parentId: options.parentId || 0,
     content: data.content || options.content || "",
     contentType: data.contentType || "text",
     contentUrl: data.contentUrl || "",
@@ -607,9 +745,8 @@ function restoreForm(data) {
     tileCol: data.tileCol || 0,
     tileRowSpan: data.tileRowSpan || 1,
     tileColSpan: data.tileColSpan || 1,
-    animation: options.animation || "none",
-    gradientColor: options.gradientColor || "",
-    opacity: options.opacity ?? 1,
+    gradientColor: options.gradientColor || tileBg || "",
+    tileBg,
     hidden: options.hidden !== undefined
       ? options.hidden === true || options.hidden === 1 || options.hidden === "1"
       : String(data.status) === "0"
@@ -618,10 +755,10 @@ function restoreForm(data) {
 
 function buildPayload() {
   const payload = { ...form.value }
-  const previousRemark = payload.remark
   delete payload.parentId
   delete payload.animation
   delete payload.gradientColor
+  delete payload.tileBg
   delete payload.opacity
   delete payload.hidden
   payload.status = form.value.hidden ? "0" : "1"
@@ -630,15 +767,26 @@ function buildPayload() {
   payload.iconKey = payload.iconType === "icon" ? (form.value.iconKey || "") : ""
   payload.contentType = form.value.contentType || "text"
   payload.contentUrl = payload.contentType === "image" ? (form.value.contentUrl || "") : ""
-  payload.remark = JSON.stringify({
-    __gridForm: true,
-    parentId: form.value.parentId || 0,
-    animation: form.value.animation || "none",
-    gradientColor: form.value.gradientColor || "",
-    opacity: form.value.opacity ?? 1,
-    remark: previousRemark || ""
-  })
+  const bg = String(form.value.gradientColor || form.value.tileBg || "").trim()
+  const remarkObj = { __gridForm: true }
+  if (bg) {
+    remarkObj.bg = bg
+    remarkObj.gradientColor = bg
+  }
+  payload.remark = JSON.stringify(remarkObj)
   return payload
+}
+
+function onGradientColorChange(value) {
+  const next = String(value ?? form.value.gradientColor ?? "").trim()
+  form.value.gradientColor = next
+  form.value.tileBg = next
+}
+
+function onSolidColorPick(value) {
+  const next = value || ""
+  form.value.gradientColor = next
+  form.value.tileBg = next
 }
 
 function reset() {
@@ -649,7 +797,6 @@ function reset() {
     iconType: "image",
     iconKey: "",
     iconUrl: undefined,
-    parentId: 0,
     linkType: "content",
     moduleKey: "none",
     externalUrl: undefined,
@@ -660,9 +807,8 @@ function reset() {
     tileCol: 0,
     tileRowSpan: 1,
     tileColSpan: 1,
-    animation: "none",
     gradientColor: "",
-    opacity: 1,
+    tileBg: "",
     hidden: false,
     sortOrder: 0,
     status: "1"
@@ -736,14 +882,7 @@ async function handleSyncModules() {
       content: "",
       sortOrder: sortBase,
       status: "1",
-      remark: JSON.stringify({
-        __gridForm: true,
-        parentId: 0,
-        animation: "none",
-        gradientColor: "",
-        opacity: 1,
-        remark: "同步常用模块"
-      })
+      remark: JSON.stringify({ __gridForm: true })
     })
   }
   proxy.$modal.msgSuccess(`已同步 ${missing.length} 个模块`)
@@ -799,6 +938,25 @@ onMounted(() => {
 .grid-editor {
   flex: 1;
   min-width: 0;
+}
+.grid-icon-thumb {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: #3a3f4b;
+  background-image:
+    linear-gradient(45deg, #2f3440 25%, transparent 25%),
+    linear-gradient(-45deg, #2f3440 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2f3440 75%),
+    linear-gradient(-45deg, transparent 75%, #2f3440 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+.grid-icon-thumb :deep(.el-image) {
+  width: 100%;
+  height: 100%;
 }
 .template-config-card {
   padding: 20px;
@@ -899,37 +1057,43 @@ onMounted(() => {
   color: #909399;
   font-size: 13px;
 }
+.tile-bg-editor {
+  width: min(100%, 620px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tile-bg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tile-bg-tip {
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.tile-bg-swatch {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
 .grid-form-section :deep(.editor) {
   width: min(100%, 700px);
 }
 .phone-preview-panel {
-  flex: 0 0 300px;
+  flex: 0 0 360px;
   padding: 14px;
   overflow: hidden;
   background: #fff;
   border: 1px solid #ebeef5;
   border-radius: 4px;
 }
-.preview-scan {
-  display: flex;
-  align-items: center;
-  min-height: 120px;
-  gap: 18px;
-}
-.preview-qrcode {
-  width: 120px;
-  height: 120px;
-  flex: 0 0 120px;
-}
-.preview-scan-title {
-  color: #303133;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
-}
 .phone-frame {
-  width: 284px;
-  margin-top: 8px;
+  width: 332px;
+  margin: 0 auto;
   overflow: hidden;
   border: 2px solid #606266;
   border-radius: 3px;
@@ -941,13 +1105,8 @@ onMounted(() => {
   background: #f5f7fa;
   scrollbar-width: thin;
 }
-.phone-status-bar {
-  height: 30px;
-  padding: 7px 12px;
-  color: #fff;
-  background: #1f3c88;
-  font-size: 12px;
-  text-align: center;
+.phone-screen.is-tile-screen {
+  background: transparent;
 }
 .template-config-form {
   display: flex;
@@ -1075,31 +1234,143 @@ onMounted(() => {
 .phone-grid-item .el-icon {
   color: inherit;
 }
+.phone-tile-page {
+  min-height: 100%;
+  background: #061a74;
+}
+.phone-tile-page.is-light-tile {
+  background: #f6f6f6;
+}
+.phone-tile-cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #061a74;
+  background-size: contain;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+.phone-tile-page.is-light-tile .phone-tile-cover {
+  background-color: #f6f6f6;
+}
+.phone-tile-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  background: #061a74;
+}
+.phone-tile-page.is-light-tile .phone-tile-countdown {
+  background: #f6f6f6;
+}
+.phone-tile-page.is-light-tile .phone-countdown-heading,
+.phone-tile-page.is-light-tile .phone-countdown-group,
+.phone-tile-countdown-text {
+  color: #303133;
+}
 .phone-tile-preview {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-template-rows: 42px 48px 48px 48px;
-  gap: 2px;
-  padding: 6px;
+  grid-template-rows: 60px 69px 69px 69px;
+  gap: 0;
+  padding: 8px 10px 0;
   background: #061a74;
+}
+.phone-tile-page.is-light-tile .phone-tile-preview {
+  background: transparent;
+  padding: 8px 0 12px;
+  grid-template-rows: 88px 97px 97px 97px;
 }
 .phone-tile-item {
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 3px;
   overflow: hidden;
+  border-radius: 10px;
   color: #fff;
   background-color: #0b2c9c;
   background-position: center;
-  background-size: cover;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
   font-size: 11px;
   text-align: center;
 }
-.phone-tile-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.phone-tile-page.is-light-tile .phone-tile-item {
+  margin: 4px;
+}
+.phone-tile-item.is-color-tile {
+  position: relative;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
+}
+.phone-tile-title {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+.phone-tile-item.is-color-tile .phone-tile-title {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: block;
+  min-height: auto;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+}
+.phone-tile-icon {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+.phone-tile-item.is-tall-color-tile .phone-tile-title {
+  top: 12px;
+  left: 12px;
+  font-size: 18px;
+}
+.phone-tile-item.is-tall-color-tile .phone-tile-icon {
+  right: 6px;
+  bottom: 6px;
+  width: 62px;
+  height: 62px;
+}
+.phone-tile-footer {
+  min-height: 52px;
+  box-sizing: border-box;
+  margin-top: 10px;
+  padding: 12px 0;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 12px;
+  text-align: center;
+}
+.phone-tile-page.is-light-tile .phone-tile-footer {
+  color: #666;
+  background: transparent;
+}
+.phone-tile-footer-name {
+  margin-left: 6px;
+  font-weight: 600;
+}
+.phone-tile-footer-logo {
+  width: 18px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: middle;
+  object-fit: contain;
 }
 .phone-empty {
   grid-column: 1 / -1;
@@ -1110,21 +1381,30 @@ onMounted(() => {
 }
 @media (max-width: 1200px) {
   .phone-preview-panel {
-    flex-basis: 270px;
+    flex-basis: 320px;
   }
   .phone-frame {
-    width: 254px;
+    width: 292px;
   }
-  .preview-scan {
-    gap: 10px;
+  .phone-tile-preview {
+    grid-template-rows: 52px 60px 60px 60px;
   }
-  .preview-qrcode {
-    width: 100px;
-    height: 100px;
-    flex-basis: 100px;
+  .phone-tile-page.is-light-tile .phone-tile-preview {
+    grid-template-rows: 78px 86px 86px 86px;
   }
-  .preview-scan-title {
-    font-size: 17px;
+  .phone-tile-item.is-color-tile .phone-tile-title {
+    font-size: 13px;
+  }
+  .phone-tile-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .phone-tile-item.is-tall-color-tile .phone-tile-title {
+    font-size: 16px;
+  }
+  .phone-tile-item.is-tall-color-tile .phone-tile-icon {
+    width: 54px;
+    height: 54px;
   }
 }
 </style>

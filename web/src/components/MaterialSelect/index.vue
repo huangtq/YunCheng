@@ -1,14 +1,15 @@
 <template>
   <div class="material-select">
     <div class="material-preview" v-if="displayUrl">
-      <el-image
-        v-if="mediaType === 'image'"
-        :src="displayUrl"
-        fit="cover"
-        style="width: 120px; height: 120px"
-        :preview-src-list="[displayUrl]"
-        preview-teleported
-      />
+      <div v-if="mediaType === 'image'" class="material-image-wrap is-selected">
+        <el-image
+          :src="displayUrl"
+          fit="contain"
+          class="material-image"
+          :preview-src-list="[displayUrl]"
+          preview-teleported
+        />
+      </div>
       <audio v-else controls :src="displayUrl" class="material-audio" />
       <div class="material-actions">
         <el-button type="primary" link @click="openDialog">重新选择</el-button>
@@ -46,12 +47,13 @@
           :class="{ active: selected && selected.fileId === item.fileId }"
           @click="selected = item"
         >
-          <el-image
-            v-if="mediaType === 'image'"
-            :src="resolveUrl(item)"
-            fit="cover"
-            style="width: 100%; height: 110px"
-          />
+          <div v-if="mediaType === 'image'" class="material-image-wrap">
+            <el-image
+              :src="resolveUrl(item)"
+              fit="contain"
+              class="material-image"
+            />
+          </div>
           <div v-else class="material-audio-item">
             <el-icon :size="36"><Headset /></el-icon>
             <span>{{ item.fileSuffix?.toUpperCase() || "音频" }}</span>
@@ -81,7 +83,7 @@
 </template>
 
 <script setup>
-import { listActivityFile, listFile } from "@/api/system/file"
+import { listFile } from "@/api/system/file"
 import { Headset } from "@element-plus/icons-vue"
 
 const props = defineProps({
@@ -97,16 +99,11 @@ const props = defineProps({
     type: String,
     default: "image",
     validator: value => ["image", "audio"].includes(value)
-  },
-  activityId: {
-    type: [String, Number],
-    default: ""
   }
 })
 
 const emit = defineEmits(["update:modelValue"])
 const baseUrl = import.meta.env.VITE_APP_BASE_API
-const route = useRoute()
 
 const visible = ref(false)
 const loading = ref(false)
@@ -117,14 +114,12 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 12,
   originalName: undefined,
-  activityId: undefined,
   params: {
     mediaType: "image"
   }
 })
 
 const mediaType = computed(() => props.mediaType)
-const currentActivityId = computed(() => props.activityId || route.query.id || "")
 const isLegacyPath = computed(() => props.modelValue.startsWith("/reference/"))
 
 const displayUrl = computed(() => {
@@ -151,12 +146,9 @@ function openDialog() {
 
 function loadList() {
   loading.value = true
-  queryParams.value.activityId = currentActivityId.value || undefined
+  // 素材选择器展示全部可用文件；会议归属过滤留给文件管理页处理
   queryParams.value.params.mediaType = mediaType.value
-  const request = currentActivityId.value
-    ? listActivityFile(currentActivityId.value, queryParams.value)
-    : listFile(queryParams.value)
-  request.then(res => {
+  listFile(queryParams.value).then(res => {
     fileList.value = res.rows || []
     total.value = res.total || 0
     loading.value = false
@@ -202,6 +194,33 @@ function clearValue() {
   display: flex;
   align-items: flex-end;
   gap: 12px;
+}
+.material-image-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #3a3f4b;
+  background-image:
+    linear-gradient(45deg, #2f3440 25%, transparent 25%),
+    linear-gradient(-45deg, #2f3440 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2f3440 75%),
+    linear-gradient(-45deg, transparent 75%, #2f3440 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+.material-image-wrap.is-selected {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color);
+}
+.material-image-wrap .material-image {
+  width: 100%;
+  height: 110px;
+}
+.material-image-wrap.is-selected .material-image {
+  height: 100%;
 }
 .material-audio {
   width: 300px;

@@ -1,6 +1,6 @@
 {
     "name" : "会议 H5",
-    "appid" : "__UNI__25A9D80",
+    "appid" : "__UNI__887753A",
     "description" : "",
     "versionName" : "1.2.0",
     "versionCode" : "100",
@@ -64,8 +64,8 @@
         },
         "title" : "会议 H5",
         "router" : {
-            "mode" : "hash",
-            "base" : "./"
+            "mode" : "history",
+            "base" : "/h5/"
         }
     }
 }

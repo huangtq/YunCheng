@@ -11,7 +11,7 @@
           <span class="section-index">01</span>
           <div>
             <div class="section-title">基本信息</div>
-            <div class="section-desc">设置会议名称、编号和时间</div>
+            <div class="section-desc">设置会议名称{{ props.embedded ? "和时间" : "、编号和时间" }}</div>
           </div>
         </div>
         <el-row :gutter="24">
@@ -20,7 +20,7 @@
               <el-input v-model="form.activityName" placeholder="请输入会议名称" maxlength="200" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :md="10">
+          <el-col v-if="!props.embedded" :xs="24" :md="10">
             <el-form-item label="会议编号" prop="activityCode">
               <div class="code-field">
                 <el-input v-model="form.activityCode" placeholder="请输入会议编号" maxlength="64" />
@@ -41,7 +41,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :md="10">
+          <el-col v-if="!props.embedded" :xs="24" :md="10">
             <el-form-item label="第三方链接" prop="thirdPartyUrl">
               <el-input v-model="form.thirdPartyUrl" placeholder="可选，填写外部访问地址" maxlength="500" />
             </el-form-item>
@@ -103,12 +103,12 @@
               <el-switch v-model="form.isHot" active-value="1" inactive-value="0" active-text="热门" inactive-text="普通" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :md="8">
+          <el-col v-if="!props.embedded" :xs="24" :md="8">
             <el-form-item label="首页推荐" prop="isHome">
               <el-switch v-model="form.isHome" active-value="1" inactive-value="0" active-text="推荐" inactive-text="不推荐" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24">
+          <el-col v-if="!props.embedded" :xs="24">
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="请输入会议备注" />
             </el-form-item>

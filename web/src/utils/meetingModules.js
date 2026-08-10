@@ -94,9 +94,34 @@ export const HUB_ACTION_MODULE_KEY = {
   meal: 'meal'
 }
 
-/** H5 meeting home URL used by qrUrl / service-account entry */
+/** H5 会议首页 URL（history 模式，供预览 / 二维码扫码） */
 export function buildMeetingH5HomeUrl(activityId) {
-  const origin = (import.meta.env.VITE_H5_ORIGIN || '').replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '')
-  return origin + '/#/pages/meeting/home?activityId=' + (activityId || '')
+  const id = activityId || ''
+  const path = '/pages/meeting/home?activityId=' + id
+  const h5Origin = String(import.meta.env.VITE_H5_ORIGIN || '').replace(/\/$/, '')
+  if (h5Origin) {
+    return h5Origin + path
+  }
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  if (origin) {
+    return origin + '/h5' + path
+  }
+  return '/h5' + path
+}
+
+/** 微信分享落地页（同域 /h5/share，供爬虫抓标题/地点/时间） */
+export function buildMeetingShareLandingUrl(activityId) {
+  const id = activityId || ''
+  const path = '/h5/share?activityId=' + id
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  if (origin) {
+    return origin + path
+  }
+  const h5Origin = String(import.meta.env.VITE_H5_ORIGIN || '').replace(/\/$/, '')
+  if (h5Origin) {
+    // VITE_H5_ORIGIN 形如 https://yunchengmice.cn/h5
+    return h5Origin.replace(/\/h5$/, '') + path
+  }
+  return path
 }
 

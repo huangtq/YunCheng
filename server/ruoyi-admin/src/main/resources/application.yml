@@ -114,10 +114,14 @@ wechat:
     app-secret: ${WECHAT_MP_SECRET:}
     # 微信授权回调到后端的地址，需在公众号后台配置为同一域名
     oauth-redirect-uri: ${WECHAT_MP_OAUTH_REDIRECT:}
-    # H5会议首页模板，{activityId} 会被替换
-    h5-home-url: ${WECHAT_MP_H5_HOME:http://localhost:9090/#/pages/meeting/home?activityId={activityId}}
-    # 本地调试无公网时可开启 mock 授权
-    mock-enabled: true
+    # H5会议首页模板，{activityId} 会被替换；本地可设 WECHAT_MP_H5_HOME=http://localhost:9090/h5/pages/meeting/home?activityId={activityId}
+    h5-home-url: ${WECHAT_MP_H5_HOME:https://yunchengmice.cn/h5/pages/meeting/home?activityId={activityId}}
+    # 对外可访问的 API 根地址（封面绝对路径）
+    public-base-url: ${WECHAT_MP_PUBLIC_BASE:https://yunchengmice.cn/prod-api}
+    # 对外分享落地页（微信转发请用这个，不要用 SPA 页面地址）
+    share-page-url: ${WECHAT_MP_SHARE_PAGE:https://yunchengmice.cn/h5/share?activityId={activityId}}
+    # 本地调试无公网时可开启 mock 授权；正式环境设 WECHAT_MP_MOCK_ENABLED=false
+    mock-enabled: ${WECHAT_MP_MOCK_ENABLED:true}
     token-expire-minutes: 10080
 
 # MyBatis配置

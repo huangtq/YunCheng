@@ -22,10 +22,6 @@ export function getPortalGrid(activityId) {
   return request({ url: '/portal/meeting/grid/' + activityId, method: 'get', headers: portalHeaders() })
 }
 
-export function getPortalBottom(activityId) {
-  return request({ url: '/portal/meeting/bottom/' + activityId, method: 'get', headers: portalHeaders() })
-}
-
 export function getPortalModule(moduleKey, activityId) {
   return request({ url: '/portal/meeting/module/' + moduleKey + '/' + activityId, method: 'get', headers: portalHeaders() })
 }

@@ -1,0 +1,6 @@
+[client]
+host=127.0.0.1
+port=13306
+user=ruoyi
+password=Htq159753!
+default-character-set=utf8mb4

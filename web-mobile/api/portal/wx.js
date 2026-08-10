@@ -20,6 +20,24 @@ export function getOauthUrl(activityId, redirect) {
   })
 }
 
+export function getShareInfo(activityId) {
+  return request({
+    url: '/portal/wx/share-info',
+    method: 'get',
+    params: { activityId },
+    headers: { isToken: false }
+  })
+}
+
+export function getJsConfig(url) {
+  return request({
+    url: '/portal/wx/js-config',
+    method: 'get',
+    params: { url },
+    headers: { isToken: false }
+  })
+}
+
 export function getWxMe() {
   return request({ url: '/portal/wx/me', method: 'get', headers: portalHeaders() })
 }

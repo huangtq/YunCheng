@@ -12,18 +12,13 @@
     </view>
 
     <view class="content">
-      <view class="section-title">
-        <text class="bar"></text>
-        <text>{{ activeTab === 'current' ? '当前会议' : '历史会议' }}</text>
-      </view>
-
       <view v-if="loading" class="state">加载中...</view>
       <view v-else-if="!visibleActivities.length" class="state">
         {{ activeTab === 'current' ? '暂无当前会议' : '暂无历史会议' }}
       </view>
       <view v-else>
         <view v-for="section in activitySections" :key="section.title" class="activity-section">
-          <view class="section-title section-title-small">
+          <view class="section-title">
             <text class="bar"></text>
             <text>{{ section.title }}</text>
           </view>
@@ -90,13 +85,13 @@ const visibleActivities = computed(() => activities.value.filter(item => {
 const activitySections = computed(() => {
   const matched = visibleActivities.value
   if (activeTab.value === 'history') {
-    return [{ title: '历史会议', items: matched }]
+    return matched.length ? [{ title: '历史会议', items: matched }] : []
   }
   const hot = matched.filter(item => String(item.isHot) === '1')
-  const recent = matched.filter(item => String(item.isHot) !== '1')
+  const current = matched.filter(item => String(item.isHot) !== '1')
   const sections = []
+  if (current.length) sections.push({ title: '当前会议', items: current })
   if (hot.length) sections.push({ title: '热门会议', items: hot })
-  if (recent.length) sections.push({ title: '近期会议', items: recent })
   return sections
 })
 
@@ -164,8 +159,8 @@ function formatRange(start, end) {
 .hero-subtitle { margin-top: 14rpx; font-size: 26rpx; opacity: .9; }
 .search-input { height: 72rpx; margin-top: 28rpx; padding: 0 24rpx; box-sizing: border-box; border-radius: 36rpx; color: #303133; background: #fff; font-size: 26rpx; }
 .content { padding: 26rpx 24rpx; }
+.activity-section + .activity-section { margin-top: 26rpx; }
 .section-title { display: flex; align-items: center; gap: 12rpx; color: #303133; font-size: 30rpx; font-weight: 600; }
-.section-title-small { margin-top: 26rpx; }
 .bar { width: 8rpx; height: 32rpx; border-radius: 4rpx; background: #f56c6c; }
 .activity-list { display: flex; flex-direction: column; gap: 20rpx; margin-top: 20rpx; }
 .activity-card { display: flex; overflow: hidden; border-radius: 16rpx; background: #fff; box-shadow: 0 4rpx 16rpx rgba(31, 111, 235, .06); }

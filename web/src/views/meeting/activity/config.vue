@@ -199,8 +199,8 @@
     <el-dialog v-model="qrOpen" title="查看二维码" width="480px" append-to-body destroy-on-close>
       <el-form :model="configForm" label-width="100px">
         <el-form-item label="落地链接">
-          <el-input v-model="configForm.qrUrl" placeholder="例：http://localhost:9090/#/pages/meeting/home?activityId=1" />
-          <div class="form-tip">默认建议：H5 会议首页 /#/pages/meeting/home?activityId={会议ID}</div>
+          <el-input v-model="configForm.qrUrl" placeholder="例：https://yunchengmice.cn/h5/pages/meeting/home?activityId=1" />
+          <div class="form-tip">扫码进会可用 H5 首页；微信转发要出标题/地点/时间卡片，请用：{域名}/h5/share?activityId={会议ID}</div>
         </el-form-item>
         <el-form-item label="二维码">
           <div class="qr-box" v-if="configForm.qrUrl">
@@ -307,8 +307,6 @@ const groups = [
       { key: "edit", label: "编辑会议信息", icon: "Edit", color: "#409EFF", action: "edit" },
       { key: "switch", label: "常用开关", icon: "Setting", color: "#67C23A", action: "switch" },
       { key: "grid", label: "九宫格配置", icon: "Menu", color: "#E6A23C", action: "grid" },
-      { key: "menu", label: "侧边菜单配置", icon: "List", color: "#2D98DA", action: "menu" },
-      { key: "gridBottom", label: "九宫格底部配置", icon: "Grid", color: "#6C5CE7", action: "gridBottom" },
       { key: "mobile", label: "移动端详情", icon: "Iphone", color: "#00B894", action: "mobile" },
       { key: "qr", label: "查看二维码", icon: "Postcard", color: "#F56C6C", action: "qr" },
       { key: "nav", label: "导航管理", icon: "Guide", color: "#00B894", action: "nav", moduleKey: HUB_ACTION_MODULE_KEY.nav }
@@ -402,8 +400,11 @@ function handleCard(item) {
   }
   if (item.action === "qr") {
     loadConfig().then(() => {
-      if (!configForm.value.qrUrl) {
-        configForm.value.qrUrl = buildMeetingH5HomeUrl(activityId.value)
+      const current = String(configForm.value.qrUrl || "").trim()
+      const preferred = buildMeetingH5HomeUrl(activityId.value)
+      // 空值 / 本地调试地址 / 旧 hash 路由 / 分享落地页 → 回填正式 H5 history 首页
+      if (shouldResetQrUrl(current, preferred)) {
+        configForm.value.qrUrl = preferred
       }
       qrOpen.value = true
     })
@@ -433,14 +434,6 @@ function handleCard(item) {
   }
   if (item.action === "file") {
     router.push({ path: "/meeting/activity-config/file", query: { id: activityId.value } })
-    return
-  }
-  if (item.action === "menu") {
-    router.push({ path: "/meeting/activity-config/menu", query: { id: activityId.value } })
-    return
-  }
-  if (item.action === "gridBottom") {
-    router.push({ path: "/meeting/activity-config/grid-bottom", query: { id: activityId.value } })
     return
   }
   if (item.action === "nav") {
@@ -586,6 +579,19 @@ function removeMobileBlock(index) {
 
 function previewMobile() {
   window.open(buildMeetingH5HomeUrl(activityId.value), "_blank")
+}
+
+function shouldResetQrUrl(current, preferred) {
+  if (!current) return true
+  if (current === preferred) return false
+  // 本地调试地址、旧 hash 路由、API 分享落地页都不能作为正式扫码落地页
+  if (/localhost|127\.0\.0\.1/i.test(current)) return true
+  if (/#\/pages\//i.test(current)) return true
+  if (/\/(dev-api|prod-api|stage-api)\/portal\/wx\/share/i.test(current)) return true
+  if (/\/portal\/wx\/share\?/i.test(current)) return true
+  // 缺 /h5/ 基路径的会议首页，也纠正
+  if (/\/pages\/meeting\/home\?/i.test(current) && !/\/h5\/pages\/meeting\/home\?/i.test(current)) return true
+  return false
 }
 
 function saveQr() {

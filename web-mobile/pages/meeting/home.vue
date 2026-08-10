@@ -18,7 +18,7 @@
         </view>
       </view>
 
-      <view v-else-if="isTile" class="tile-page" :style="tilePageStyle">
+      <view v-else-if="isTile" class="tile-page" :class="{ 'is-light-tile': isLightTile }" :style="tilePageStyle">
         <view class="cover tile-cover" :style="coverStyle"></view>
         <view v-if="layout.showCountdown && countdown" class="tile-countdown">
           <CountdownBoard :countdown="countdown" :theme-color="layout.themeColor" />
@@ -29,10 +29,20 @@
             v-for="item in gridList"
             :key="item.gridId"
             class="tile-item"
+            :class="{
+              'is-color-tile': isColorTile(item),
+              'is-tall-color-tile': isTallColorTile(item)
+            }"
             :style="tileStyle(item)"
             @click="onGridClick(item)"
           >
-            <text v-if="!item.iconUrl" class="tile-title">{{ item.title }}</text>
+            <text v-if="!item.iconUrl || isColorTile(item)" class="tile-title">{{ item.title }}</text>
+            <image
+              v-if="isColorTile(item) && item.iconUrl"
+              class="tile-icon"
+              :src="resolveUrl(item.iconUrl)"
+              mode="aspectFit"
+            />
           </view>
         </view>
         <view
@@ -121,30 +131,6 @@
         </view>
       </view>
 
-      <view class="bottom-safe"></view>
-      <view v-if="bottomList.length" class="bottom-bar">
-        <view
-          v-for="item in bottomList"
-          :key="item.bottomId"
-          class="bottom-item"
-          @click="onBottomClick(item)"
-        >
-          <image
-            v-if="item.iconUrl"
-            class="bottom-icon"
-            :src="resolveUrl(item.iconUrl)"
-            mode="aspectFit"
-          />
-          <MeetingIcon
-            v-else-if="item.moduleKey"
-            icon-type="icon"
-            :icon-key="guessBottomIcon(item.moduleKey)"
-            :size="36"
-            :color="layout.themeColor"
-          />
-          <text class="bottom-text">{{ item.bottomName }}</text>
-        </view>
-      </view>
     </template>
   </view>
 </template>
@@ -154,11 +140,11 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import MeetingIcon from '@/components/MeetingIcon/MeetingIcon.vue'
 import CountdownBoard from '@/components/CountdownBoard/CountdownBoard.vue'
-import { getPortalActivity, getPortalGrid, getPortalBottom } from '@/api/portal/meeting'
-import { getOauthUrl, buildMockOauthJump } from '@/api/portal/wx'
-import { captureMpTokenFromQuery, hasMpToken } from '@/utils/mpAuth'
+import { getPortalActivity, getPortalGrid } from '@/api/portal/meeting'
+import { captureMpTokenFromQuery } from '@/utils/mpAuth'
 import { resolveModulePage } from '@/utils/meetingModules'
 import { buildHomeLayout, formatCountdownParts } from '@/utils/meetingLayout'
+import { setupMeetingShare } from '@/utils/wxShare'
 import config from '@/config'
 
 const loading = ref(true)
@@ -167,18 +153,20 @@ const activity = ref({})
 const meetingConfig = ref({})
 const layout = ref(buildHomeLayout())
 const gridList = ref([])
-const bottomList = ref([])
 const now = ref(Date.now())
 let timer = null
 
 const pageThemeStyle = computed(() => ({
   '--theme-color': layout.value.themeColor || '#1f6feb',
-  backgroundColor: layout.value.gridTemplate === 'tile' ? '#000' : '#f5f7fa',
+  backgroundColor: layout.value.gridTemplate === 'tile'
+    ? (isLightTile.value ? tileSurfaceColor.value : '#000')
+    : '#f5f7fa',
   paddingBottom: layout.value.gridTemplate === 'tile' ? '0' : undefined
 }))
 
 const coverStyle = computed(() => {
   const url = activity.value.coverUrl
+  const tileBg = tileSurfaceColor.value
   if (!url) {
     return {
       background: `linear-gradient(135deg, ${layout.value.themeColor || '#1f6feb'}, #0b3d91)`
@@ -191,13 +179,15 @@ const coverStyle = computed(() => {
     backgroundSize: isTile.value ? 'contain' : 'cover',
     backgroundPosition: isTile.value ? 'top center' : 'center',
     backgroundRepeat: 'no-repeat',
-    backgroundColor: isTile.value ? '#061a74' : 'transparent',
+    backgroundColor: isTile.value ? tileBg : 'transparent',
     height: isTile.value ? (isPcViewport ? '421.875px' : '56.25vw') : undefined
   }
 })
 
 const isImageMap = computed(() => layout.value.template === 'image-map')
 const isTile = computed(() => layout.value.template === 'standard' && layout.value.gridTemplate === 'tile')
+const isLightTile = computed(() => isTile.value && isLightColor(layout.value.themeColor))
+const tileSurfaceColor = computed(() => (isLightTile.value ? (layout.value.themeColor || '#f6f6f6') : '#061a74'))
 const isIconOnly = computed(() => layout.value.gridStyle === 'icon')
 const gridClass = computed(() => `cols-${layout.value.gridColumns || 3}`)
 const audioUrl = computed(() => layout.value.audioUrl ? resolveUrl(layout.value.audioUrl) : '')
@@ -210,12 +200,12 @@ const gridIconWrapStyle = computed(() => ({
 const tilePageStyle = computed(() => {
   const background = layout.value.backgroundUrl
   return {
-    backgroundColor: '#1100ab',
+    backgroundColor: isLightTile.value ? tileSurfaceColor.value : '#1100ab',
     backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
     backgroundSize: '100% 100%',
     backgroundPosition: '50% 100%',
     backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'fixed'
+    backgroundAttachment: isLightTile.value ? 'scroll' : 'fixed'
   }
 })
 
@@ -242,17 +232,15 @@ onLoad(async (options) => {
     uni.showToast({ title: '缺少会议ID', icon: 'none' })
     return
   }
-  if (!hasMpToken()) {
-    const redirected = await ensureLogin(options)
-    if (redirected) return
-  }
+  // 首页允许匿名浏览；微信授权改到「注册报名」等需要身份的页面再唤起
   await loadHome()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
 })
 
 onShow(() => {
-  if (activityId.value && hasMpToken()) {
-    // keep silent
+  // keep page live；返回首页时恢复会议网站标题
+  if (activityId.value) {
+    setupMeetingShare(activityId.value, activity.value.activityName || '')
   }
 })
 
@@ -265,39 +253,20 @@ onUnload(() => {
   }
 })
 
-async function ensureLogin() {
-  try {
-    const redirect = `${location.origin}${location.pathname}#/pages/meeting/home?activityId=${activityId.value}`
-    const res = await getOauthUrl(activityId.value, redirect)
-    const data = res.data || {}
-    if (data.mode === 'mock') {
-      window.location.href = buildMockOauthJump(activityId.value, redirect)
-      return true
-    }
-    if (data.url) {
-      window.location.href = data.url
-      return true
-    }
-  } catch (e) {
-    console.log(e)
-  }
-  return false
-}
-
 async function loadHome() {
   loading.value = true
   try {
-    const [actRes, gridRes, bottomRes] = await Promise.all([
+    const [actRes, gridRes] = await Promise.all([
       getPortalActivity(activityId.value),
-      getPortalGrid(activityId.value),
-      getPortalBottom(activityId.value)
+      getPortalGrid(activityId.value)
     ])
     activity.value = (actRes.data && actRes.data.activity) || {}
     meetingConfig.value = (actRes.data && actRes.data.config) || {}
     layout.value = buildHomeLayout(actRes.data && actRes.data.layout, meetingConfig.value)
     gridList.value = gridRes.data || []
-    bottomList.value = bottomRes.data || []
-    uni.setNavigationBarTitle({ title: activity.value.activityName || '会议首页' })
+    const meetingTitle = activity.value.activityName || '会议首页'
+    uni.setNavigationBarTitle({ title: meetingTitle })
+    setupMeetingShare(activityId.value, meetingTitle)
     if (layout.value.notice) {
       setTimeout(showNotice, 200)
     }
@@ -311,12 +280,90 @@ function isImageCard(item) {
   return item && item.iconType === 'image' && !!item.iconUrl && Number(layout.value.gridColumns) === 2
 }
 
+function isLightColor(color) {
+  if (!color || typeof color !== 'string') return false
+  const value = color.trim().toLowerCase()
+  let r = 0
+  let g = 0
+  let b = 0
+  if (value.startsWith('#')) {
+    const hex = value.slice(1)
+    const full = hex.length === 3
+      ? hex.split('').map((ch) => ch + ch).join('')
+      : hex
+    if (full.length < 6) return false
+    r = parseInt(full.slice(0, 2), 16)
+    g = parseInt(full.slice(2, 4), 16)
+    b = parseInt(full.slice(4, 6), 16)
+  } else {
+    const match = value.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/)
+    if (!match) return false
+    r = Number(match[1])
+    g = Number(match[2])
+    b = Number(match[3])
+  }
+  if ([r, g, b].some((n) => Number.isNaN(n))) return false
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance >= 0.72
+}
+
+function parseTileMeta(item) {
+  const raw = (item && item.remark) || ''
+  if (!raw) return {}
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return {}
+    const bg = resolveTileBgMeta(parsed)
+    return {
+      ...parsed,
+      bg: bg || undefined
+    }
+  } catch (e) {
+    if (raw.startsWith('tile-bg:')) {
+      return { bg: raw.slice(8) }
+    }
+    return {}
+  }
+}
+
+function resolveTileBgMeta(options = {}, depth = 0) {
+  if (!options || typeof options !== 'object' || depth > 3) return ''
+  const direct = options.bg || options.background || options.tileBg || options.gradientColor || ''
+  if (direct) return direct
+  if (typeof options.remark !== 'string' || !options.remark) return ''
+  try {
+    const nested = JSON.parse(options.remark)
+    if (nested && typeof nested === 'object') {
+      return resolveTileBgMeta(nested, depth + 1)
+    }
+  } catch (e) {
+    if (options.remark.startsWith('tile-bg:')) {
+      return options.remark.slice(8)
+    }
+  }
+  return ''
+}
+
+function isColorTile(item) {
+  const meta = parseTileMeta(item)
+  return !!(meta.bg || meta.background || meta.tileBg || meta.gradientColor)
+}
+
+function isTallColorTile(item) {
+  return isColorTile(item) && Number(item.tileRowSpan || 1) >= 2
+}
+
 function tileStyle(item) {
+  const meta = parseTileMeta(item)
   const style = {
     gridColumn: `${item.tileCol || 'auto'} / span ${item.tileColSpan || 1}`,
     gridRow: `${item.tileRow || 'auto'} / span ${item.tileRowSpan || 1}`
   }
-  if (item.iconUrl) {
+  const gradient = meta.bg || meta.background || meta.tileBg || meta.gradientColor
+  if (gradient) {
+    style.backgroundImage = gradient
+    style.backgroundColor = 'transparent'
+  } else if (item.iconUrl) {
     style.backgroundImage = `url(${resolveUrl(item.iconUrl)})`
   }
   return style
@@ -347,30 +394,24 @@ function toggleAudio() {
   }
 }
 
-function guessBottomIcon(moduleKey) {
-  const map = {
-    schedule: 'menu_hdgl',
-    guest: 'menu_lrtx',
-    apply: 'menu_hdbm',
-    hotel: 'menu_fcgl',
-    venue: 'menu_xqgl',
-    nav: 'menu_jkzx',
-    exhibitor: 'menu_cxzp',
-    meal: 'menu_ywgl'
-  }
-  return map[moduleKey] || 'menu_home'
-}
-
 function onGridClick(item) {
   if (item.linkType === 'url' && item.externalUrl) {
     uni.navigateTo({
-      url: `/pages/common/webview/index?title=${encodeURIComponent(item.title)}&url=${encodeURIComponent(item.externalUrl)}`
+      url: `/pages/common/webview/index?activityId=${encodeURIComponent(activityId.value || '')}&title=${encodeURIComponent(item.title)}&url=${encodeURIComponent(item.externalUrl)}`
     })
     return
   }
-  if (item.linkType === 'content' && item.contentType === 'image' && (item.contentUrl || item.iconUrl)) {
+  if (item.linkType === 'content' && item.contentType === 'image' && (item.gridId || item.contentUrl || item.content || item.iconUrl)) {
+    const query = [
+      `activityId=${encodeURIComponent(activityId.value || '')}`,
+      `title=${encodeURIComponent(item.title || '图片内容')}`
+    ]
+    if (item.gridId) query.push(`gridId=${encodeURIComponent(item.gridId)}`)
+    if (item.contentUrl || item.iconUrl) {
+      query.push(`url=${encodeURIComponent(item.contentUrl || item.iconUrl)}`)
+    }
     uni.navigateTo({
-      url: `/pages/common/imageview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title)}&url=${encodeURIComponent(item.contentUrl || item.iconUrl)}`
+      url: `/pages/common/imageview/index?${query.join('&')}`
     })
     return
   }
@@ -426,34 +467,10 @@ function resolveUrl(url) {
   return url && url.startsWith('http') ? url : config.baseUrl + (url || '')
 }
 
-function onBottomClick(item) {
-  if (item.bottomType === 'phone' && item.phone) {
-    uni.makePhoneCall({ phoneNumber: item.phone })
-    return
-  }
-  if (item.bottomType === 'link' && item.linkUrl) {
-    uni.navigateTo({
-      url: `/pages/common/webview/index?title=${encodeURIComponent(item.bottomName)}&url=${encodeURIComponent(item.linkUrl)}`
-    })
-    return
-  }
-  if (item.bottomType === 'module') {
-    onGridClick({
-      linkType: 'module',
-      moduleKey: item.moduleKey,
-      title: item.bottomName
-    })
-    return
-  }
-  if (item.bottomType === 'text') {
-    uni.showModal({ title: item.bottomName, content: item.remark || item.linkUrl || '暂无内容', showCancel: false })
-  }
-}
-
 function onFooterClick() {
   if (layout.value.footer.linkUrl) {
     uni.navigateTo({
-      url: `/pages/common/webview/index?title=${encodeURIComponent(layout.value.footer.company || layout.value.footer.text || '会务支持')}&url=${encodeURIComponent(layout.value.footer.linkUrl)}`
+      url: `/pages/common/webview/index?activityId=${encodeURIComponent(activityId.value || '')}&title=${encodeURIComponent(layout.value.footer.company || layout.value.footer.text || '会务支持')}&url=${encodeURIComponent(layout.value.footer.linkUrl)}`
     })
   }
 }
@@ -463,7 +480,7 @@ function onFooterClick() {
 .home-page {
   min-height: 100vh;
   background: #f5f7fa;
-  padding-bottom: 120rpx;
+  padding-bottom: 24rpx;
 }
 :global(html),
 :global(body),
@@ -502,6 +519,9 @@ function onFooterClick() {
   min-height: 100vh;
   background: #061a74;
 }
+.tile-page.is-light-tile {
+  background: #f6f6f6;
+}
 .tile-cover {
   height: 56.25vw;
   min-height: 0;
@@ -509,6 +529,9 @@ function onFooterClick() {
   background-size: cover;
   background-position: top center;
   background-repeat: no-repeat;
+}
+.tile-page.is-light-tile .tile-cover {
+  background-color: #f6f6f6;
 }
 .tile-countdown {
   display: flex;
@@ -518,6 +541,9 @@ function onFooterClick() {
   padding: 24rpx 18rpx;
   background: #061a74;
 }
+.tile-page.is-light-tile .tile-countdown {
+  background: #f6f6f6;
+}
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -525,6 +551,14 @@ function onFooterClick() {
   gap: 0;
   padding: 18rpx;
   background: #061a74;
+}
+.tile-page.is-light-tile .tile-grid {
+  background: transparent;
+  padding: 10px 0 24rpx;
+  grid-template-rows: 100px 110px 110px 110px;
+}
+.tile-page.is-light-tile .tile-item {
+  margin: 5px;
 }
 .tile-item {
   min-width: 0;
@@ -534,6 +568,56 @@ function onFooterClick() {
   background-position: center;
   background-repeat: no-repeat;
   background-size: 100% 100%;
+}
+.tile-item.is-color-tile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
+}
+.tile-item.is-color-tile .tile-title {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: block;
+  min-height: auto;
+  max-width: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+.tile-item.is-color-tile .tile-icon {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  z-index: 1;
+  width: 50px;
+  height: 50px;
+  margin: 0;
+}
+.tile-item.is-tall-color-tile .tile-title {
+  top: 15px;
+  left: 15px;
+  max-width: none;
+  font-size: 24px;
+  white-space: nowrap;
+}
+.tile-item.is-tall-color-tile .tile-icon {
+  right: 8px;
+  bottom: 8px;
+  width: 80px;
+  height: 80px;
+}
+.tile-icon {
+  width: 56rpx;
+  height: 56rpx;
+  margin-bottom: 10rpx;
 }
 .tile-title {
   display: flex;
@@ -558,8 +642,34 @@ function onFooterClick() {
     padding: 16px 20px 0;
     grid-template-rows: 147px 167px 167px 167px;
   }
+  .tile-page.is-light-tile .tile-grid {
+    padding: 10px 0 20px;
+    grid-template-rows: 100px 110px 110px 110px;
+  }
   .tile-item {
     margin: 6px;
+  }
+  .tile-item.is-color-tile .tile-title {
+    top: 10px;
+    left: 10px;
+    font-size: 18px;
+  }
+  .tile-item.is-color-tile .tile-icon {
+    right: 5px;
+    bottom: 5px;
+    width: 50px;
+    height: 50px;
+  }
+  .tile-item.is-tall-color-tile .tile-title {
+    top: 15px;
+    left: 15px;
+    font-size: 24px;
+  }
+  .tile-item.is-tall-color-tile .tile-icon {
+    right: 8px;
+    bottom: 8px;
+    width: 80px;
+    height: 80px;
   }
 }
 .tile-footer {
@@ -571,6 +681,10 @@ function onFooterClick() {
   background: rgba(0, 0, 0, 0.2);
   font-size: 24rpx;
   text-align: center;
+}
+.tile-page.is-light-tile .tile-footer {
+  color: #666;
+  background: transparent;
 }
 .tile-footer-name {
   margin-left: 12rpx;
@@ -683,40 +797,10 @@ function onFooterClick() {
 .grid-text { font-size: 24rpx; color: #303133; text-align: center; }
 .cols-1 .grid-text { font-size: 28rpx; font-weight: 500; }
 .empty, .state { padding: 80rpx 24rpx; text-align: center; color: #909399; font-size: 28rpx; }
-.bottom-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 20;
-  display: flex;
-  background: #fff;
-  border-top: 1px solid #ebeef5;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.bottom-item {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6rpx;
-  padding: 14rpx 8rpx 12rpx;
-  color: #606266;
-}
-.bottom-icon { width: 36rpx; height: 36rpx; }
-.bottom-text {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 22rpx;
-}
-.bottom-safe { height: 20rpx; }
 .image-map-page {
   position: relative;
   min-height: 56.25vw;
-  padding-bottom: 120rpx;
+  padding-bottom: 24rpx;
   background-position: top center;
 }
 .image-map-block {

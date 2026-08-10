@@ -7,7 +7,13 @@ export function normalizeGridTemplate(value) {
   const legacyMap = {
     grid3x3: '1',
     grid2x2: '5',
-    list: '7'
+    list: '7',
+    '62': '1',
+    '63': '1',
+    '64': '1',
+    '65': '1',
+    '651': '1',
+    '681': '68'
   }
   return legacyMap[value] || String(value || '1')
 }

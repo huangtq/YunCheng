@@ -19,7 +19,6 @@ import com.ruoyi.system.domain.YcApplyChannel;
 import com.ruoyi.system.domain.YcApplyField;
 import com.ruoyi.system.domain.YcApplyOrder;
 import com.ruoyi.system.domain.YcExhibitor;
-import com.ruoyi.system.domain.YcGridBottom;
 import com.ruoyi.system.domain.YcGuest;
 import com.ruoyi.system.domain.YcHotel;
 import com.ruoyi.system.domain.YcMealTicket;
@@ -33,7 +32,6 @@ import com.ruoyi.system.mapper.YcApplyChannelMapper;
 import com.ruoyi.system.mapper.YcApplyFieldMapper;
 import com.ruoyi.system.mapper.YcApplyOrderMapper;
 import com.ruoyi.system.mapper.YcExhibitorMapper;
-import com.ruoyi.system.mapper.YcGridBottomMapper;
 import com.ruoyi.system.mapper.YcGuestMapper;
 import com.ruoyi.system.mapper.YcHotelMapper;
 import com.ruoyi.system.mapper.YcMealTicketMapper;
@@ -48,7 +46,6 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     @Autowired private YcActivityMapper activityMapper;
     @Autowired private YcActivityConfigMapper configMapper;
     @Autowired private YcActivityGridMapper gridMapper;
-    @Autowired private YcGridBottomMapper bottomMapper;
     @Autowired private YcScheduleMapper scheduleMapper;
     @Autowired private YcGuestMapper guestMapper;
     @Autowired private YcVenueMapper venueMapper;
@@ -131,28 +128,6 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         q.setActivityId(activityId);
         q.setStatus("1");
         List<YcActivityGrid> list = gridMapper.selectYcActivityGridList(q);
-        list.sort((a, b) -> Integer.compare(
-            a.getSortOrder() == null ? 0 : a.getSortOrder(),
-            b.getSortOrder() == null ? 0 : b.getSortOrder()));
-        return list;
-    }
-
-    @Override
-    public List<?> listMenu(Long activityId)
-    {
-        // 参考站点的内容页侧栏与首页入口使用同一组会议九宫格配置。
-        // 保留此接口作为旧客户端兼容入口，但不再读取独立菜单表。
-        return listGrid(activityId);
-    }
-
-    @Override
-    public List<?> listBottom(Long activityId)
-    {
-        requireActivity(activityId);
-        YcGridBottom q = new YcGridBottom();
-        q.setActivityId(activityId);
-        q.setStatus("1");
-        List<YcGridBottom> list = bottomMapper.selectYcGridBottomList(q);
         list.sort((a, b) -> Integer.compare(
             a.getSortOrder() == null ? 0 : a.getSortOrder(),
             b.getSortOrder() == null ? 0 : b.getSortOrder()));
@@ -326,15 +301,12 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             }
         }
 
-        YcApplyOrder existQ = new YcApplyOrder();
-        existQ.setActivityId(activityId);
-        existQ.setChannelId(channelId);
-        existQ.setOrderStatus("0");
-        existQ.setMobile(user.getPhone());
-        List<YcApplyOrder> exists = orderMapper.selectYcApplyOrderList(existQ);
+        // 同一会议下，同一微信/手机号已有有效报名则不允许再报（不区分通道）
+        List<YcApplyOrder> exists = orderMapper.selectPortalUserOrders(
+            activityId, user.getOpenid(), user.getPhone(), "0");
         if (exists != null && !exists.isEmpty())
         {
-            throw new ServiceException("already registered");
+            throw new ServiceException("您已报名成功，请勿重复提交");
         }
 
         Object formData = body.get("formData");
@@ -374,29 +346,9 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         {
             throw new ServiceException("please login via wechat", 401);
         }
-        YcApplyOrder q = new YcApplyOrder();
-        if (activityId != null)
-        {
-            q.setActivityId(activityId);
-        }
-        if (StringUtils.isNotEmpty(user.getPhone()))
-        {
-            q.setMobile(user.getPhone());
-        }
-        List<YcApplyOrder> list = orderMapper.selectYcApplyOrderList(q);
-        List<YcApplyOrder> mine = new ArrayList<>();
-        for (YcApplyOrder order : list)
-        {
-            if (user.getOpenid() != null && user.getOpenid().equals(order.getCreateBy()))
-            {
-                mine.add(order);
-            }
-            else if (StringUtils.isNotEmpty(user.getPhone()) && user.getPhone().equals(order.getMobile()))
-            {
-                mine.add(order);
-            }
-        }
-        return mine;
+        List<YcApplyOrder> list = orderMapper.selectPortalUserOrders(
+            activityId, user.getOpenid(), user.getPhone(), null);
+        return list == null ? new ArrayList<>() : list;
     }
 
     private YcActivity requireActivity(Long activityId)

@@ -1,12 +1,15 @@
 <template>
   <view class="module-page">
-    <view v-if="loading" class="state">加载中...</view>
-    <view v-else-if="!rows.length" class="state">暂无数据，请先在后台配置</view>
-    <view v-else class="list">
-      <view v-for="(item, index) in rows" :key="itemKey(item, index)" class="card" @click="onItemClick(item)">
-        <view class="title">{{ itemTitle(item) }}</view>
-        <view v-if="itemSub(item)" class="sub">{{ itemSub(item) }}</view>
-        <view v-if="itemExtra(item)" class="extra">{{ itemExtra(item) }}</view>
+    <MeetingContentHeader :title="pageTitle" :activity-id="activityId" />
+    <view class="module-body">
+      <view v-if="loading" class="state">加载中...</view>
+      <view v-else-if="!rows.length" class="state">暂无数据，请先在后台配置</view>
+      <view v-else class="list">
+        <view v-for="(item, index) in rows" :key="itemKey(item, index)" class="card" @click="onItemClick(item)">
+          <view class="title">{{ itemTitle(item) }}</view>
+          <view v-if="itemSub(item)" class="sub">{{ itemSub(item) }}</view>
+          <view v-if="itemExtra(item)" class="extra">{{ itemExtra(item) }}</view>
+        </view>
       </view>
     </view>
   </view>
@@ -14,15 +17,18 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import MeetingContentHeader from '@/components/MeetingContentHeader.vue'
 import { getPortalModule } from '@/api/portal/meeting'
 import { getMeetingModule } from '@/utils/meetingModules'
 import { captureMpTokenFromQuery } from '@/utils/mpAuth'
+import { setupMeetingShare } from '@/utils/wxShare'
 
 const loading = ref(true)
 const rows = ref([])
 const activityId = ref('')
 const moduleKey = ref('')
+const pageTitle = ref('会议模块')
 
 onLoad(options => {
   captureMpTokenFromQuery(options || {})
@@ -30,8 +36,13 @@ onLoad(options => {
   moduleKey.value = options?.moduleKey || ''
   const title = decodeURIComponent(options?.title || '')
   const mod = getMeetingModule(moduleKey.value)
-  uni.setNavigationBarTitle({ title: title || mod?.label || '会议模块' })
+  pageTitle.value = title || mod?.label || '会议模块'
+  if (activityId.value) setupMeetingShare(activityId.value)
   loadData()
+})
+
+onShow(() => {
+  if (activityId.value) setupMeetingShare(activityId.value)
 })
 
 function loadData() {
@@ -89,7 +100,12 @@ function onItemClick(item) {
 </script>
 
 <style lang="scss" scoped>
-.module-page { min-height: 100vh; padding: 24rpx; background: #f5f7fa; }
+.module-page { min-height: 100vh; background: #f5f7fa; }
+.module-body {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: calc(49px + 24rpx) 24rpx 24rpx;
+}
 .list { display: flex; flex-direction: column; gap: 20rpx; }
 .card { padding: 28rpx; border-radius: 16rpx; background: #fff; }
 .title { color: #303133; font-size: 30rpx; font-weight: 600; }

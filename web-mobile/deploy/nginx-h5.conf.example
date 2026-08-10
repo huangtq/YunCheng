@@ -1,0 +1,18 @@
+# 会议 H5（history 模式）Nginx 示例
+# 构建产物发布到 /var/www/yuncheng/h5/（目录内有 index.html）
+
+server {
+    listen 80;
+    server_name yunchengmice.cn;
+
+    # 管理端、接口等其它 location 按现网配置保留
+
+    location /h5/ {
+        root /var/www/yuncheng;
+        try_files $uri $uri/ /h5/index.html;
+    }
+
+    location = /h5 {
+        return 301 /h5/;
+    }
+}

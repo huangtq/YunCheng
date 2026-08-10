@@ -20,6 +20,18 @@
 
 本项目不提供若依管理员登录、工作台和个人中心。浏览会议不需要管理员账号，提交报名时才需要绑定手机号。
 
+## 路由说明
+
+H5 使用 **history** 模式，基路径为 `/h5/`。
+
+正式入口示例：
+
+- 会议列表：`https://yunchengmice.cn/h5/pages/meeting/index`
+- 会议首页：`https://yunchengmice.cn/h5/pages/meeting/home?activityId=13`
+- 分享落地页（带中文 meta）：`https://yunchengmice.cn/prod-api/portal/wx/share?activityId=13`
+
+旧 hash 链接（`/h5/#/pages/...`）打开后会自动跳转到 history 地址。
+
 ## 本地运行
 
 本项目使用 **HBuilderX**：
@@ -30,10 +42,14 @@
 
 平台入口：
 
-`http://localhost:9090/#/pages/meeting/index`
+`http://localhost:9090/h5/pages/meeting/index`
 
 会议详情入口：
 
-`http://localhost:9090/#/pages/meeting/home?activityId=2`
+`http://localhost:9090/h5/pages/meeting/home?activityId=2`
 
 请先启动 `server` 后端，再运行 H5。
+
+## 部署注意（Nginx）
+
+history 模式必须把 `/h5/` 下的前端路由回退到 `index.html`，示例见 `deploy/nginx-h5.conf.example`。

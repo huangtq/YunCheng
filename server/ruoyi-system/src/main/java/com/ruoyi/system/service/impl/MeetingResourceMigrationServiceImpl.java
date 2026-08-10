@@ -63,14 +63,19 @@ public class MeetingResourceMigrationServiceImpl implements IMeetingResourceMigr
     private MeetingResourceMigrationMapper migrationMapper;
 
     /**
-     * 参考资源随服务启动自动迁移，避免增加一次性后台按钮。
-     * 迁移过程按文件路径幂等，重复启动不会产生重复记录。
+     * 参考资源随服务启动自动迁移（幂等）。
+     * 本地文件与文件登记均已就绪时直接跳过，避免每次启动重复复制和刷日志。
      */
     @EventListener(ApplicationReadyEvent.class)
     public void migrateReferenceResourcesOnStartup()
     {
         try
         {
+            if (isReferenceResourceReady())
+            {
+                log.debug("会议参考资源已就绪，跳过启动迁移");
+                return;
+            }
             Map<String, Object> result = migrateMeeting38569("system");
             log.info("会议参考资源迁移完成：复制{}个，登记{}个，替换{}条配置",
                     result.get("copiedCount"), result.get("registeredCount"), result.get("replacedCount"));
@@ -99,11 +104,14 @@ public class MeetingResourceMigrationServiceImpl implements IMeetingResourceMigr
             }
 
             Path targetPath = targetDirectory.resolve(fileName);
-            try (InputStream inputStream = resource.getInputStream())
+            if (!Files.exists(targetPath) || Files.size(targetPath) != resource.contentLength())
             {
-                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream inputStream = resource.getInputStream())
+                {
+                    Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+                copiedCount++;
             }
-            copiedCount++;
 
             String storedPath = NEW_PREFIX + fileName;
             SysFileInfo existing = sysFileInfoMapper.selectSysFileInfoByFileName(storedPath);
@@ -132,7 +140,6 @@ public class MeetingResourceMigrationServiceImpl implements IMeetingResourceMigr
         replacedCount += migrationMapper.replaceActivityCover(OLD_PREFIX, NEW_PREFIX);
         replacedCount += migrationMapper.replaceActivityConfigMedia(OLD_PREFIX, NEW_PREFIX);
         replacedCount += migrationMapper.replaceActivityGridMedia(OLD_PREFIX, NEW_PREFIX);
-        replacedCount += migrationMapper.replaceGridBottomIcon(OLD_PREFIX, NEW_PREFIX);
         replacedCount += migrationMapper.replaceActivityNavCover(OLD_PREFIX, NEW_PREFIX);
         replacedCount += migrationMapper.replaceVenueCover(OLD_PREFIX, NEW_PREFIX);
         replacedCount += migrationMapper.replaceHotelCover(OLD_PREFIX, NEW_PREFIX);
@@ -147,6 +154,24 @@ public class MeetingResourceMigrationServiceImpl implements IMeetingResourceMigr
         result.put("targetDirectory", targetDirectory.toString());
         result.put("targetPrefix", NEW_PREFIX);
         return result;
+    }
+
+    /** 本地文件与 sys_file_info 登记都齐了，则视为已迁移完成。 */
+    private boolean isReferenceResourceReady()
+    {
+        Path targetDirectory = Paths.get(RuoYiConfig.getProfile(), "upload", "reference", "meeting-38569");
+        for (String fileName : RESOURCE_FILES)
+        {
+            if (!Files.exists(targetDirectory.resolve(fileName)))
+            {
+                return false;
+            }
+            if (sysFileInfoMapper.selectSysFileInfoByFileName(NEW_PREFIX + fileName) == null)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String getSuffix(String fileName)

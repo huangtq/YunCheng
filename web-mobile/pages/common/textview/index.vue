@@ -34,9 +34,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getPortalGrid } from '@/api/portal/meeting'
 import { openMeetingItem } from '@/utils/meetingNavigation'
+import { setupMeetingShare } from '@/utils/wxShare'
 
 const title = ref('内容')
 const content = ref('')
@@ -48,10 +49,15 @@ onLoad(options => {
   title.value = decodeURIComponent(options?.title || '内容')
   content.value = decodeURIComponent(options?.content || '')
   activityId.value = options?.activityId || ''
+  if (activityId.value) setupMeetingShare(activityId.value)
   if (!activityId.value) return
   getPortalGrid(activityId.value)
     .then(res => { gridItems.value = res.data || [] })
     .catch(() => { gridItems.value = [] })
+})
+
+onShow(() => {
+  if (activityId.value) setupMeetingShare(activityId.value)
 })
 
 function goHome() {

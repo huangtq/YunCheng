@@ -31,12 +31,6 @@
            or content_url like concat(#{oldPrefix}, '%')
     </update>
 
-    <update id="replaceGridBottomIcon">
-        update yc_grid_bottom
-        set icon_url = replace(icon_url, #{oldPrefix}, #{newPrefix})
-        where icon_url like concat(#{oldPrefix}, '%')
-    </update>
-
     <update id="replaceActivityNavCover">
         update yc_activity_nav
         set cover_url = replace(cover_url, #{oldPrefix}, #{newPrefix})

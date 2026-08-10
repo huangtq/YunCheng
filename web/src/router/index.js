@@ -341,17 +341,6 @@ export const dynamicRoutes = [
               tagsGroup: 'meeting-config'
             }
           },
-          {
-            path: 'grid-bottom',
-            name: 'MeetingGridBottom',
-            component: () => import('@/views/meeting/grid/bottom'),
-            meta: {
-              title: '九宫格底部配置',
-              activeMenu: '/meeting/activity',
-              noCache: true,
-              tagsGroup: 'meeting-config'
-            }
-          }
         ]
       }
     ]

@@ -1,0 +1,1 @@
+import{R as n,S as o,T as e}from"./index-BsAhT54e.js";function t(){return o("Mp-Token")}function r(){return n("Mp-Token")}function s(){return!!t()}function u(n={}){const o=n.mpToken||n.token;return!!o&&(function(n){e("Mp-Token",n)}(decodeURIComponent(o)),!0)}export{u as c,t as g,s as h,r};

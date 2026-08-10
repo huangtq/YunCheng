@@ -33,7 +33,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectSysFileInfoVo"/>
         <where>
             <if test="activityId != null">
-                AND activity_id = #{activityId}
+                AND (activity_id = #{activityId} OR activity_id IS NULL)
             </if>
             <if test="originalName != null and originalName != ''">
                 AND original_name like concat('%', #{originalName}, '%')

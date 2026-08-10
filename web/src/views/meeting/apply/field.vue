@@ -128,36 +128,63 @@
           <div class="phone-frame">
             <div class="phone-notch"></div>
             <div class="phone-screen">
-              <div class="preview-header">报名信息</div>
+              <div class="preview-header">注册报名</div>
               <div class="preview-body">
-                <div v-for="item in previewFields" :key="item.fieldId" class="preview-field">
-                  <div class="preview-label">
-                    <span v-if="item.requiredFlag === '1'" class="req">*</span>
-                    {{ item.fieldName }}
-                  </div>
-                  <div v-if="conditionSummary(item) !== '始终显示'" class="preview-cond">{{ conditionSummary(item) }}</div>
-                  <div class="preview-control">
-                    <template v-if="isOptionType(item.fieldType)">
-                      <div class="preview-options" :class="{ multi: item.fieldType === 'checkbox' }">
-                        <span v-for="(opt, idx) in parseOptions(item.optionsJson)" :key="idx" class="opt">{{ opt }}</span>
-                        <span v-if="!parseOptions(item.optionsJson).length" class="opt muted">选项待配置</span>
-                      </div>
-                    </template>
-                    <template v-else-if="item.fieldType === 'textarea'">
-                      <div class="fake-textarea">{{ item.placeholder || '请输入' }}</div>
-                    </template>
-                    <template v-else-if="item.fieldType === 'system'">
-                      <div class="fake-input">{{ item.placeholder || ('请选择' + item.fieldName) }}</div>
-                    </template>
-                    <template v-else>
-                      <div class="fake-input">{{ item.placeholder || '请输入' }}</div>
-                    </template>
+                <div class="preview-section">
+                  <div class="preview-section-title">报名通道选择</div>
+                  <div class="preview-channel">
+                    <span>{{ channelName || '报名通道' }}</span>
+                    <span class="preview-check">✓</span>
                   </div>
                 </div>
+
+                <div v-if="previewPhoneFields.length" class="preview-section">
+                  <div class="preview-section-title">手机验证</div>
+                  <div v-for="item in previewPhoneFields" :key="'p-' + item.fieldId" class="preview-field">
+                    <div class="preview-label">
+                      <span v-if="item.requiredFlag === '1'" class="req">*</span>
+                      {{ item.fieldName }}
+                    </div>
+                    <div class="preview-control">
+                      <div class="fake-input">{{ item.placeholder || item.fieldName }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="previewInfoFields.length" class="preview-section">
+                  <div class="preview-section-title">报名信息填写</div>
+                  <div v-for="item in previewInfoFields" :key="'i-' + item.fieldId" class="preview-field">
+                    <div class="preview-label">
+                      <span v-if="item.requiredFlag === '1'" class="req">*</span>
+                      {{ item.fieldName }}
+                    </div>
+                    <div v-if="conditionSummary(item) !== '始终显示'" class="preview-cond">{{ conditionSummary(item) }}</div>
+                    <div class="preview-control">
+                      <template v-if="isOptionType(item.fieldType) || (item.fieldType === 'system' && item.fieldKey !== 'region')">
+                        <div class="preview-options" :class="{ multi: item.fieldType === 'checkbox' }">
+                          <span v-for="(opt, idx) in parseOptions(item.optionsJson)" :key="idx" class="opt">{{ opt }}</span>
+                          <span v-if="!parseOptions(item.optionsJson).length" class="opt muted">
+                            {{ item.fieldType === 'system' ? (item.placeholder || ('请选择' + item.fieldName)) : '选项待配置' }}
+                          </span>
+                        </div>
+                      </template>
+                      <template v-else-if="item.fieldType === 'textarea'">
+                        <div class="fake-textarea">{{ item.placeholder || '请输入' }}</div>
+                      </template>
+                      <template v-else-if="item.fieldType === 'system'">
+                        <div class="fake-input">{{ item.placeholder || ('请选择' + item.fieldName) }}</div>
+                      </template>
+                      <template v-else>
+                        <div class="fake-input">{{ item.placeholder || '请输入' }}</div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
                 <div v-if="!previewFields.length" class="preview-empty">暂无启用字段</div>
               </div>
               <div class="preview-footer">
-                <div class="submit-btn">提交报名</div>
+                <div class="submit-btn">提交</div>
               </div>
             </div>
           </div>
@@ -263,6 +290,7 @@
 
 <script setup name="ApplyField">
 import { listApplyField, getApplyField, addApplyField, updateApplyField, delApplyField, changeApplyFieldEnabled } from '@/api/meeting/applyField'
+import { getApplyChannel } from '@/api/meeting/apply'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -270,12 +298,15 @@ const route = useRoute()
 const channelId = computed(() => Number(route.query.channelId || 0))
 const activityId = computed(() => Number(route.query.id || route.query.activityId || 0))
 const fields = ref([])
+const channelName = ref('')
 const loading = ref(false)
 const selectedStandard = ref([])
 const open = ref(false)
 const dialogTitle = ref('')
 const conditionEnabled = ref(false)
 const conditionForm = reactive({ fieldKey: '', value: '' })
+
+const PHONE_KEYS = ['name', 'contactName', 'mobile', 'phone']
 
 const fieldTypeOptions = [
   { label: '单行文本', value: 'input' },
@@ -324,6 +355,12 @@ const previewFields = computed(() =>
   fields.value
     .filter(item => item.enabledFlag === '1')
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+)
+const previewPhoneFields = computed(() =>
+  previewFields.value.filter(item => PHONE_KEYS.includes(item.fieldKey))
+)
+const previewInfoFields = computed(() =>
+  previewFields.value.filter(item => !PHONE_KEYS.includes(item.fieldKey))
 )
 const stats = computed(() => {
   const enabled = fields.value.filter(item => item.enabledFlag === '1')
@@ -415,11 +452,16 @@ function handleConditionFieldChange() {
 function getList() {
   if (!channelId.value) {
     fields.value = []
+    channelName.value = ''
     return
   }
   loading.value = true
-  listApplyField({ channelId: channelId.value }).then(res => {
-    fields.value = res.data || []
+  Promise.all([
+    listApplyField({ channelId: channelId.value }),
+    getApplyChannel(channelId.value).catch(() => ({ data: null }))
+  ]).then(([fieldRes, channelRes]) => {
+    fields.value = fieldRes.data || []
+    channelName.value = (channelRes && channelRes.data && channelRes.data.channelName) || ''
   }).finally(() => {
     loading.value = false
   })
@@ -623,31 +665,84 @@ watch(() => route.query.channelId, () => getList(), { immediate: true })
   flex-direction: column;
 }
 .preview-header {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #fff;
+  background: #fff;
+  color: #303133;
   text-align: center;
-  padding: 16px 12px;
-  font-size: 16px;
+  padding: 14px 12px;
+  font-size: 15px;
   font-weight: 600;
+  border-bottom: 1px solid #eef0f3;
 }
-.preview-body { flex: 1; padding: 14px 12px; }
-.preview-field { margin-bottom: 14px; }
+.preview-body { flex: 1; padding: 12px; }
+.preview-section { margin-bottom: 14px; }
+.preview-section-title {
+  position: relative;
+  padding-left: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
+.preview-section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: #4c6ef5;
+}
+.preview-channel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: #303133;
+}
+.preview-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7c4dff;
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+.preview-field {
+  margin-bottom: 0;
+  background: #fff;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f2f5;
+}
+.preview-section .preview-field:first-of-type { border-radius: 10px 10px 0 0; }
+.preview-section .preview-field:last-of-type {
+  border-bottom: none;
+  border-radius: 0 0 10px 10px;
+}
+.preview-section .preview-field:only-of-type { border-radius: 10px; }
 .preview-label { font-size: 13px; color: #303133; margin-bottom: 6px; font-weight: 500; }
 .preview-cond { font-size: 11px; color: #909399; margin: -2px 0 6px; }
 .req { color: #f56c6c; margin-right: 2px; }
 .fake-input, .fake-textarea {
-  background: #fff;
-  border: 1px solid #e4e7ed;
+  background: #f7f8fa;
+  border: none;
   border-radius: 8px;
   color: #c0c4cc;
   font-size: 13px;
   padding: 10px 12px;
+  text-align: right;
 }
-.fake-textarea { min-height: 64px; }
-.preview-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.fake-textarea { min-height: 64px; text-align: left; }
+.preview-options { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .preview-options .opt {
-  background: #fff;
-  border: 1px solid #dcdfe6;
+  background: #f7f8fa;
+  border: 1px solid #e4e7ed;
   border-radius: 16px;
   padding: 4px 12px;
   font-size: 12px;
@@ -658,10 +753,10 @@ watch(() => route.query.channelId, () => getList(), { immediate: true })
 .preview-empty { text-align: center; color: #909399; padding: 40px 0; font-size: 13px; }
 .preview-footer { padding: 12px; }
 .submit-btn {
-  background: #2563eb;
+  background: #7c4dff;
   color: #fff;
   text-align: center;
-  border-radius: 22px;
+  border-radius: 999px;
   padding: 10px 0;
   font-size: 14px;
   font-weight: 600;

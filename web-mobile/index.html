@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
-    <title>会议 H5</title>
+    <meta name="description" content="会议详情与报名入口，欢迎转发分享。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="会议邀请" />
+    <meta property="og:description" content="会议详情与报名入口，欢迎转发分享。" />
+    <title>会议邀请</title>
+    <script>
+      // 旧 hash 路由兼容：/h5/#/pages/... -> /h5/pages/...
+      (function () {
+        try {
+          var hash = location.hash || ''
+          if (hash.indexOf('#/') !== 0) return
+          var route = hash.slice(1)
+          var pathname = (location.pathname || '/h5/').replace(/\/index\.html$/i, '')
+          var base = '/h5'
+          var idx = pathname.indexOf('/h5')
+          if (idx >= 0) base = pathname.slice(0, idx + 3)
+          base = base.replace(/\/$/, '')
+          location.replace(location.origin + base + route)
+        } catch (e) {}
+      })()
+    </script>
 </head>
 
 <body>

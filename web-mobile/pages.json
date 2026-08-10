@@ -18,12 +18,14 @@
   }, {
     "path": "pages/meeting/module",
     "style": {
+      "navigationStyle": "custom",
       "navigationBarTitleText": "会议模块"
     }
   }, {
     "path": "pages/meeting/apply/index",
     "style": {
-      "navigationBarTitleText": "参会报名"
+      "navigationStyle": "custom",
+      "navigationBarTitleText": "注册报名"
     }
   }, {
     "path": "pages/meeting/apply/form",
@@ -33,7 +35,8 @@
   }, {
     "path": "pages/meeting/apply/mine",
     "style": {
-      "navigationBarTitleText": "我的报名"
+      "navigationStyle": "custom",
+      "navigationBarTitleText": "报名成功"
     }
   }, {
     "path": "pages/common/webview/index",

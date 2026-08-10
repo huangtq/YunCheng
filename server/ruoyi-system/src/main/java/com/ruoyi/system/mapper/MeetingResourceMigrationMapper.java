@@ -13,8 +13,6 @@ public interface MeetingResourceMigrationMapper
 
     int replaceActivityGridMedia(@Param("oldPrefix") String oldPrefix, @Param("newPrefix") String newPrefix);
 
-    int replaceGridBottomIcon(@Param("oldPrefix") String oldPrefix, @Param("newPrefix") String newPrefix);
-
     int replaceActivityNavCover(@Param("oldPrefix") String oldPrefix, @Param("newPrefix") String newPrefix);
 
     int replaceVenueCover(@Param("oldPrefix") String oldPrefix, @Param("newPrefix") String newPrefix);

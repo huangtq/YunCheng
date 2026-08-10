@@ -50,8 +50,7 @@ const isChildPage = computed(() => {
     'MeetingHotel',
     'MeetingHotelOrder',
     'MeetingHotelAssign',
-    'MeetingNav',
-    'MeetingGridBottom'
+    'MeetingNav'
   ].includes(route.name)
 })
 

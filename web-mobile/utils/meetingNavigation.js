@@ -11,14 +11,22 @@ export function openMeetingItem(activityId, item, options = {}) {
 
   if (entry.linkType === 'url' && entry.externalUrl) {
     navigate({
-      url: `/pages/common/webview/index?title=${encodeURIComponent(entry.title)}&url=${encodeURIComponent(entry.externalUrl)}`
+      url: `/pages/common/webview/index?activityId=${encodeURIComponent(activityId || '')}&title=${encodeURIComponent(entry.title)}&url=${encodeURIComponent(entry.externalUrl)}`
     })
     return true
   }
 
-  if (entry.linkType === 'content' && entry.contentType === 'image' && (entry.contentUrl || entry.iconUrl)) {
+  if (entry.linkType === 'content' && entry.contentType === 'image' && (entry.gridId || entry.contentUrl || entry.content || entry.iconUrl)) {
+    const query = [
+      `activityId=${encodeURIComponent(activityId || '')}`,
+      `title=${encodeURIComponent(entry.title)}`
+    ]
+    if (entry.gridId) query.push(`gridId=${encodeURIComponent(entry.gridId)}`)
+    if (entry.contentUrl || entry.iconUrl) {
+      query.push(`url=${encodeURIComponent(entry.contentUrl || entry.iconUrl)}`)
+    }
     navigate({
-      url: `/pages/common/imageview/index?activityId=${activityId}&title=${encodeURIComponent(entry.title)}&url=${encodeURIComponent(entry.contentUrl || entry.iconUrl)}`
+      url: `/pages/common/imageview/index?${query.join('&')}`
     })
     return true
   }

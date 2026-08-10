@@ -122,17 +122,20 @@ public class YcApplyFieldServiceImpl implements IYcApplyFieldService
     private List<YcApplyField> buildStandardFields(Long channelId, Long activityId, String createBy)
     {
         List<YcApplyField> list = new ArrayList<>();
-        list.add(createStandard(channelId, activityId, createBy, "gender", "\u6027\u522b", "radio", "", "[\"\u7537\",\"\u5973\"]", "1", "1", 1));
-        list.add(createStandard(channelId, activityId, createBy, "region", "\u7701\u5e02\u533a", "system", "", "", "1", "1", 2));
-        list.add(createStandard(channelId, activityId, createBy, "company", "\u5355\u4f4d", "input", "", "", "1", "1", 3));
-        list.add(createStandard(channelId, activityId, createBy, "position", "\u804c\u52a1", "input", "", "", "1", "1", 4));
-        list.add(createStandard(channelId, activityId, createBy, "hotel", "\u662f\u5426\u9884\u5b9a\u9152\u5e97", "system", "", "", "1", "1", 5));
+        // 手机验证区：与移动端报名页固定分区对齐，后台可启停/改展示名
+        list.add(createStandard(channelId, activityId, createBy, "name", "\u59d3\u540d", "input", "\u59d3\u540d", "", "1", "1", 1));
+        list.add(createStandard(channelId, activityId, createBy, "mobile", "\u624b\u673a\u53f7", "input", "\u624b\u673a\u53f7", "", "1", "1", 2));
+        list.add(createStandard(channelId, activityId, createBy, "gender", "\u6027\u522b", "radio", "", "[\"\u7537\",\"\u5973\"]", "1", "1", 3));
+        list.add(createStandard(channelId, activityId, createBy, "region", "\u7701\u5e02\u533a", "system", "", "", "1", "1", 4));
+        list.add(createStandard(channelId, activityId, createBy, "company", "\u5355\u4f4d", "input", "", "", "1", "1", 5));
+        list.add(createStandard(channelId, activityId, createBy, "position", "\u804c\u52a1", "input", "", "", "1", "1", 6));
+        list.add(createStandard(channelId, activityId, createBy, "hotel", "\u662f\u5426\u9884\u5b9a\u9152\u5e97", "system", "", "[\"\u662f\",\"\u5426\"]", "1", "1", 7));
         list.add(createStandard(channelId, activityId, createBy, "idCard", "\u8eab\u4efd\u8bc1", "input", "", "", "0", "0", 100));
         list.add(createStandard(channelId, activityId, createBy, "age", "\u5e74\u9f84", "input", "", "", "0", "0", 100));
         list.add(createStandard(channelId, activityId, createBy, "department", "\u79d1\u5ba4", "input", "", "", "0", "0", 100));
         list.add(createStandard(channelId, activityId, createBy, "grassroots", "\u662f\u5426\u6765\u81ea\u57fa\u5c42", "input", "", "", "0", "0", 100));
         list.add(createStandard(channelId, activityId, createBy, "westProvince", "\u662f\u5426\u96b6\u5c5e\u897f\u90e8\u5341\u4e8c\u7701", "input", "", "", "0", "0", 100));
-        list.add(createStandard(channelId, activityId, createBy, "attendType", "\u53c2\u4f1a\u5f62\u5f0f", "input", "", "", "0", "0", 100));
+        list.add(createStandard(channelId, activityId, createBy, "attendType", "\u53c2\u4f1a\u5f62\u5f0f", "select", "\u53c2\u4f1a\u5f62\u5f0f", "[\"\u73b0\u573a\u53c2\u4f1a\",\"\u7ebf\u4e0a\u53c2\u4f1a\"]", "0", "0", 100));
         list.add(createStandard(channelId, activityId, createBy, "email", "\u90ae\u7bb1", "input", "", "", "0", "0", 100));
         list.add(createStandard(channelId, activityId, createBy, "title", "\u804c\u79f0", "input", "\u8bf7\u8f93\u5165\u804c\u79f0", "", "0", "0", 100));
         return list;

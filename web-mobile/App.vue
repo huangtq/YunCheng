@@ -1,7 +1,10 @@
 <script setup>
 import { onLaunch } from '@dcloudio/uni-app'
+import { redirectLegacyHashIfNeeded } from '@/utils/h5Route'
 
-onLaunch(() => {})
+onLaunch(() => {
+  redirectLegacyHashIfNeeded()
+})
 </script>
 
 <style lang="scss">

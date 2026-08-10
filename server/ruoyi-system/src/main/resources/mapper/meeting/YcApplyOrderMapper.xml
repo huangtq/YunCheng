@@ -47,6 +47,35 @@
             <if test="mobile != null and mobile != ''">and o.mobile like concat('%', #{mobile}, '%')</if>
             <if test="orderStatus != null and orderStatus != ''">and o.order_status = #{orderStatus}</if>
             <if test="checkinStatus != null and checkinStatus != ''">and o.checkin_status = #{checkinStatus}</if>
+            <if test="params != null and params.createBy != null and params.createBy != ''">and o.create_by = #{params.createBy}</if>
+            <if test="createBy != null and createBy != ''">and o.create_by = #{createBy}</if>
+        </where>
+        order by o.create_time desc, o.order_id desc
+    </select>
+
+    <!-- 门户：按微信 openid 或手机号查该会议下本人订单 -->
+    <select id="selectPortalUserOrders" resultMap="YcApplyOrderResult">
+        <include refid="selectYcApplyOrderVo"/>
+        <where>
+            o.del_flag = '0'
+            <if test="activityId != null">and o.activity_id = #{activityId}</if>
+            and (
+                <choose>
+                    <when test="openid != null and openid != '' and mobile != null and mobile != ''">
+                        o.create_by = #{openid} or o.mobile = #{mobile}
+                    </when>
+                    <when test="openid != null and openid != ''">
+                        o.create_by = #{openid}
+                    </when>
+                    <when test="mobile != null and mobile != ''">
+                        o.mobile = #{mobile}
+                    </when>
+                    <otherwise>
+                        1 = 0
+                    </otherwise>
+                </choose>
+            )
+            <if test="orderStatus != null and orderStatus != ''">and o.order_status = #{orderStatus}</if>
         </where>
         order by o.create_time desc, o.order_id desc
     </select>
