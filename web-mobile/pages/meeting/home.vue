@@ -457,8 +457,18 @@ function onGridClick(item) {
     return
   }
   if (item.linkType === 'content' && item.content) {
+    const query = [
+      `activityId=${encodeURIComponent(activityId.value || '')}`,
+      `title=${encodeURIComponent(item.title || '内容')}`
+    ]
+    if (item.gridId) {
+      query.push(`gridId=${encodeURIComponent(item.gridId)}`)
+    } else {
+      // 兼容没有 gridId 的旧入口。
+      query.push(`content=${encodeURIComponent(item.content)}`)
+    }
     uni.navigateTo({
-      url: `/pages/common/textview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title)}&content=${encodeURIComponent(item.content)}`
+      url: `/pages/common/textview/index?${query.join('&')}`
     })
     return
   }

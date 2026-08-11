@@ -19,6 +19,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.framework.config.ServerConfig;
+import com.ruoyi.system.service.TestResourceStorage;
 
 /**
  * 通用请求处理
@@ -33,6 +34,9 @@ public class CommonController
 
     @Autowired
     private ServerConfig serverConfig;
+
+    @Autowired
+    private TestResourceStorage testResourceStorage;
 
     private static final String FILE_DELIMITER = ",";
 
@@ -80,6 +84,7 @@ public class CommonController
             String filePath = RuoYiConfig.getUploadPath();
             // 上传并返回新文件名称
             String fileName = FileUploadUtils.upload(filePath, file);
+            testResourceStorage.upload(fileName);
             String url = serverConfig.getUrl() + fileName;
             AjaxResult ajax = AjaxResult.success();
             ajax.put("url", url);
@@ -112,6 +117,7 @@ public class CommonController
             {
                 // 上传并返回新文件名称
                 String fileName = FileUploadUtils.upload(filePath, file);
+                testResourceStorage.upload(fileName);
                 String url = serverConfig.getUrl() + fileName;
                 urls.add(url);
                 fileNames.add(fileName);

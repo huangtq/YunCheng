@@ -26,6 +26,7 @@
         <fastjson.version>2.0.62</fastjson.version>
         <oshi.version>7.3.0</oshi.version>
         <commons.io.version>2.22.0</commons.io.version>
+        <jsch.version>0.2.23</jsch.version>
         <poi.version>4.1.2</poi.version>
         <jwt.version>0.9.1</jwt.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
@@ -89,6 +90,13 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons.io.version}</version>
+            </dependency>
+
+            <!-- SFTP client for the isolated test resource store -->
+            <dependency>
+                <groupId>com.github.mwiede</groupId>
+                <artifactId>jsch</artifactId>
+                <version>${jsch.version}</version>
             </dependency>
 
             <!-- excel工具 -->

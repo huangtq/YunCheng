@@ -12,8 +12,7 @@
 
     <view class="sub-content">
       <view class="content-card">
-        <text class="content-title">{{ title }}</text>
-        <text class="content-body">{{ content }}</text>
+        <rich-text class="content-body" :nodes="content" />
       </view>
     </view>
 
@@ -42,6 +41,7 @@ import { setupMeetingShare } from '@/utils/wxShare'
 const title = ref('内容')
 const content = ref('')
 const activityId = ref('')
+const gridId = ref('')
 const drawerOpen = ref(false)
 const gridItems = ref([])
 
@@ -49,10 +49,17 @@ onLoad(options => {
   title.value = decodeURIComponent(options?.title || '内容')
   content.value = decodeURIComponent(options?.content || '')
   activityId.value = options?.activityId || ''
+  gridId.value = options?.gridId || ''
   if (activityId.value) setupMeetingShare(activityId.value)
   if (!activityId.value) return
   getPortalGrid(activityId.value)
-    .then(res => { gridItems.value = res.data || [] })
+    .then(res => {
+      gridItems.value = res.data || []
+      const currentItem = gridItems.value.find(item => String(item.gridId) === String(gridId.value))
+      if (currentItem?.content) {
+        content.value = currentItem.content
+      }
+    })
     .catch(() => { gridItems.value = [] })
 })
 
@@ -117,19 +124,19 @@ function selectMenu(item) {
   padding: 24px;
   background: #fff;
 }
-.content-title {
-  display: block;
-  margin-bottom: 20px;
-  color: #303133;
-  font-size: 22px;
-  font-weight: 600;
-}
 .content-body {
   display: block;
   color: #303133;
   font-size: 17px;
   line-height: 1.8;
-  white-space: pre-wrap;
+}
+.content-body :deep(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.content-body :deep(p) {
+  margin: 0 0 16px;
 }
 .drawer-mask {
   position: fixed;

@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-upload
-      :action="uploadUrl"
+      :action="resolvedUploadUrl"
       :before-upload="handleBeforeUpload"
       :on-success="handleUploadSuccess"
       :on-error="handleUploadError"
@@ -35,7 +35,6 @@ import { getToken } from "@/utils/auth"
 const { proxy } = getCurrentInstance()
 
 const quillEditorRef = ref()
-const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + "/common/upload") // 上传的图片服务器地址
 const headers = ref({
   Authorization: "Bearer " + getToken()
 })
@@ -69,8 +68,15 @@ const props = defineProps({
   type: {
     type: String,
     default: "url",
+  },
+  /* 图片上传接口；未传入时使用通用上传接口 */
+  uploadUrl: {
+    type: String,
+    default: "",
   }
 })
+
+const resolvedUploadUrl = computed(() => props.uploadUrl || (import.meta.env.VITE_APP_BASE_API + "/common/upload"))
 
 const options = ref({
   theme: "snow",
@@ -157,8 +163,16 @@ function handleUploadSuccess(res, file) {
     let quill = toRaw(quillEditorRef.value).getQuill()
     // 获取光标位置
     let length = quill.selection.savedRange.index
-    // 插入图片，res.url为服务器返回的图片链接地址
-    quill.insertEmbed(length, "image", import.meta.env.VITE_APP_BASE_API + res.fileName)
+    // 会议文件接口将上传结果放在 data 内，通用接口则直接返回 fileName。
+    const uploadResult = res.data || res
+    const imageUrl = uploadResult.url || (uploadResult.fileName
+      ? import.meta.env.VITE_APP_BASE_API + uploadResult.fileName
+      : "")
+    if (!imageUrl) {
+      proxy.$modal.msgError("图片插入失败")
+      return
+    }
+    quill.insertEmbed(length, "image", imageUrl)
     // 调整光标到最后
     quill.setSelection(length + 1)
   } else {
@@ -181,17 +195,19 @@ function handlePasteCapture(e) {
         e.preventDefault()
         const file = item.getAsFile()
         insertImage(file)
+        break
       }
     }
   }
 }
 
 function insertImage(file) {
+  if (!file || !handleBeforeUpload(file)) return
   const formData = new FormData()
   formData.append("file", file)
-  axios.post(uploadUrl.value, formData, { headers: { "Content-Type": "multipart/form-data", Authorization: headers.value.Authorization } }).then(res => {
-    handleUploadSuccess(res.data)
-  })
+  axios.post(resolvedUploadUrl.value, formData, { headers: { "Content-Type": "multipart/form-data", Authorization: headers.value.Authorization } })
+    .then(res => handleUploadSuccess(res.data))
+    .catch(handleUploadError)
 }
 </script>
 

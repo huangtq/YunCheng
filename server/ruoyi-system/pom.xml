@@ -23,6 +23,12 @@
             <artifactId>ruoyi-common</artifactId>
         </dependency>
 
+        <!-- SFTP-backed test resource synchronization -->
+        <dependency>
+            <groupId>com.github.mwiede</groupId>
+            <artifactId>jsch</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

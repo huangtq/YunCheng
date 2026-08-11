@@ -1,0 +1,166 @@
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective settings
+[WARNING] Unrecognised tag: 'id' (position: START_TAG seen ...</profile>\r\n    -->\r\n\t<id>... @213:6)  @ C:\Program Files\apache-maven-3.6.3\bin\..\conf\settings.xml, line 213, column 6
+[WARNING] 
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] ruoyi                                                              [pom]
+[INFO] ruoyi-common                                                       [jar]
+[INFO] ruoyi-system                                                       [jar]
+[INFO] ruoyi-framework                                                    [jar]
+[INFO] ruoyi-quartz                                                       [jar]
+[INFO] ruoyi-admin                                                        [jar]
+[INFO] 
+[INFO] --------------------------< com.ruoyi:ruoyi >---------------------------
+[INFO] Building ruoyi 3.9.2                                               [1/6]
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-common >-----------------------
+[INFO] Building ruoyi-common 3.9.2                                        [2/6]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ ruoyi-common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-common\src\main\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ ruoyi-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ ruoyi-common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-common\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ ruoyi-common ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ ruoyi-common ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ ruoyi-common ---
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-system >-----------------------
+[INFO] Building ruoyi-system 3.9.2                                        [3/6]
+[INFO] --------------------------------[ jar ]---------------------------------
+Downloading from public: https://maven.aliyun.com/repository/public/com/github/mwiede/jsch/0.2.23/jsch-0.2.23.pom
+Progress (1): 2.1 kB                    Downloaded from public: https://maven.aliyun.com/repository/public/com/github/mwiede/jsch/0.2.23/jsch-0.2.23.pom (2.1 kB at 2.2 kB/s)
+Downloading from public: https://maven.aliyun.com/repository/public/com/github/mwiede/jsch/0.2.23/jsch-0.2.23.jar
+Progress (1): 4.1/553 kBProgress (1): 7.2/553 kBProgress (1): 11/553 kB Progress (1): 15/553 kBProgress (1): 19/553 kBProgress (1): 23/553 kBProgress (1): 27/553 kBProgress (1): 31/553 kBProgress (1): 35/553 kBProgress (1): 39/553 kBProgress (1): 43/553 kBProgress (1): 47/553 kBProgress (1): 50/553 kBProgress (1): 54/553 kBProgress (1): 57/553 kBProgress (1): 61/553 kBProgress (1): 65/553 kBProgress (1): 69/553 kBProgress (1): 73/553 kBProgress (1): 77/553 kBProgress (1): 81/553 kBProgress (1): 86/553 kBProgress (1): 90/553 kBProgress (1): 94/553 kBProgress (1): 98/553 kBProgress (1): 102/553 kBProgress (1): 106/553 kBProgress (1): 110/553 kBProgress (1): 114/553 kBProgress (1): 118/553 kBProgress (1): 122/553 kBProgress (1): 126/553 kBProgress (1): 130/553 kBProgress (1): 134/553 kBProgress (1): 138/553 kBProgress (1): 142/553 kBProgress (1): 146/553 kBProgress (1): 151/553 kBProgress (1): 155/553 kBProgress (1): 159/553 kBProgress (1): 163/553 kBProgress (1): 167/553 kBProgress (1): 171/553 kBProgress (1): 175/553 kBProgress (1): 179/553 kBProgress (1): 183/553 kBProgress (1): 187/553 kBProgress (1): 191/553 kBProgress (1): 194/553 kBProgress (1): 198/553 kBProgress (1): 202/553 kBProgress (1): 206/553 kBProgress (1): 210/553 kBProgress (1): 213/553 kBProgress (1): 217/553 kBProgress (1): 221/553 kBProgress (1): 225/553 kBProgress (1): 229/553 kBProgress (1): 233/553 kBProgress (1): 237/553 kBProgress (1): 242/553 kBProgress (1): 246/553 kBProgress (1): 250/553 kBProgress (1): 254/553 kBProgress (1): 258/553 kBProgress (1): 262/553 kBProgress (1): 266/553 kBProgress (1): 270/553 kBProgress (1): 274/553 kBProgress (1): 278/553 kBProgress (1): 283/553 kBProgress (1): 287/553 kBProgress (1): 291/553 kBProgress (1): 295/553 kBProgress (1): 297/553 kBProgress (1): 301/553 kBProgress (1): 305/553 kBProgress (1): 309/553 kBProgress (1): 313/553 kBProgress (1): 317/553 kBProgress (1): 322/553 kBProgress (1): 326/553 kBProgress (1): 328/553 kBProgress (1): 332/553 kBProgress (1): 336/553 kBProgress (1): 341/553 kBProgress (1): 345/553 kBProgress (1): 349/553 kBProgress (1): 353/553 kBProgress (1): 357/553 kBProgress (1): 361/553 kBProgress (1): 365/553 kBProgress (1): 369/553 kBProgress (1): 373/553 kBProgress (1): 377/553 kBProgress (1): 382/553 kBProgress (1): 386/553 kBProgress (1): 390/553 kBProgress (1): 392/553 kBProgress (1): 396/553 kBProgress (1): 400/553 kBProgress (1): 404/553 kBProgress (1): 408/553 kBProgress (1): 412/553 kBProgress (1): 416/553 kBProgress (1): 421/553 kBProgress (1): 425/553 kBProgress (1): 429/553 kBProgress (1): 433/553 kBProgress (1): 437/553 kBProgress (1): 441/553 kBProgress (1): 445/553 kBProgress (1): 449/553 kBProgress (1): 453/553 kBProgress (1): 457/553 kBProgress (1): 461/553 kBProgress (1): 466/553 kBProgress (1): 470/553 kBProgress (1): 474/553 kBProgress (1): 477/553 kBProgress (1): 481/553 kBProgress (1): 485/553 kBProgress (1): 489/553 kBProgress (1): 494/553 kBProgress (1): 498/553 kBProgress (1): 502/553 kBProgress (1): 504/553 kBProgress (1): 508/553 kBProgress (1): 512/553 kBProgress (1): 516/553 kBProgress (1): 520/553 kBProgress (1): 524/553 kBProgress (1): 527/553 kBProgress (1): 531/553 kBProgress (1): 535/553 kBProgress (1): 539/553 kBProgress (1): 544/553 kBProgress (1): 548/553 kBProgress (1): 552/553 kBProgress (1): 553 kB                        Downloaded from public: https://maven.aliyun.com/repository/public/com/github/mwiede/jsch/0.2.23/jsch-0.2.23.jar (553 kB at 241 kB/s)
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ ruoyi-system ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 40 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ ruoyi-system ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 155 source files with javac [debug parameters target 17] to target\classes
+[INFO] /D:/MyProject/YunCheng/server/ruoyi-system/src/main/java/com/ruoyi/system/service/impl/SysFileInfoServiceImpl.java: D:\MyProject\YunCheng\server\ruoyi-system\src\main\java\com\ruoyi\system\service\impl\SysFileInfoServiceImpl.java使用或覆盖了已过时的 API。
+[INFO] /D:/MyProject/YunCheng/server/ruoyi-system/src/main/java/com/ruoyi/system/service/impl/SysFileInfoServiceImpl.java: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ ruoyi-system ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-system\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ ruoyi-system ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ ruoyi-system ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ ruoyi-system ---
+[INFO] Building jar: D:\MyProject\YunCheng\server\ruoyi-system\target\ruoyi-system-3.9.2.jar
+[INFO] 
+[INFO] ---------------------< com.ruoyi:ruoyi-framework >----------------------
+[INFO] Building ruoyi-framework 3.9.2                                     [4/6]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ ruoyi-framework ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-framework\src\main\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ ruoyi-framework ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 47 source files with javac [debug parameters target 17] to target\classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ ruoyi-framework ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-framework\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ ruoyi-framework ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ ruoyi-framework ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ ruoyi-framework ---
+[INFO] Building jar: D:\MyProject\YunCheng\server\ruoyi-framework\target\ruoyi-framework-3.9.2.jar
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-quartz >-----------------------
+[INFO] Building ruoyi-quartz 3.9.2                                        [5/6]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ ruoyi-quartz ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 2 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ ruoyi-quartz ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 18 source files with javac [debug parameters target 17] to target\classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ ruoyi-quartz ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-quartz\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ ruoyi-quartz ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ ruoyi-quartz ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ ruoyi-quartz ---
+[INFO] Building jar: D:\MyProject\YunCheng\server\ruoyi-quartz\target\ruoyi-quartz-3.9.2.jar
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-admin >------------------------
+[INFO] Building ruoyi-admin 3.9.2                                         [6/6]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ ruoyi-admin ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 52 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ ruoyi-admin ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 48 source files with javac [debug parameters target 17] to target\classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ ruoyi-admin ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory D:\MyProject\YunCheng\server\ruoyi-admin\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ ruoyi-admin ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ ruoyi-admin ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ ruoyi-admin ---
+[INFO] Building jar: D:\MyProject\YunCheng\server\ruoyi-admin\target\ruoyi-admin.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:4.0.6:repackage (default) @ ruoyi-admin ---
+[INFO] Replacing main artifact D:\MyProject\YunCheng\server\ruoyi-admin\target\ruoyi-admin.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\MyProject\YunCheng\server\ruoyi-admin\target\ruoyi-admin.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for ruoyi 3.9.2:
+[INFO] 
+[INFO] ruoyi .............................................. SUCCESS [  0.126 s]
+[INFO] ruoyi-common ....................................... SUCCESS [  7.270 s]
+[INFO] ruoyi-system ....................................... SUCCESS [ 31.372 s]
+[INFO] ruoyi-framework .................................... SUCCESS [ 18.329 s]
+[INFO] ruoyi-quartz ....................................... SUCCESS [  9.295 s]
+[INFO] ruoyi-admin ........................................ SUCCESS [ 30.088 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:38 min
+[INFO] Finished at: 2026-08-11T22:03:56+08:00
+[INFO] ------------------------------------------------------------------------

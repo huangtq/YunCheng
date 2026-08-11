@@ -15,6 +15,7 @@ import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.system.domain.SysFileInfo;
 import com.ruoyi.system.mapper.SysFileInfoMapper;
 import com.ruoyi.system.service.ISysFileInfoService;
+import com.ruoyi.system.service.TestResourceStorage;
 
 /**
  * 文件管理 服务层实现
@@ -26,6 +27,9 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
 {
     @Autowired
     private SysFileInfoMapper sysFileInfoMapper;
+
+    @Autowired
+    private TestResourceStorage testResourceStorage;
 
     /**
      * 查询文件
@@ -69,6 +73,15 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
     {
         String filePath = RuoYiConfig.getUploadPath();
         String fileName = FileUploadUtils.upload(filePath, file);
+        try
+        {
+            testResourceStorage.upload(fileName);
+        }
+        catch (RuntimeException e)
+        {
+            FileUtils.deleteFile(filePath + FileUtils.stripPrefix(fileName));
+            throw e;
+        }
 
         SysFileInfo sysFileInfo = new SysFileInfo();
         String originalName = file.getOriginalFilename();
@@ -97,6 +110,7 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
         List<SysFileInfo> fileList = sysFileInfoMapper.selectSysFileInfoByIds(fileIds);
         for (SysFileInfo fileInfo : fileList)
         {
+            testResourceStorage.delete(fileInfo.getFileName());
             deleteLocalFile(fileInfo.getFileName());
         }
         return sysFileInfoMapper.deleteSysFileInfoByIds(fileIds);
@@ -115,6 +129,7 @@ public class SysFileInfoServiceImpl implements ISysFileInfoService
         }
         for (SysFileInfo fileInfo : fileList)
         {
+            testResourceStorage.delete(fileInfo.getFileName());
             deleteLocalFile(fileInfo.getFileName());
         }
         return sysFileInfoMapper.deleteSysFileInfoByIds(fileIds);

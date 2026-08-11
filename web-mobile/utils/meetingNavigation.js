@@ -32,8 +32,18 @@ export function openMeetingItem(activityId, item, options = {}) {
   }
 
   if (entry.linkType === 'content' && entry.content) {
+    const query = [
+      `activityId=${encodeURIComponent(activityId || '')}`,
+      `title=${encodeURIComponent(entry.title)}`
+    ]
+    if (entry.gridId) {
+      query.push(`gridId=${encodeURIComponent(entry.gridId)}`)
+    } else {
+      // 兼容没有 gridId 的旧入口。
+      query.push(`content=${encodeURIComponent(entry.content)}`)
+    }
     navigate({
-      url: `/pages/common/textview/index?activityId=${activityId}&title=${encodeURIComponent(entry.title)}&content=${encodeURIComponent(entry.content)}`
+      url: `/pages/common/textview/index?${query.join('&')}`
     })
     return true
   }

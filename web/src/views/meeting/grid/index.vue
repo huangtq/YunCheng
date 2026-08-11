@@ -378,7 +378,12 @@
                 v-model="form.contentUrl"
                 :show-tip="false"
               />
-              <editor v-else v-model="form.content" :min-height="220" />
+              <editor
+                v-else
+                v-model="form.content"
+                :min-height="220"
+                :upload-url="contentImageUploadUrl"
+              />
             </el-form-item>
           </section>
 
@@ -462,6 +467,9 @@ const router = useRouter()
 const baseUrl = import.meta.env.VITE_APP_BASE_API
 
 const activityId = computed(() => route.query.id)
+const contentImageUploadUrl = computed(() => activityId.value
+  ? `${baseUrl}/meeting/activity/${activityId.value}/file/upload`
+  : "")
 const activityInfo = ref({})
 const loading = ref(true)
 const gridList = ref([])
