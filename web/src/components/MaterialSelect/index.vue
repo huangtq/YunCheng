@@ -120,7 +120,7 @@ const queryParams = ref({
 })
 
 const mediaType = computed(() => props.mediaType)
-const isLegacyPath = computed(() => props.modelValue.startsWith("/reference/"))
+const isLegacyPath = computed(() => String(props.modelValue || "").startsWith("/reference/"))
 
 const displayUrl = computed(() => {
   if (!props.modelValue) return ""

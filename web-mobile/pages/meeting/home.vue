@@ -61,14 +61,20 @@
         </view>
       </view>
 
-      <view v-else class="standard-page">
+      <view v-else class="standard-page" :class="{ 'is-image-card-grid': isImageCardGrid }" :style="standardPageStyle">
         <view class="cover" :style="coverStyle">
+          <image
+            v-if="isImageCardGrid && activity.coverUrl"
+            class="cover-auto-image"
+            :src="resolveUrl(activity.coverUrl)"
+            mode="widthFix"
+          />
           <view class="cover-mask">
             <view class="title">{{ activity.activityName || '会议' }}</view>
             <view v-if="layout.showRegisterCount" class="meta-row">
               已报名 {{ activity.registerCount || 0 }} 人
             </view>
-            <view v-if="layout.showCountdown && countdown" class="countdown-wrap">
+            <view v-if="layout.showCountdown && countdown && !isImageCardGrid" class="countdown-wrap">
               <view v-if="countdown.ended" class="countdown-ended">会议进行中</view>
               <view v-else-if="layout.countdownStyle === 'digital'">
                 <CountdownBoard
@@ -88,6 +94,10 @@
               </view>
             </view>
           </view>
+        </view>
+
+        <view v-if="layout.showCountdown && countdown && isImageCardGrid" class="image-card-countdown">
+          <CountdownBoard :countdown="countdown" :theme-color="layout.themeColor" />
         </view>
 
         <view v-if="layout.notice" class="notice" @click="showNotice">
@@ -110,7 +120,7 @@
               <image
                 v-if="isImageCard(item)"
                 class="grid-card-image"
-                :src="resolveUrl(item.iconUrl)"
+                :src="resolveUrl(gridCardUrl(item))"
                 mode="widthFix"
               />
               <template v-else>
@@ -120,7 +130,7 @@
                     :icon-key="item.iconKey"
                     :icon-url="item.iconUrl"
                     :size="isIconOnly ? 64 : 56"
-                    :color="layout.themeColor"
+                    color="#fff"
                   />
                 </view>
                 <text v-if="!isIconOnly" class="grid-text">{{ item.title }}</text>
@@ -190,11 +200,19 @@ const isLightTile = computed(() => isTile.value && isLightColor(layout.value.the
 const tileSurfaceColor = computed(() => (isLightTile.value ? (layout.value.themeColor || '#f6f6f6') : '#061a74'))
 const isIconOnly = computed(() => layout.value.gridStyle === 'icon')
 const gridClass = computed(() => `cols-${layout.value.gridColumns || 3}`)
+const isImageCardGrid = computed(() => (
+  Number(layout.value.gridColumns) === 2
+  && gridList.value.some(item => item?.iconType === 'image' && !!gridCardUrl(item))
+))
 const audioUrl = computed(() => layout.value.audioUrl ? resolveUrl(layout.value.audioUrl) : '')
 const audioPlaying = ref(false)
 let audioContext = null
+const gridIconSurfaceColor = computed(() => {
+  const color = layout.value.themeColor || '#1f6feb'
+  return isLightColor(color) ? '#4f46e5' : color
+})
 const gridIconWrapStyle = computed(() => ({
-  background: `${layout.value.themeColor || '#1f6feb'}14`
+  background: gridIconSurfaceColor.value
 }))
 
 const tilePageStyle = computed(() => {
@@ -216,6 +234,25 @@ const imageMapStyle = computed(() => {
     backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
     backgroundSize: '100% auto',
     backgroundRepeat: 'no-repeat'
+  }
+})
+
+const standardPageStyle = computed(() => {
+  const background = layout.value.backgroundUrl
+  const visual = layout.value.visual || {}
+  const imageCardGap = Math.max(Number(visual.itemGap) || 10, 18)
+  const imageCardPadding = Math.max(Number(visual.itemPadding) || 10, 12)
+  return {
+    backgroundColor: isImageCardGrid.value ? '#eaf8ff' : '#fff',
+    backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
+    backgroundSize: '100% auto',
+    backgroundPosition: 'top center',
+    backgroundRepeat: 'repeat-y',
+    '--grid-hero-height': visual.heroHeight > 0 ? `${visual.heroHeight}rpx` : 'auto',
+    '--grid-countdown-top': `${visual.countdownTop || 16}rpx`,
+    '--grid-countdown-bottom': `${visual.countdownBottom || 20}rpx`,
+    '--grid-item-gap': `${imageCardGap}rpx`,
+    '--grid-item-padding': `${imageCardPadding}rpx`
   }
 })
 
@@ -277,7 +314,11 @@ async function loadHome() {
 }
 
 function isImageCard(item) {
-  return item && item.iconType === 'image' && !!item.iconUrl && Number(layout.value.gridColumns) === 2
+  return item && item.iconType === 'image' && !!gridCardUrl(item) && Number(layout.value.gridColumns) === 2
+}
+
+function gridCardUrl(item) {
+  return item?.contentUrl || item?.iconUrl || ''
 }
 
 function isLightColor(color) {
@@ -515,6 +556,69 @@ function onFooterClick() {
   line-height: 1;
 }
 .standard-page { min-height: 100vh; }
+.standard-page.is-image-card-grid {
+  padding: 0 20rpx 32rpx;
+}
+.standard-page.is-image-card-grid .cover {
+  height: var(--grid-hero-height, auto);
+  min-height: 0;
+  margin: 0 -20rpx;
+  background: none;
+}
+.standard-page.is-image-card-grid .cover-auto-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.standard-page.is-image-card-grid .cover-mask {
+  background: transparent;
+}
+.standard-page.is-image-card-grid .title,
+.standard-page.is-image-card-grid .meta-row {
+  display: none;
+}
+.image-card-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 -20rpx;
+  padding: var(--grid-countdown-top, 16rpx) 20rpx var(--grid-countdown-bottom, 20rpx);
+  background: #eaf8ff;
+}
+.image-card-countdown :deep(.countdown-board) {
+  color: #202a38;
+}
+.image-card-countdown :deep(.heading-line) {
+  background: rgba(32, 42, 56, 0.68);
+}
+.image-card-countdown :deep(.group-label) {
+  color: #202a38;
+}
+.standard-page.is-image-card-grid .section {
+  margin: 12rpx 0 0;
+  padding: 10rpx;
+  background: transparent;
+  box-shadow: none;
+}
+.standard-page.is-image-card-grid .section-title {
+  display: none;
+}
+.standard-page.is-image-card-grid .grid-item.is-image-card {
+  padding: var(--grid-item-padding, 10rpx);
+}
+.standard-page.is-image-card-grid .grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--grid-item-gap, 10rpx);
+}
+.standard-page.is-image-card-grid .grid-item {
+  width: auto;
+}
+.standard-page.is-image-card-grid .grid-card-image {
+  border-radius: 10rpx;
+  box-shadow: none;
+}
 .tile-page {
   min-height: 100vh;
   background: #061a74;

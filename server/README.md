@@ -1,5 +1,7 @@
 # YunCheng Server
 
+> Production deployment: see [`../docs/production-deployment.md`](../docs/production-deployment.md). Keep the production external configuration unchanged during releases.
+
 基于 RuoYi-Vue 的后端服务，Spring Boot + Spring Security + Redis + JWT。
 
 ## 技术栈

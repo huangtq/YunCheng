@@ -3,10 +3,17 @@ param(
     [ValidateSet("Start", "Stop", "Status")]
     [string]$Action = "Status",
 
-    [string]$KeyPath = (Join-Path $HOME ".ssh\id_ed25519")
+    [string]$KeyPath = ""
 )
 
 $ErrorActionPreference = "Stop"
+
+$KeyPath = if ([string]::IsNullOrWhiteSpace($KeyPath)) {
+    Join-Path $HOME ".ssh\yuncheng_tunnel"
+}
+else {
+    $KeyPath
+}
 
 $ServerHost = "124.223.26.157"
 $SshUser = "ubuntu"

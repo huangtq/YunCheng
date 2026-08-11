@@ -30,7 +30,9 @@ insert ignore into sys_menu values('2122', '报名订单查询', '2101', '22', '
 insert ignore into sys_menu values('2123', '报名订单新增', '2101', '23', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:order:add', '#', 'admin', sysdate(), '', null, '');
 insert ignore into sys_menu values('2124', '报名订单修改', '2101', '24', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:order:edit', '#', 'admin', sysdate(), '', null, '');
 insert ignore into sys_menu values('2125', '报名订单删除', '2101', '25', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:order:remove', '#', 'admin', sysdate(), '', null, '');
+insert ignore into sys_menu values('2126', '报名订单导出', '2101', '26', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:order:export', '#', 'admin', sysdate(), '', null, '');
 insert ignore into sys_role_menu values ('1', '2122');
 insert ignore into sys_role_menu values ('1', '2123');
 insert ignore into sys_role_menu values ('1', '2124');
 insert ignore into sys_role_menu values ('1', '2125');
+insert ignore into sys_role_menu values ('1', '2126');

@@ -34,6 +34,7 @@ export function resolveGridStyle(gridTemplate) {
 export function buildHomeLayout(rawLayout = {}, config = {}) {
   const gridTemplate = normalizeGridTemplate(rawLayout.gridTemplate || config.gridTemplate || '1')
   const rawFooter = rawLayout.footer || {}
+  const rawVisual = rawLayout.visual || {}
   return {
     template: rawLayout.template || config.mobileTemplate || 'standard',
     themeColor: rawLayout.themeColor || config.mobileThemeColor || '#1f6feb',
@@ -43,6 +44,13 @@ export function buildHomeLayout(rawLayout = {}, config = {}) {
     gridTemplate,
     gridColumns: Number(rawLayout.gridColumns) || resolveGridColumns(gridTemplate),
     gridStyle: rawLayout.gridStyle || resolveGridStyle(gridTemplate),
+    visual: {
+      heroHeight: Number(rawVisual.heroHeight) || 0,
+      countdownTop: Number(rawVisual.countdownTop) || 16,
+      countdownBottom: Number(rawVisual.countdownBottom) || 20,
+      itemGap: Number(rawVisual.itemGap) || 10,
+      itemPadding: Number(rawVisual.itemPadding) || 10
+    },
     audioUrl: rawLayout.audioUrl || config.audioUrl || '',
     audioAutoplay: rawLayout.audioAutoplay === true || String(config.audioAutoplay) === '1',
     audioLoop: rawLayout.audioLoop !== false && String(config.audioLoop) !== '0',

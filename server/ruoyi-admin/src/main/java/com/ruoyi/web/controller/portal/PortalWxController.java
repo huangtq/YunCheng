@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.portal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -339,9 +340,8 @@ public class PortalWxController extends BaseController
             return null;
         }
         String title = StringUtils.isNotEmpty(activity.getActivityName()) ? activity.getActivityName() : "会议邀请";
-        String place = joinPlace(activity.getProvince(), activity.getCity(), activity.getAddress());
-        String dateText = activity.getStartTime() == null ? ""
-            : DateUtils.parseDateToStr("yyyy-MM-dd", activity.getStartTime());
+        String place = StringUtils.defaultString(activity.getAddress());
+        String dateText = formatMeetingDate(activity.getStartTime(), activity.getEndTime());
         String desc = buildShareDesc(place, dateText, activity.getRemark());
         String imgUrl = toAbsoluteUrl(activity.getCoverUrl());
         String h5Url = buildPlainH5HomeUrl(activityId);
@@ -362,13 +362,13 @@ public class PortalWxController extends BaseController
     private String buildShareDesc(String place, String dateText, String remark)
     {
         List<String> parts = new ArrayList<>();
-        if (StringUtils.isNotEmpty(place))
-        {
-            parts.add("地点：" + place);
-        }
         if (StringUtils.isNotEmpty(dateText))
         {
             parts.add("时间：" + dateText);
+        }
+        if (StringUtils.isNotEmpty(place))
+        {
+            parts.add("地点：" + place);
         }
         if (parts.isEmpty() && StringUtils.isNotEmpty(remark))
         {
@@ -378,7 +378,7 @@ public class PortalWxController extends BaseController
         {
             return "点击查看会议详情，欢迎报名参加";
         }
-        // 微信卡片描述通常单行展示：地点在前，时间在后
+        // 标题由微信卡片单独展示，描述按时间、地点的顺序拼接。
         return trimDesc(String.join("　", parts));
     }
 
@@ -392,22 +392,13 @@ public class PortalWxController extends BaseController
         return "https://yunchengmice.cn/h5/share?activityId=" + id;
     }
 
-    private static String joinPlace(String province, String city, String address)
+    private String formatMeetingDate(Date startTime, Date endTime)
     {
-        StringBuilder sb = new StringBuilder();
-        if (StringUtils.isNotEmpty(province))
-        {
-            sb.append(province);
-        }
-        if (StringUtils.isNotEmpty(city) && (StringUtils.isEmpty(province) || !city.equals(province)))
-        {
-            sb.append(city);
-        }
-        if (StringUtils.isNotEmpty(address))
-        {
-            sb.append(address);
-        }
-        return sb.toString();
+        if (startTime == null) return "";
+        String start = DateUtils.parseDateToStr("yyyy年MM月dd日", startTime);
+        if (endTime == null) return start;
+        String end = DateUtils.parseDateToStr("yyyy年MM月dd日", endTime);
+        return start.equals(end) ? start : start + " 至 " + end;
     }
 
     private static String trimDesc(String text)

@@ -55,6 +55,37 @@
               保存模板
             </el-button>
           </el-form-item>
+          <el-form-item class="layout-settings-item">
+            <el-popover placement="bottom-start" :width="384" trigger="click" popper-class="grid-visual-popper">
+              <template #reference>
+                <el-button plain icon="Operation">移动端布局</el-button>
+              </template>
+              <div class="grid-visual-panel">
+                <div class="grid-visual-header">
+                  <div>
+                    <div class="grid-visual-title">移动端布局</div>
+                    <div class="grid-visual-hint">调整后点击“保存模板”才会同步到报名页</div>
+                  </div>
+                  <span class="grid-visual-unit">单位：rpx</span>
+                </div>
+                <div class="grid-visual-section">
+                  <span>主视觉</span>
+                  <label>高度<el-input-number v-model="gridVisual.heroHeight" :min="0" :max="1600" :step="10" /></label>
+                  <small>设为 0 时，主图按图片原始比例展示</small>
+                </div>
+                <div class="grid-visual-section grid-visual-section--two">
+                  <span>倒计时</span>
+                  <label>上边距<el-input-number v-model="gridVisual.countdownTop" :min="0" :max="200" :step="2" /></label>
+                  <label>下边距<el-input-number v-model="gridVisual.countdownBottom" :min="0" :max="200" :step="2" /></label>
+                </div>
+                <div class="grid-visual-section grid-visual-section--two">
+                  <span>九宫格</span>
+                  <label>卡片间距<el-input-number v-model="gridVisual.itemGap" :min="0" :max="100" :step="2" /></label>
+                  <label>外侧留白<el-input-number v-model="gridVisual.itemPadding" :min="0" :max="100" :step="2" /></label>
+                </div>
+              </div>
+            </el-popover>
+          </el-form-item>
         </el-form>
         <div class="template-tip">
           当前移动端实际生效的模板：列数（1/2/3）、纯图标/图文，以及「不规则 Tile 宫格」。保存模板后右侧预览会同步。
@@ -139,7 +170,7 @@
 
       <aside class="phone-preview-panel">
         <div class="phone-frame">
-          <div class="phone-screen" :class="{ 'is-tile-screen': isTilePreview }">
+          <div class="phone-screen" :class="{ 'is-tile-screen': isTilePreview }" :style="previewGridVisualStyle">
             <div
               v-if="isTilePreview"
               class="phone-tile-page"
@@ -196,12 +227,18 @@
             </div>
 
             <template v-else>
-              <div class="phone-cover" :style="previewCoverStyle">
-                <div class="phone-cover-title">{{ activityInfo.activityName || "会议名称" }}</div>
+              <div class="phone-cover" :class="{ 'is-image-card-cover': hasImageCardPreview }" :style="previewCoverStyle">
+                <img
+                  v-if="hasImageCardPreview && activityInfo.coverUrl"
+                  class="phone-cover-auto-image"
+                  :src="resolveUrl(activityInfo.coverUrl)"
+                  alt=""
+                />
+                <div v-if="!hasImageCardPreview" class="phone-cover-title">{{ activityInfo.activityName || "会议名称" }}</div>
                 <div v-if="String(configForm.showRegisterCount) === '1'" class="phone-cover-meta">
                   已报名 {{ activityInfo.registerCount || 0 }} 人
                 </div>
-                <div v-if="String(configForm.showCountdown) === '1'" class="phone-cover-countdown">
+                <div v-if="String(configForm.showCountdown) === '1' && !hasImageCardPreview" class="phone-cover-countdown">
                   <div v-if="configForm.countdownStyle === 'digital'" class="phone-countdown-board">
                     <div class="phone-countdown-heading">距会议开始还有</div>
                     <div class="phone-countdown-groups">
@@ -217,19 +254,50 @@
                   <span v-else>{{ countdownPreviewText }}</span>
                 </div>
               </div>
-              <div class="phone-grid" :class="[previewGridClass, previewGridStyleClass]">
-                <div v-for="item in previewItems" :key="item.gridId" class="phone-grid-item">
-                  <div class="phone-grid-icon" :style="{ background: `${themeColor}22` }">
-                    <MeetingIcon
-                      v-if="item.iconType === 'icon' && item.iconKey"
-                      :icon-key="item.iconKey"
-                      :size="34"
-                      :color="themeColor"
-                    />
-                    <img v-else-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
-                    <el-icon v-else :size="28"><Grid /></el-icon>
+              <div v-if="String(configForm.showCountdown) === '1' && hasImageCardPreview" class="phone-image-card-countdown">
+                <div v-if="configForm.countdownStyle === 'digital'" class="phone-countdown-board">
+                  <div class="phone-countdown-heading">距会议开始还有</div>
+                  <div class="phone-countdown-groups">
+                    <div v-for="item in previewCountdownParts" :key="item.label" class="phone-countdown-group">
+                      <div class="phone-flip-pair">
+                        <span class="phone-flip-card">{{ item.value[0] }}</span>
+                        <span class="phone-flip-card">{{ item.value[1] }}</span>
+                      </div>
+                      <span>{{ item.label }}</span>
+                    </div>
                   </div>
-                  <span v-if="!isIconOnlyPreview">{{ item.title }}</span>
+                </div>
+                <span v-else>{{ countdownPreviewText }}</span>
+              </div>
+              <div
+                class="phone-grid"
+                :class="[previewGridClass, previewGridStyleClass, { 'grid-image-cards': hasImageCardPreview }]"
+              >
+                <div
+                  v-for="item in previewItems"
+                  :key="item.gridId"
+                  class="phone-grid-item"
+                  :class="{ 'is-image-card': isImageCardPreview(item) }"
+                >
+                  <img
+                    v-if="isImageCardPreview(item)"
+                    class="phone-grid-card-image"
+                    :src="resolveUrl(gridCardUrl(item))"
+                    alt=""
+                  />
+                  <template v-else>
+                    <div class="phone-grid-icon" :style="{ background: previewIconSurfaceColor }">
+                      <MeetingIcon
+                        v-if="item.iconType === 'icon' && item.iconKey"
+                        :icon-key="item.iconKey"
+                        :size="34"
+                        color="#fff"
+                      />
+                      <img v-else-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
+                      <el-icon v-else :size="28"><Grid /></el-icon>
+                    </div>
+                    <span v-if="!isIconOnlyPreview">{{ item.title }}</span>
+                  </template>
                 </div>
                 <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
               </div>
@@ -239,7 +307,7 @@
       </aside>
     </div>
 
-    <el-dialog :title="title" v-model="open" width="920px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="820px" append-to-body destroy-on-close>
       <el-scrollbar max-height="70vh">
         <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="grid-form">
           <section class="grid-form-section">
@@ -267,6 +335,9 @@
             </el-form-item>
             <el-form-item v-else label="图标选择" prop="iconKey">
               <meeting-icon-select v-model="form.iconKey" />
+            </el-form-item>
+            <el-form-item v-if="form.iconType === 'image'" label="两列展示">
+              <el-switch v-model="form.displayAsCard" active-text="整图卡片" inactive-text="图标入口" />
             </el-form-item>
           </section>
 
@@ -400,6 +471,13 @@ const multiple = ref(true)
 const open = ref(false)
 const title = ref("")
 const configForm = ref({ gridTemplate: "1" })
+const gridVisual = reactive({
+  heroHeight: 0,
+  countdownTop: 16,
+  countdownBottom: 20,
+  itemGap: 10,
+  itemPadding: 10
+})
 
 const templateOptions = [
   {
@@ -452,6 +530,9 @@ const previewItems = computed(() => {
 })
 
 const themeColor = computed(() => configForm.value.mobileThemeColor || "#1f6feb")
+const previewIconSurfaceColor = computed(() => (
+  isLightColor(themeColor.value) ? "#4f46e5" : themeColor.value
+))
 
 const previewGridClass = computed(() => {
   const template = String(configForm.value.gridTemplate)
@@ -462,9 +543,18 @@ const previewGridClass = computed(() => {
 
 const isIconOnlyPreview = computed(() => ["5", "71"].includes(String(configForm.value.gridTemplate)))
 const previewGridStyleClass = computed(() => (isIconOnlyPreview.value ? "grid-icon-only" : ""))
+const hasImageCardPreview = computed(() => previewItems.value.some(item => isImageCardPreview(item)))
 const isTilePreview = computed(() => String(configForm.value.gridTemplate) === "tile")
 const isLightTilePreview = computed(() => isTilePreview.value && isLightColor(themeColor.value))
 const tileSurfaceColor = computed(() => (isLightTilePreview.value ? (themeColor.value || "#f6f6f6") : "#061a74"))
+
+function isImageCardPreview(item) {
+  return item && item.iconType === "image" && !!gridCardUrl(item) && previewGridClass.value === "grid-two"
+}
+
+function gridCardUrl(item) {
+  return item?.contentUrl || item?.iconUrl || ""
+}
 const solidColorValue = computed(() => {
   const value = String(form.value.gradientColor || form.value.tileBg || "").trim()
   if (!value || /gradient|url\(/i.test(value)) return ""
@@ -599,6 +689,14 @@ const previewCountdownParts = [
   { label: "Seconds", value: "00" }
 ]
 
+const previewGridVisualStyle = computed(() => ({
+  '--grid-hero-height': gridVisual.heroHeight > 0 ? `${gridVisual.heroHeight / 2}px` : 'auto',
+  '--grid-countdown-top': `${gridVisual.countdownTop / 2}px`,
+  '--grid-countdown-bottom': `${gridVisual.countdownBottom / 2}px`,
+  '--grid-item-gap': `${gridVisual.itemGap / 2}px`,
+  '--grid-item-padding': `${gridVisual.itemPadding / 2}px`
+}))
+
 const previewCoverStyle = computed(() => {
   const coverUrl = resolveUrl(activityInfo.value.coverUrl)
   if (coverUrl) {
@@ -656,7 +754,30 @@ function loadMeta() {
       ...(res.data || {}),
       gridTemplate: normalizeTemplate(res.data?.gridTemplate)
     }
+    Object.assign(gridVisual, parseGridVisual(res.data?.remark))
   })
+}
+
+function defaultGridVisual() {
+  return { heroHeight: 0, countdownTop: 16, countdownBottom: 20, itemGap: 10, itemPadding: 10 }
+}
+
+function parseGridVisual(value) {
+  const defaults = defaultGridVisual()
+  try {
+    const parsed = JSON.parse(value || "{}")
+    return { ...defaults, ...(parsed.gridVisual || {}) }
+  } catch {
+    return defaults
+  }
+}
+
+function buildConfigRemark() {
+  let parsed = {}
+  try {
+    parsed = JSON.parse(configForm.value.remark || "{}")
+  } catch {}
+  return JSON.stringify({ ...parsed, gridVisual: { ...gridVisual } })
 }
 
 function normalizeTemplate(value) {
@@ -678,7 +799,8 @@ function normalizeTemplate(value) {
 function saveTemplate() {
   updateActivityConfig({
     activityId: Number(activityId.value),
-    gridTemplate: configForm.value.gridTemplate
+    gridTemplate: configForm.value.gridTemplate,
+    remark: buildConfigRemark()
   }).then(() => proxy.$modal.msgSuccess("模板已保存"))
 }
 
@@ -749,7 +871,8 @@ function restoreForm(data) {
     tileBg,
     hidden: options.hidden !== undefined
       ? options.hidden === true || options.hidden === 1 || options.hidden === "1"
-      : String(data.status) === "0"
+      : String(data.status) === "0",
+    displayAsCard: options.displayAsCard === true || options.displayAsCard === 1 || options.displayAsCard === "1"
   }
 }
 
@@ -769,6 +892,7 @@ function buildPayload() {
   payload.contentUrl = payload.contentType === "image" ? (form.value.contentUrl || "") : ""
   const bg = String(form.value.gradientColor || form.value.tileBg || "").trim()
   const remarkObj = { __gridForm: true }
+  if (form.value.displayAsCard) remarkObj.displayAsCard = true
   if (bg) {
     remarkObj.bg = bg
     remarkObj.gradientColor = bg
@@ -809,6 +933,7 @@ function reset() {
     tileColSpan: 1,
     gradientColor: "",
     tileBg: "",
+    displayAsCard: false,
     hidden: false,
     sortOrder: 0,
     status: "1"
@@ -1001,14 +1126,15 @@ onMounted(() => {
   text-align: left;
 }
 .grid-form {
-  padding: 0 4px;
+  padding: 0 2px;
 }
 .grid-form-section {
-  margin-bottom: 16px;
-  padding: 16px;
+  margin-bottom: 12px;
+  padding: 16px 18px 4px;
   border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 .grid-form-section:last-child {
   margin-bottom: 0;
@@ -1017,7 +1143,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   color: #303133;
   font-size: 15px;
   font-weight: 600;
@@ -1034,19 +1160,67 @@ onMounted(() => {
 }
 .grid-form-section :deep(.el-form-item__label) {
   color: #606266;
+  padding-right: 12px;
+  line-height: 32px;
 }
 .grid-form-section :deep(.el-form-item) {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+}
+.grid-form-section :deep(.el-input),
+.grid-form-section :deep(.el-select),
+.grid-form-section :deep(.el-input-number) {
+  max-width: 100%;
+}
+.grid-form-section :deep(.el-input-number) {
+  width: 130px;
 }
 :deep(.el-dialog__body) {
-  padding: 16px 20px 4px;
+  padding: 14px 18px 2px;
   background: #f5f7fa;
 }
+:deep(.el-dialog__header) {
+  margin-right: 0;
+  padding: 16px 20px 13px;
+  border-bottom: 1px solid #ebeef5;
+}
+:deep(.el-dialog__title) {
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+}
 :deep(.el-dialog__footer) {
-  padding-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 14px;
+  border-top: 1px solid #ebeef5;
+}
+:deep(.el-dialog__footer .el-button + .el-button) {
+  margin-left: 0;
+}
+.grid-form-section :deep(.material-preview) {
+  align-items: center;
+  gap: 10px;
+}
+.grid-form-section :deep(.material-image-wrap.is-selected) {
+  width: 96px;
+  height: 96px;
+  border-radius: 6px;
+}
+.grid-form-section :deep(.material-actions) {
+  gap: 2px;
+}
+.grid-form-section :deep(.material-actions .el-button) {
+  justify-content: flex-start;
+  padding: 2px 4px;
 }
 .action-type-group {
   display: flex;
+  flex-wrap: wrap;
+}
+.action-type-group :deep(.el-radio-button__inner) {
+  min-width: 72px;
+  padding: 8px 12px;
 }
 .module-tip {
   display: flex;
@@ -1082,6 +1256,35 @@ onMounted(() => {
 }
 .grid-form-section :deep(.editor) {
   width: min(100%, 700px);
+}
+.grid-form-section :deep(.el-divider) {
+  margin: 4px 0 16px;
+}
+.tile-bg-editor {
+  width: min(100%, 560px);
+}
+.tile-bg-toolbar {
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  :deep(.el-dialog) {
+    width: calc(100vw - 24px) !important;
+  }
+  .grid-form-section :deep(.el-form-item__label) {
+    float: none;
+    display: block;
+    width: auto !important;
+    padding: 0;
+    line-height: 24px;
+    text-align: left;
+  }
+  .grid-form-section :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+  }
+  .action-type-group :deep(.el-radio-button__inner) {
+    min-width: 0;
+    padding: 8px 10px;
+  }
 }
 .phone-preview-panel {
   flex: 0 0 360px;
@@ -1119,6 +1322,87 @@ onMounted(() => {
   line-height: 1.5;
   padding: 0 2px 4px;
 }
+.layout-settings-item :deep(.el-button) {
+  color: #526174;
+  border-color: #d9e1ea;
+  background: #fff;
+}
+.layout-settings-item :deep(.el-button:hover) {
+  color: #1f6feb;
+  border-color: #9fc5ee;
+  background: #f3f8ff;
+}
+.grid-visual-panel {
+  padding: 2px 0;
+}
+.grid-visual-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px 12px;
+  border-bottom: 1px solid #edf0f4;
+}
+.grid-visual-title {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+}
+.grid-visual-hint {
+  margin-top: 4px;
+  color: #7a8493;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.grid-visual-unit {
+  flex: 0 0 auto;
+  color: #8a94a3;
+  font-size: 12px;
+  line-height: 20px;
+}
+.grid-visual-section {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 8px;
+  padding: 14px 2px;
+  border-bottom: 1px solid #f0f2f5;
+}
+.grid-visual-section:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+.grid-visual-section > span {
+  align-self: start;
+  padding-top: 7px;
+  color: #526174;
+  font-size: 13px;
+  font-weight: 600;
+}
+.grid-visual-section label {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: #667085;
+  font-size: 12px;
+}
+.grid-visual-section--two {
+  grid-template-columns: 62px repeat(2, minmax(0, 1fr));
+}
+.grid-visual-section--two label {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.grid-visual-section small {
+  grid-column: 2;
+  color: #98a2b3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.grid-visual-section :deep(.el-input-number) {
+  width: 100%;
+}
 .phone-cover {
   display: flex;
   flex-direction: column;
@@ -1129,6 +1413,17 @@ onMounted(() => {
   background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
   background-position: center;
   background-size: cover;
+}
+.phone-cover.is-image-card-cover {
+  min-height: var(--grid-hero-height, 0);
+  height: var(--grid-hero-height, auto);
+  padding: 0;
+  background: none;
+}
+.phone-cover-auto-image {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .phone-cover-title {
   color: #fff;
@@ -1145,39 +1440,51 @@ onMounted(() => {
 }
 .phone-countdown-board {
   width: 100%;
-  padding-top: 8px;
+  padding: 12px 0 9px;
   text-align: center;
 }
 .phone-countdown-heading {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
   color: #fff;
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.phone-countdown-heading::before,
+.phone-countdown-heading::after {
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+  content: "";
 }
 .phone-countdown-groups {
   display: flex;
   justify-content: center;
-  gap: 5px;
+  gap: 7px;
 }
 .phone-countdown-group {
   color: #fff;
-  font-size: 8px;
+  font-size: 10px;
   text-align: center;
 }
 .phone-flip-pair {
   display: flex;
-  gap: 1px;
+  gap: 2px;
 }
 .phone-flip-card {
   display: inline-flex;
-  width: 16px;
-  height: 23px;
+  width: 24px;
+  height: 32px;
   align-items: center;
   justify-content: center;
   border-radius: 3px;
   color: #687078;
   background: linear-gradient(180deg, #fff 0%, #e8ebee 48%, #bfc4c9 50%, #f8f9fa 52%, #d8dce0 100%);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
+  font-size: 16px;
 }
 .phone-grid {
   display: grid;
@@ -1192,6 +1499,28 @@ onMounted(() => {
 }
 .phone-grid.grid-three {
   grid-template-columns: repeat(3, 1fr);
+}
+.phone-image-card-countdown {
+  padding: var(--grid-countdown-top, 8px) 10px var(--grid-countdown-bottom, 10px);
+  color: #202a38;
+  background: #eaf8ff;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.phone-image-card-countdown .phone-countdown-heading {
+  color: #202a38;
+}
+.phone-image-card-countdown .phone-countdown-heading::before,
+.phone-image-card-countdown .phone-countdown-heading::after {
+  background: rgba(32, 42, 56, 0.68);
+}
+.phone-image-card-countdown .phone-countdown-group {
+  color: #202a38;
+}
+.phone-grid.grid-image-cards {
+  gap: var(--grid-item-gap, 10px);
+  padding: var(--grid-item-padding, 12px);
+  background: #eaf8ff;
 }
 .phone-grid-item {
   display: flex;
@@ -1213,6 +1542,18 @@ onMounted(() => {
   padding: 14px 16px;
   min-height: 72px;
 }
+.phone-grid-item.is-image-card {
+  display: block;
+  min-height: 0;
+  padding: var(--grid-item-padding, 0);
+  background: transparent;
+}
+.phone-grid-card-image {
+  display: block;
+  width: 100%;
+  border-radius: 5px;
+  box-shadow: none;
+}
 .phone-grid-icon {
   width: 44px;
   height: 44px;
@@ -1220,13 +1561,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #fff;
 }
 .phone-grid.grid-icon-only .phone-grid-icon {
   width: 56px;
   height: 56px;
   border-radius: 16px;
 }
-.phone-grid-item img {
+.phone-grid-item:not(.is-image-card) img {
   width: 28px;
   height: 28px;
   object-fit: contain;

@@ -7,7 +7,7 @@ spring:
             # 主库数据源
             master:
                 # 通过 SSH 隧道连接远端 MySQL
-                url: jdbc:mysql://127.0.0.1:13306/ry-vue?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B8
+                url: jdbc:mysql://127.0.0.1:13306/ry-vue-dev?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B8
                 username: ${RUOYI_DB_USERNAME:ruoyi}
                 password: ${RUOYI_DB_PASSWORD:}
             # 从库数据源

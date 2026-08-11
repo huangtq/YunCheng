@@ -117,6 +117,7 @@ const ids = ref([])
 const multiple = ref(true)
 const total = ref(0)
 const uploadList = ref([])
+const uploadRef = ref(null)
 const baseUrl = import.meta.env.VITE_APP_BASE_API
 const activityId = computed(() => route.query.id || "")
 const uploadUrl = computed(() => activityId.value

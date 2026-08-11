@@ -3,6 +3,7 @@
     <div class="page-title-bar">
       <div class="page-title">{{ activityName ? activityName + '的报名订单' : '报名订单' }}</div>
       <div class="page-actions">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['meeting:order:export']">导出</el-button>
         <el-button icon="Refresh" @click="refreshAll">刷新数据</el-button>
       </div>
     </div>
@@ -166,16 +167,11 @@
     <el-dialog title="报名信息" v-model="viewOpen" width="560px" append-to-body>
       <el-descriptions :column="1" border>
         <el-descriptions-item label="订单号">{{ viewData.orderNo }}</el-descriptions-item>
-        <el-descriptions-item label="姓名">{{ viewData.contactName }}</el-descriptions-item>
-        <el-descriptions-item label="手机">{{ viewData.mobile }}</el-descriptions-item>
-        <el-descriptions-item label="性别">{{ viewData.gender || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="单位">{{ viewData.company || '-' }}</el-descriptions-item>
+        <el-descriptions-item v-for="item in viewFormItems" :key="item.key" :label="item.label">
+          {{ item.value || '-' }}
+        </el-descriptions-item>
         <el-descriptions-item label="报名通道">{{ viewData.channelName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="订单状态">{{ orderStatusLabel(viewData.orderStatus) }}</el-descriptions-item>
-        <el-descriptions-item label="签到状态">{{ viewData.checkinStatus === '1' ? '已签到' : '未签到' }}</el-descriptions-item>
-        <el-descriptions-item label="签到时间">{{ parseTime(viewData.checkinTime) || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="备注">{{ viewData.remark || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ parseTime(viewData.createTime) || '-' }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="viewOpen = false">关 闭</el-button>
@@ -187,6 +183,7 @@
 <script setup name="MeetingApplyOrder">
 import { listApplyOrder, getApplyOrderStats, getApplyOrder, addApplyOrder, updateApplyOrder, checkinApplyOrder, delApplyOrder } from '@/api/meeting/applyOrder'
 import { listApplyChannel } from '@/api/meeting/apply'
+import { listApplyField } from '@/api/meeting/applyField'
 import { getActivity } from '@/api/meeting/activity'
 
 const { proxy } = getCurrentInstance()
@@ -205,6 +202,43 @@ const viewOpen = ref(false)
 const title = ref('')
 const viewData = ref({})
 const stats = ref({})
+const applyFieldsByChannel = reactive({})
+
+const viewFormItems = computed(() => {
+  const values = parseFormJson(viewData.value.formJson)
+  const fields = applyFieldsByChannel[viewData.value.channelId] || []
+  const items = fields
+    .slice()
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    .filter(field => {
+      // Only show data that was actually submitted. This excludes disabled fields
+      // and fields hidden by a conditional display rule at submission time.
+      return Object.prototype.hasOwnProperty.call(values, field.fieldKey) && hasFieldValue(values[field.fieldKey])
+    })
+    .map(field => ({
+      key: field.fieldKey,
+      label: field.fieldName || field.fieldKey,
+      value: formatFieldValue(values[field.fieldKey])
+    }))
+
+  // Old orders or manually created orders may not have a form snapshot.
+  if (!items.length) {
+    return [
+      { key: 'name', label: '姓名', value: viewData.value.contactName },
+      { key: 'mobile', label: '手机', value: viewData.value.mobile },
+      { key: 'gender', label: '性别', value: viewData.value.gender },
+      { key: 'company', label: '单位', value: viewData.value.company }
+    ]
+  }
+
+  const configuredKeys = new Set(items.map(item => item.key))
+  Object.keys(values).forEach(key => {
+    if (!configuredKeys.has(key) && hasFieldValue(values[key])) {
+      items.push({ key, label: key, value: formatFieldValue(values[key]) })
+    }
+  })
+  return items
+})
 
 const queryParams = ref({
   pageNum: 1,
@@ -279,6 +313,12 @@ function resetQuery() {
   handleQuery()
 }
 
+function handleExport() {
+  const params = { ...queryParams.value, pageNum: undefined, pageSize: undefined }
+  const fileName = (activityName.value || '报名订单').replace(/[\\/:*?"<>|]/g, '_')
+  proxy.download('meeting/apply/order/export', params, `${fileName}_报名订单.xlsx`)
+}
+
 function handleSelectionChange(selection) {
   ids.value = selection.map(i => i.orderId)
   multiple.value = !selection.length
@@ -315,9 +355,40 @@ function handleUpdate(row) {
 }
 
 function handleView(row) {
-  getApplyOrder(row.orderId).then(res => {
+  getApplyOrder(row.orderId).then(async res => {
     viewData.value = res.data || {}
+    await loadApplyFields(viewData.value.channelId)
     viewOpen.value = true
+  })
+}
+
+function parseFormJson(formJson) {
+  if (!formJson) return {}
+  if (typeof formJson === 'object') return formJson
+  try {
+    const parsed = JSON.parse(formJson)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch (e) {
+    return {}
+  }
+}
+
+function formatFieldValue(value) {
+  if (Array.isArray(value)) return value.join('、')
+  return value === undefined || value === null ? '' : String(value)
+}
+
+function hasFieldValue(value) {
+  if (Array.isArray(value)) return value.length > 0
+  return value !== undefined && value !== null && String(value).trim() !== ''
+}
+
+function loadApplyFields(channelId) {
+  if (!channelId || applyFieldsByChannel[channelId]) return Promise.resolve()
+  return listApplyField({ channelId }).then(res => {
+    applyFieldsByChannel[channelId] = res.data || []
+  }).catch(() => {
+    applyFieldsByChannel[channelId] = []
   })
 }
 

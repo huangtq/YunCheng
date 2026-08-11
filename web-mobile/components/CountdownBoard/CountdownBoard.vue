@@ -19,6 +19,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import config from '@/config'
 
 const props = defineProps({
   countdown: {
@@ -42,7 +43,7 @@ function pair(value) {
 function digitStyle(digit) {
   const value = Math.min(9, Math.max(0, Number(digit) || 0))
   return {
-    backgroundImage: 'url(/static/countdown/jcountdown_flip_white.png)',
+    backgroundImage: `url(${config.h5Base}/static/countdown/jcountdown_flip_white.png)`,
     backgroundPosition: `${-(9 - value) * 50}px -896px`
   }
 }
@@ -85,7 +86,7 @@ const groups = computed(() => [
 .countdown-groups {
   display: flex;
   justify-content: center;
-  gap: 24rpx;
+  gap: 20rpx;
 }
 .countdown-group {
   min-width: 132rpx;
@@ -121,9 +122,9 @@ const groups = computed(() => [
 }
 @media screen and (max-width: 480px) {
   .countdown-groups {
-    transform: scale(0.72);
+    transform: scale(0.80);
     transform-origin: center top;
-    margin-bottom: -18px;
+    margin-bottom: -12px;
   }
 }
 </style>

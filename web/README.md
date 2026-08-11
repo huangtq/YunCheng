@@ -1,5 +1,7 @@
 # YunCheng Web
 
+> Production deployment: see [`../docs/production-deployment.md`](../docs/production-deployment.md).
+
 基于 RuoYi-Vue3 的 Web 管理端，Vue3 + Element Plus + Vite。
 
 ## 技术栈

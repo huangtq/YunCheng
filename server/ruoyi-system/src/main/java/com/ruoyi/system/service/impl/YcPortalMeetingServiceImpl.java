@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.core.domain.model.MpLoginUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
@@ -413,6 +414,16 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         footer.put("logoUrl", config.getFooterLogoUrl());
         footer.put("linkUrl", config.getFooterLinkUrl());
         layout.put("footer", footer);
+        if (StringUtils.isNotEmpty(config.getRemark()) && config.getRemark().trim().startsWith("{"))
+        {
+            try
+            {
+                JSONObject remark = JSON.parseObject(config.getRemark());
+                JSONObject visual = remark.getJSONObject("gridVisual");
+                if (visual != null) layout.put("visual", visual);
+            }
+            catch (Exception ignored) { }
+        }
         List<?> blocks = new ArrayList<>();
         if (StringUtils.isNotEmpty(config.getMobileBlocksJson()))
         {
