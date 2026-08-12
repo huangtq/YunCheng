@@ -18,6 +18,10 @@
 | Phase 2 | [02-p1-on-site-services.md](02-p1-on-site-services.md) | 凭证、签到、酒店、餐券、通知与驾驶舱 | 进行中 |
 | Phase 3 | `03-p2-experience-and-operations.md` | 自由 Tile、定时发布、展商互动、回放与看板 | 进行中 |
 
+## 当前台账
+
+- [04-当前改造进度与验收台账](04-current-progress.md)：已交付、验证证据、风险、Git 同步状态与下一步。
+
 ## 任务状态
 
 `待开始`：依赖未就绪或尚未开发。<br>
