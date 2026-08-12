@@ -21,5 +21,10 @@ public interface YcApplyOrderMapper
 
     public int updateYcApplyOrder(YcApplyOrder order);
 
+    /** Atomically transition an active, unchecked order to checked in. */
+    public int checkinIfPending(@Param("orderId") Long orderId, @Param("updateBy") String updateBy);
+
+    public int revokeCheckin(@Param("orderId") Long orderId, @Param("updateBy") String updateBy);
+
     public int deleteYcApplyOrderByIds(Long[] orderIds);
 }

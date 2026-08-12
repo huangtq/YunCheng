@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcUserMealCouponMapper">
+  <resultMap id="Coupon" type="YcUserMealCoupon">
+    <id property="couponId" column="coupon_id"/><result property="activityId" column="activity_id"/><result property="ticketId" column="ticket_id"/><result property="applyOrderId" column="apply_order_id"/><result property="couponStatus" column="coupon_status"/><result property="validStart" column="valid_start"/><result property="validEnd" column="valid_end"/><result property="issuedBy" column="issued_by"/><result property="issuedTime" column="issued_time"/><result property="delFlag" column="del_flag"/><result property="ticketName" column="ticket_name"/><result property="mealType" column="meal_type"/><result property="mealDate" column="meal_date"/>
+  </resultMap>
+  <sql id="columns">c.coupon_id,c.activity_id,c.ticket_id,c.apply_order_id,c.coupon_status,c.valid_start,c.valid_end,c.issued_by,c.issued_time,c.del_flag,t.ticket_name,t.meal_type,t.meal_date</sql>
+  <select id="selectById" resultMap="Coupon">select <include refid="columns"/> from yc_user_meal_coupon c join yc_meal_ticket t on t.ticket_id=c.ticket_id and t.del_flag='0' where c.coupon_id=#{couponId} and c.del_flag='0'</select>
+  <select id="selectByTicketAndOrder" resultMap="Coupon">select <include refid="columns"/> from yc_user_meal_coupon c join yc_meal_ticket t on t.ticket_id=c.ticket_id and t.del_flag='0' where c.ticket_id=#{ticketId} and c.apply_order_id=#{orderId} and c.del_flag='0'</select>
+  <select id="selectByOrderId" resultMap="Coupon">select <include refid="columns"/> from yc_user_meal_coupon c join yc_meal_ticket t on t.ticket_id=c.ticket_id and t.del_flag='0' where c.apply_order_id=#{orderId} and c.del_flag='0' order by c.coupon_id desc</select>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="couponId">insert into yc_user_meal_coupon(activity_id,ticket_id,apply_order_id,coupon_status,valid_start,valid_end,issued_by,issued_time,del_flag,remark) values(#{activityId},#{ticketId},#{applyOrderId},#{couponStatus},#{validStart},#{validEnd},#{issuedBy},sysdate(),'0',#{remark})</insert>
+  <update id="redeemIfAvailable">update yc_user_meal_coupon set coupon_status='redeemed' where coupon_id=#{couponId} and coupon_status='available' and del_flag='0'</update>
+  <update id="revokeIfRedeemed">update yc_user_meal_coupon set coupon_status='available' where coupon_id=#{couponId} and coupon_status='redeemed' and del_flag='0'</update>
+</mapper>

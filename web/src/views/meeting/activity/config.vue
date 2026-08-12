@@ -307,6 +307,10 @@ const groups = [
       { key: "edit", label: "编辑会议信息", icon: "Edit", color: "#409EFF", action: "edit" },
       { key: "switch", label: "常用开关", icon: "Setting", color: "#67C23A", action: "switch" },
       { key: "grid", label: "九宫格配置", icon: "Menu", color: "#E6A23C", action: "grid" },
+      { key: "homeComposer", label: "首页编排与发布", icon: "SetUp", color: "#6C5CE7", action: "homeComposer" },
+      { key: "content", label: "内容与资料", icon: "Document", color: "#409EFF", action: "content" },
+      { key: "checkin", label: "现场核验", icon: "CircleCheck", color: "#67C23A", action: "checkin" },
+      { key: "notice", label: "会议通知", icon: "Bell", color: "#E6A23C", action: "notice" },
       { key: "mobile", label: "移动端详情", icon: "Iphone", color: "#00B894", action: "mobile" },
       { key: "qr", label: "查看二维码", icon: "Postcard", color: "#F56C6C", action: "qr" },
       { key: "nav", label: "导航管理", icon: "Guide", color: "#00B894", action: "nav", moduleKey: HUB_ACTION_MODULE_KEY.nav }
@@ -430,6 +434,22 @@ function handleCard(item) {
   }
   if (item.action === "grid") {
     router.push({ path: "/meeting/activity-config/grid", query: { id: activityId.value } })
+    return
+  }
+  if (item.action === "homeComposer") {
+    router.push({ path: "/meeting/activity-config/home-composer", query: { id: activityId.value } })
+    return
+  }
+  if (item.action === "content") {
+    router.push({ path: "/meeting/activity-config/content", query: { id: activityId.value } })
+    return
+  }
+  if (item.action === "checkin") {
+    router.push({ path: "/meeting/activity-config/checkin", query: { id: activityId.value } })
+    return
+  }
+  if (item.action === "notice") {
+    router.push({ path: "/meeting/activity-config/notice", query: { id: activityId.value } })
     return
   }
   if (item.action === "file") {

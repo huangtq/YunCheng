@@ -5,14 +5,14 @@
     <result property="roomId" column="room_id"/><result property="activityId" column="activity_id"/>
     <result property="hotelId" column="hotel_id"/><result property="roomName" column="room_name"/>
     <result property="bedType" column="bed_type"/><result property="price" column="price"/>
-    <result property="stock" column="stock"/><result property="sortOrder" column="sort_order"/>
+    <result property="stock" column="stock"/><result property="reservedStock" column="reserved_stock"/><result property="sortOrder" column="sort_order"/>
     <result property="delFlag" column="del_flag"/><result property="createBy" column="create_by"/>
     <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
     <result property="updateTime" column="update_time"/><result property="remark" column="remark"/>
     <result property="hotelName" column="hotel_name"/>
   </resultMap>
   <sql id="selectVo">
-    select r.room_id,r.activity_id,r.hotel_id,r.room_name,r.bed_type,r.price,r.stock,r.sort_order,
+    select r.room_id,r.activity_id,r.hotel_id,r.room_name,r.bed_type,r.price,r.stock,r.reserved_stock,r.sort_order,
            r.del_flag,r.create_by,r.create_time,r.update_by,r.update_time,r.remark,h.hotel_name
     from yc_hotel_room r left join yc_hotel h on h.hotel_id=r.hotel_id and h.del_flag='0'
   </sql>
@@ -30,8 +30,8 @@
     select count(1) as totalCount from yc_hotel_room where activity_id=#{activityId} and del_flag='0'
   </select>
   <insert id="insertYcHotelRoom" useGeneratedKeys="true" keyProperty="roomId">
-    insert into yc_hotel_room(activity_id,hotel_id,room_name,bed_type,price,stock,sort_order,del_flag,create_by,create_time,remark)
-    values(#{activityId},#{hotelId},#{roomName},#{bedType},#{price},#{stock},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
+    insert into yc_hotel_room(activity_id,hotel_id,room_name,bed_type,price,stock,reserved_stock,sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{hotelId},#{roomName},#{bedType},#{price},#{stock},#{reservedStock},#{sortOrder},'0',#{createBy},sysdate(),#{remark})
   </insert>
   <update id="updateYcHotelRoom">
     update yc_hotel_room
@@ -41,6 +41,7 @@
       <if test="bedType!=null">bed_type=#{bedType},</if>
       <if test="price!=null">price=#{price},</if>
       <if test="stock!=null">stock=#{stock},</if>
+      <if test="reservedStock!=null">reserved_stock=#{reservedStock},</if>
       <if test="sortOrder!=null">sort_order=#{sortOrder},</if>
       <if test="updateBy!=null">update_by=#{updateBy},</if>
       <if test="remark!=null">remark=#{remark},</if>
@@ -48,6 +49,8 @@
     </set>
     where room_id=#{roomId}
   </update>
+  <update id="reserveStock">update yc_hotel_room set reserved_stock=reserved_stock+#{quantity},update_time=sysdate() where room_id=#{roomId} and del_flag='0' and (stock=0 or reserved_stock+#{quantity}&lt;=stock)</update>
+  <update id="releaseStock">update yc_hotel_room set reserved_stock=greatest(0,reserved_stock-#{quantity}),update_time=sysdate() where room_id=#{roomId} and del_flag='0'</update>
   <delete id="deleteYcHotelRoomByIds">
     update yc_hotel_room set del_flag='2' where room_id in
     <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>

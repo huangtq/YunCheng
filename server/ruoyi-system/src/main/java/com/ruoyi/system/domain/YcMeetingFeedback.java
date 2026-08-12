@@ -1,0 +1,4 @@
+package com.ruoyi.system.domain;
+import java.util.Date;
+public class YcMeetingFeedback { private Long feedbackId; private Long activityId; private Long mpUserId; private Integer rating; private String content; private String status; private Date createdTime;
+ public Long getFeedbackId(){return feedbackId;} public void setFeedbackId(Long v){feedbackId=v;} public Long getActivityId(){return activityId;} public void setActivityId(Long v){activityId=v;} public Long getMpUserId(){return mpUserId;} public void setMpUserId(Long v){mpUserId=v;} public Integer getRating(){return rating;} public void setRating(Integer v){rating=v;} public String getContent(){return content;} public void setContent(String v){content=v;} public String getStatus(){return status;} public void setStatus(String v){status=v;} public Date getCreatedTime(){return createdTime;} public void setCreatedTime(Date v){createdTime=v;} }

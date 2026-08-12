@@ -1,0 +1,90 @@
+<template>
+  <div class="app-container home-composer">
+    <el-alert title="模板决定移动端整页版式；会议只配置本场的主视觉、入口图和跳转目标。选择新模板会重排页面，不会发布到移动端。" type="info" :closable="false" class="mb16" />
+    <div class="composer-head">
+      <div><h2>会议首页编排</h2><p>{{ currentTemplate.description }}</p></div>
+      <div class="head-actions"><el-button @click="loadVersions">版本记录</el-button><el-button type="primary" :loading="saving" @click="saveDraft">保存草稿</el-button><el-button type="success" :disabled="!versionId" :loading="publishing" @click="publish">发布</el-button></div>
+    </div>
+
+    <section class="template-strip">
+      <button v-for="item in templates" :key="item.key" class="template-card" :class="{ active: templateKey === item.key }" @click="selectTemplate(item.key)">
+        <img :src="item.preview" :alt="item.label" /><span>{{ item.label }}</span><small>{{ item.description }}</small>
+      </button>
+    </section>
+
+    <div class="composer-grid">
+      <section class="editor-panel">
+        <div class="panel-title">本场视觉与区块</div>
+        <el-form label-position="top">
+          <el-form-item label="主题色"><el-color-picker v-model="page.theme.color" show-alpha /></el-form-item>
+          <el-form-item :label="isPoster ? '整页海报' : '主视觉图片'"><material-select v-model="heroUrl" :show-tip="false" /></el-form-item>
+          <template v-if="!isPoster">
+            <el-form-item label="显示倒计时"><el-switch v-model="page.layout.showCountdown" /></el-form-item>
+            <el-form-item label="页脚"><el-switch v-model="footer.enabled" /><el-input v-if="footer.enabled" v-model="footer.company" maxlength="100" placeholder="主办方或会务支持" class="mt8" /></el-form-item>
+          </template>
+        </el-form>
+        <div class="panel-title">{{ isPoster ? '热点入口' : '功能入口' }}</div>
+        <div v-for="section in currentTemplate.entrySections" :key="section.key" class="entry-section">
+          <div class="entry-section-title"><span>{{ section.label }} <small>{{ section.columns ? `${section.columns} 列 · ${section.ratio} 图片` : '热点坐标' }} · 已启用 {{ enabledSectionCount(section) }}/{{ section.max || '不限' }}</small></span><el-button link type="primary" :disabled="!canAddEntry(section)" @click="addEntry(section.key)">新增入口</el-button></div>
+          <div class="entry-list">
+          <article v-for="(entry, index) in entries.filter(item => item.sectionKey === section.key)" :key="entry.id" class="entry-editor">
+            <div class="entry-top"><strong>入口 {{ index + 1 }}</strong><el-switch v-model="entry.enabled" @change="onEntryEnabledChange(entry, section)" /><el-button link type="danger" @click="removeEntryById(entry.id)">删除</el-button></div>
+            <el-input v-model="entry.title" placeholder="入口标题" class="mb8" />
+            <el-select v-if="currentTemplate.entrySections.length > 1" v-model="entry.sectionKey" class="full mb8"><el-option v-for="option in currentTemplate.entrySections" :key="option.key" :label="option.label" :value="option.key" /></el-select>
+            <el-select v-model="entry.targetType" class="full" @change="resetTarget(entry)"><el-option label="原生模块" value="module" /><el-option label="富文本内容" value="content" /><el-option label="外部链接" value="external" /></el-select>
+            <el-select v-if="entry.targetType === 'module'" v-model="entry.target.moduleKey" class="full mt8"><el-option v-for="module in modules" :key="module.key" :label="module.label" :value="module.key" /></el-select>
+            <el-select v-else-if="entry.targetType === 'content'" v-model="entry.target.contentId" filterable class="full mt8"><el-option v-for="content in contentOptions" :key="content.contentId" :label="content.title" :value="content.contentId" /></el-select>
+            <el-input v-else v-model="entry.target.url" placeholder="https://" class="mt8" />
+            <template v-if="isPoster"><div class="bounds"><el-input-number v-model="entry.bounds.left" :min="0" :max="100" /><el-input-number v-model="entry.bounds.top" :min="0" :max="100" /><el-input-number v-model="entry.bounds.width" :min="1" :max="100" /><el-input-number v-model="entry.bounds.height" :min="1" :max="100" /></div><small>左 / 上 / 宽 / 高（%）</small></template>
+            <template v-else><material-select v-model="entry.iconUrl" :show-tip="false" class="mt8" /><template v-if="isTile"><div class="bounds"><el-input-number v-model="entry.tileCol" :min="1" :max="6" /><el-input-number v-model="entry.tileRow" :min="1" :max="20" /><el-input-number v-model="entry.tileColSpan" :min="1" :max="6" /><el-input-number v-model="entry.tileRowSpan" :min="1" :max="6" /></div><small>列 / 行 / 跨列 / 跨行</small></template></template>
+          </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="preview-panel"><div class="panel-title">手机预览</div><div class="phone"><div class="phone-screen" :class="{ poster: isPoster, tile: isTile }" :style="phoneStyle"><template v-if="isPoster"><img v-if="heroUrl" :src="resolveUrl(heroUrl)" class="poster-image" /><span v-for="entry in enabledEntries" :key="entry.id" class="hotspot" :style="hotspotStyle(entry)">{{ entry.title }}</span></template><template v-else><div class="hero" :style="heroStyle"></div><div v-if="page.layout.showCountdown" class="countdown">距会议开始还有　00 天 00 时 00 分</div><div v-for="section in previewSections" :key="section.key" class="nav-preview" :class="{ tile: isTile, icons: section.columns === 3 }" :style="previewGridStyle(section)"><div v-for="entry in section.entries" :key="entry.id" class="nav-item" :class="{ tall: section.ratio === 'tall' }" :style="tileStyle(entry)"><img v-if="entry.iconUrl" :src="resolveUrl(entry.iconUrl)" /><span>{{ entry.title || '入口标题' }}</span></div></div><div v-if="footer.enabled" class="footer-preview">{{ footer.company || '会务支持' }}</div></template></div></div></section>
+    </div>
+    <el-collapse class="advanced"><el-collapse-item title="高级 JSON（迁移与排错）"><el-input v-model="pageJson" type="textarea" :rows="14" @blur="loadJson" /></el-collapse-item></el-collapse>
+    <el-dialog v-model="versionsOpen" title="首页版本" width="760px"><el-table :data="versions"><el-table-column prop="versionNo" label="版本" width="90" /><el-table-column prop="status" label="状态" width="110" /><el-table-column prop="publishedTime" label="发布时间" /><el-table-column label="操作" width="100"><template #default="scope"><el-button link type="primary" @click="loadVersion(scope.row.versionId)">载入</el-button></template></el-table-column></el-table></el-dialog>
+  </div>
+</template>
+
+<script setup name="MeetingHomeComposer">
+import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { getHomeVersion, listHomeVersions, publishHomeVersion, saveHomeDraft } from '@/api/meeting/homeVersion'
+import { listMeetingContent } from '@/api/meeting/content'
+import MaterialSelect from '@/components/MaterialSelect'
+import { MEETING_HOME_TEMPLATES, createTemplatePage, getMeetingHomeTemplate } from '@/utils/meetingHomeTemplates'
+
+const { proxy } = getCurrentInstance(); const route = useRoute(); const activityId = computed(() => Number(route.query.id)); const templates = MEETING_HOME_TEMPLATES
+const page = ref(createTemplatePage(templates[0].key, defaultEntries())); const templateKey = ref(templates[0].key); const versionId = ref(null); const pageJson = ref(''); const saving = ref(false); const publishing = ref(false); const versions = ref([]); const versionsOpen = ref(false); const contentOptions = ref([])
+const modules = [{ key: 'apply', label: '参会报名' }, { key: 'schedule', label: '会议议程' }, { key: 'guest', label: '嘉宾列表' }, { key: 'venue', label: '会场' }, { key: 'nav', label: '会议导航' }, { key: 'hotel', label: '酒店预订' }, { key: 'meal', label: '餐券服务' }, { key: 'exhibitor', label: '展商名录' }, { key: 'notice', label: '会议通知' }, { key: 'my-attendance', label: '我的参会' }, { key: 'feedback', label: '意见反馈' }]
+const currentTemplate = computed(() => getMeetingHomeTemplate(templateKey.value)); const entries = computed(() => page.value.entryTree || []); const enabledEntries = computed(() => entries.value.filter(item => item.enabled !== false)); const isPoster = computed(() => currentTemplate.value.layout.template === 'image-map'); const isTile = computed(() => currentTemplate.value.layout.gridTemplate === 'tile'); const heroUrl = computed({ get: () => isPoster.value ? page.value.layout.backgroundUrl || '' : page.value.layout.heroUrl || '', set: value => { if (isPoster.value) page.value.layout.backgroundUrl = value; else page.value.layout.heroUrl = value } }); const footer = computed(() => { page.value.layout.footer ||= { enabled: false, company: '' }; return page.value.layout.footer })
+const previewSections = computed(() => currentTemplate.value.entrySections.map(section => ({ ...section, entries: enabledEntries.value.filter(entry => entry.sectionKey === section.key) })))
+const phoneStyle = computed(() => ({ background: page.value.theme?.color || '#f5f7fa' })); const heroStyle = computed(() => ({ backgroundImage: heroUrl.value ? `url(${resolveUrl(heroUrl.value)})` : 'none', backgroundColor: page.value.theme?.color || '#1f6feb' }))
+function defaultEntries() { return [{ id: 'apply', title: '参会报名', targetType: 'module', target: { moduleKey: 'apply' }, enabled: true }, { id: 'schedule', title: '会议议程', targetType: 'module', target: { moduleKey: 'schedule' }, enabled: true }, { id: 'guest', title: '嘉宾检索', targetType: 'module', target: { moduleKey: 'guest' }, enabled: true }, { id: 'notice', title: '会议通知', targetType: 'module', target: { moduleKey: 'notice' }, enabled: true } ] }
+function selectTemplate(key) { if (key === templateKey.value) return; templateKey.value = key; page.value = createTemplatePage(key, entries.value); syncJson() }
+function enabledSectionCount(section) { return entries.value.filter(entry => entry.sectionKey === section.key && entry.enabled !== false).length }
+function canAddEntry(section) { return !section.max || enabledSectionCount(section) < section.max }
+function addEntry(sectionKey) { const section = currentTemplate.value.entrySections.find(item => item.key === sectionKey) || currentTemplate.value.entrySections[0]; if (!canAddEntry(section)) { proxy.$modal.msgWarning(`${section.label}最多可启用 ${section.max} 个入口`); return }; const entry = { id: `entry_${Date.now()}`, title: '', targetType: 'module', target: { moduleKey: 'apply' }, enabled: true, iconUrl: '', iconType: currentTemplate.value.entryDefaults.iconType, imageRatio: currentTemplate.value.entryDefaults.imageRatio, sectionKey: section.key }; if (isPoster.value) entry.bounds = { left: 10, top: entries.value.length * 12, width: 80, height: 8 }; if (isTile.value) Object.assign(entry, { tileCol: 1, tileRow: entries.value.length + 1, tileColSpan: 3, tileRowSpan: 1 }); entries.value.push(entry) }
+function onEntryEnabledChange(entry, section) { if (entry.enabled && section.max && enabledSectionCount(section) > section.max) { entry.enabled = false; proxy.$modal.msgWarning(`${section.label}最多可启用 ${section.max} 个入口`) } }
+function removeEntryById(id) { const index = entries.value.findIndex(item => item.id === id); if (index >= 0) entries.value.splice(index, 1) }
+function resetTarget(entry) { entry.target = entry.targetType === 'module' ? { moduleKey: 'apply' } : entry.targetType === 'content' ? { contentId: null } : { url: '' } }
+function resolveUrl(url) { if (!url || /^https?:\/\//.test(url)) return url; return import.meta.env.VITE_APP_BASE_API + url }
+function hotspotStyle(entry) { const b = entry.bounds || {}; return { left: `${b.left || 0}%`, top: `${b.top || 0}%`, width: `${b.width || 10}%`, height: `${b.height || 8}%` } }
+function tileStyle(entry) { if (!isTile.value) return {}; return { gridColumn: `${entry.tileCol || 'auto'} / span ${entry.tileColSpan || 1}`, gridRow: `${entry.tileRow || 'auto'} / span ${entry.tileRowSpan || 1}` } }
+function previewGridStyle(section) { return isTile.value ? {} : { gridTemplateColumns: `repeat(${section.columns || 2}, 1fr)` } }
+function validateTemplateEntries() { for (const section of currentTemplate.value.entrySections) { const count = enabledSectionCount(section); if (count < (section.min || 0)) { proxy.$modal.msgError(`${section.label}至少需要启用 ${section.min} 个入口`); return false }; if (section.max && count > section.max) { proxy.$modal.msgError(`${section.label}最多只能启用 ${section.max} 个入口`); return false } }; return true }
+function syncJson() { page.value.templateKey = templateKey.value; page.value.layout.themeColor = page.value.theme?.color || '#1f6feb'; page.value.sections = currentTemplate.value.slots.map(slot => ({ id: slot, type: slot, enabled: true, entries: currentTemplate.value.entrySections.some(section => section.key === slot) ? entries.value.filter(entry => entry.sectionKey === slot) : [] })); pageJson.value = JSON.stringify(page.value, null, 2) }
+function loadJson() { try { const parsed = JSON.parse(pageJson.value); page.value = parsed; templateKey.value = parsed.templateKey && getMeetingHomeTemplate(parsed.templateKey).key === parsed.templateKey ? parsed.templateKey : (parsed.layout?.template === 'image-map' ? 'sciconf-poster-map' : 'sciconf-image-menu'); page.value.entryTree ||= []; page.value.theme ||= { color: page.value.layout?.themeColor || '#1f6feb' }; page.value.layout ||= {}; page.value.layout.entrySections ||= currentTemplate.value.entrySections; } catch { proxy.$modal.msgError('页面 JSON 格式错误') } }
+function saveDraft() { if (!validateTemplateEntries()) return; syncJson(); saving.value = true; saveHomeDraft({ versionId: versionId.value, activityId: activityId.value, pageJson: pageJson.value, schemaVersion: '2' }).then(res => { versionId.value = res.data?.versionId; proxy.$modal.msgSuccess('草稿已保存') }).finally(() => { saving.value = false }) }
+function publish() { if (!validateTemplateEntries()) return; proxy.$modal.prompt('填写发布备注（可选）', '发布首页').then(({ value }) => { publishing.value = true; publishHomeVersion(versionId.value, value).then(() => proxy.$modal.msgSuccess('已发布')).finally(() => { publishing.value = false }) }).catch(() => {}) }
+function loadVersions() { listHomeVersions({ activityId: activityId.value, pageNum: 1, pageSize: 100 }).then(res => { versions.value = res.rows || []; versionsOpen.value = true }) }
+function loadVersion(id) { getHomeVersion(id).then(res => { versionId.value = res.data?.versionId; pageJson.value = res.data?.pageJson || ''; loadJson(); versionsOpen.value = false }) }
+watch(page, syncJson, { deep: true }); onMounted(() => { syncJson(); listMeetingContent({ activityId: activityId.value, status: 'published', pageNum: 1, pageSize: 200 }).then(res => { contentOptions.value = res.rows || [] }) })
+</script>
+
+<style scoped>
+.composer-head{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-bottom:16px}.composer-head h2{margin:0;font-size:20px}.composer-head p{margin:6px 0 0;color:#606266}.head-actions{display:flex;gap:8px}.template-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.template-card{padding:8px;border:1px solid #dcdfe6;border-radius:8px;background:#fff;text-align:left;cursor:pointer}.template-card.active{border-color:#409eff;box-shadow:0 0 0 2px #d9ecff}.template-card img{display:block;width:100%;height:98px;object-fit:cover;border-radius:5px}.template-card span{display:block;margin-top:8px;font-weight:600;color:#303133}.template-card small{display:block;margin-top:4px;color:#909399;line-height:1.35}.composer-grid{display:grid;grid-template-columns:minmax(360px,1fr) 420px;gap:16px}.editor-panel,.preview-panel{padding:18px;background:#fff;border:1px solid #ebeef5;border-radius:8px}.panel-title{margin-bottom:14px;font-weight:600;color:#303133}.entry-section{margin-bottom:16px}.entry-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 8px;font-weight:600;color:#303133}.entry-section-title small{margin-left:8px;font-weight:400;color:#909399}.entry-list{display:flex;flex-direction:column;gap:10px}.entry-editor{padding:12px;background:#f8fafc;border:1px solid #e4e7ed;border-radius:6px}.entry-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.entry-top strong{margin-right:auto}.full{width:100%}.mt8{margin-top:8px}.bounds{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.bounds :deep(.el-input-number){width:100%}.entry-editor small{display:block;margin-top:4px;color:#909399}.preview-panel{position:sticky;top:12px;height:max-content}.phone{width:360px;max-width:100%;margin:auto;padding:9px;background:#1f2937;border-radius:28px}.phone-screen{min-height:650px;overflow:hidden;background:#f5f7fa;border-radius:20px}.hero{height:205px;background-position:center;background-size:cover}.countdown{padding:16px 10px;background:#fff;text-align:center;color:#303133;font-weight:600}.nav-preview{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px;background:#fff}.nav-preview.icons{grid-template-columns:repeat(3,1fr)}.nav-preview.tile{grid-template-columns:repeat(6,1fr);grid-auto-rows:48px}.nav-item{display:flex;min-height:82px;flex-direction:column;align-items:center;justify-content:center;gap:5px;overflow:hidden;background:#f1f5f9;border-radius:5px;color:#303133;text-align:center;font-size:12px}.nav-item.tall{min-height:122px}.nav-item img{width:100%;height:100%;object-fit:cover}.nav-item img+span{position:absolute;padding:2px 5px;background:rgba(0,0,0,.45);color:#fff}.footer-preview{padding:16px;background:#fff;color:#909399;text-align:center;font-size:12px}.phone-screen.poster{position:relative;min-height:auto;background:#fff}.poster-image{display:block;width:100%;height:auto}.hotspot{position:absolute;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:1px dashed rgba(64,158,255,.9);background:rgba(64,158,255,.15);color:#1677d2;font-size:11px}.advanced{margin-top:16px}@media(max-width:1000px){.template-strip{grid-template-columns:repeat(2,1fr)}.composer-grid{grid-template-columns:1fr}.preview-panel{position:static}.composer-head{align-items:flex-start;flex-direction:column}}
+</style>

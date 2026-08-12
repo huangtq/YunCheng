@@ -63,13 +63,13 @@ function itemKey(item, index) {
 }
 
 function itemTitle(item) {
-  return item.scheduleName || item.guestName || item.channelName || item.hotelName
+  return item.name || item.scheduleName || item.guestName || item.channelName || item.hotelName
     || item.venueName || item.title || item.exhibitorName || item.ticketName || '未命名'
 }
 
 function itemSub(item) {
   if (moduleKey.value === 'schedule') return [item.venueName, item.topicName].filter(Boolean).join(' · ')
-  if (moduleKey.value === 'guest') return [item.orgName, item.title].filter(Boolean).join(' · ')
+  if (moduleKey.value === 'guest') return [item.organization || item.orgName, item.title].filter(Boolean).join(' · ')
   if (moduleKey.value === 'hotel') return item.address || item.phone || ''
   if (moduleKey.value === 'venue') return item.isLive === '1' ? '直播会场' : '线下会场'
   if (moduleKey.value === 'nav') return item.address || ''
@@ -82,13 +82,12 @@ function itemExtra(item) {
   if (moduleKey.value === 'schedule' && item.startTime) {
     return item.startTime + (item.endTime ? (' - ' + item.endTime) : '')
   }
-  if (moduleKey.value === 'guest' && item.phone) return item.phone
   if (moduleKey.value === 'nav' && item.phone) return item.phone
   return ''
 }
 
 function onItemClick(item) {
-  if (moduleKey.value === 'nav' && item.latitude && item.longitude) {
+  if (moduleKey.value === 'nav' && item.canNavigate && item.latitude && item.longitude) {
     uni.openLocation({
       latitude: Number(item.latitude),
       longitude: Number(item.longitude),

@@ -30,6 +30,7 @@
       <if test="guestName!=null and guestName!=''">and o.guest_name like concat('%',#{guestName},'%')</if>
       <if test="phone!=null and phone!=''">and o.phone like concat('%',#{phone},'%')</if>
       <if test="orderStatus!=null and orderStatus!=''">and o.order_status=#{orderStatus}</if>
+      <if test="createBy!=null and createBy!=''">and o.create_by=#{createBy}</if>
     </where>
     order by o.order_id desc
   </select>

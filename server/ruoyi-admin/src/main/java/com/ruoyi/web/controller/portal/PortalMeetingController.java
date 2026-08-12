@@ -6,10 +6,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletResponse;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.system.service.IYcPortalMeetingService;
+import com.ruoyi.system.service.IYcMeetingNoticeService;
+import com.ruoyi.common.core.domain.model.MpLoginUser;
+import com.ruoyi.framework.web.service.MpTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Anonymous
 @RestController
@@ -18,6 +23,30 @@ public class PortalMeetingController extends BaseController
 {
     @Autowired
     private IYcPortalMeetingService portalMeetingService;
+    @Autowired
+    private MpTokenService mpTokenService;
+    @Autowired private IYcMeetingNoticeService noticeService;
+
+    @GetMapping("/home/{activityId}")
+    public AjaxResult home(@PathVariable Long activityId, HttpServletRequest request)
+    {
+        MpLoginUser user = mpTokenService.getLoginUser(request);
+        return success(portalMeetingService.getHomePage(activityId, user));
+    }
+
+    @GetMapping("/content/{activityId}/{contentId}")
+    public AjaxResult content(@PathVariable Long activityId, @PathVariable Long contentId, HttpServletRequest request)
+    {
+        return success(portalMeetingService.getPublicContent(activityId, contentId, mpTokenService.getLoginUser(request)));
+    }
+
+    @GetMapping("/content/{activityId}/attachment/{attachmentId}")
+    public void downloadAttachment(@PathVariable Long activityId, @PathVariable Long attachmentId,
+        HttpServletRequest request, HttpServletResponse response) throws java.io.IOException
+    {
+        response.sendRedirect(portalMeetingService.getPublicAttachmentUrl(activityId, attachmentId,
+            mpTokenService.getLoginUser(request)));
+    }
 
     @GetMapping("/activity/{activityId}")
     public AjaxResult activity(@PathVariable Long activityId)
@@ -35,6 +64,42 @@ public class PortalMeetingController extends BaseController
     public AjaxResult grid(@PathVariable Long activityId)
     {
         return success(portalMeetingService.listGrid(activityId));
+    }
+
+    @GetMapping("/schedule/{activityId}")
+    public AjaxResult schedule(@PathVariable Long activityId)
+    {
+        return success(portalMeetingService.listPublicSchedules(activityId));
+    }
+
+    @GetMapping("/guest/{activityId}")
+    public AjaxResult guest(@PathVariable Long activityId)
+    {
+        return success(portalMeetingService.listPublicGuests(activityId));
+    }
+
+    @GetMapping("/navigation/{activityId}")
+    public AjaxResult navigation(@PathVariable Long activityId)
+    {
+        return success(portalMeetingService.listPublicNavigation(activityId));
+    }
+
+    @GetMapping("/hotel/{activityId}")
+    public AjaxResult hotel(@PathVariable Long activityId, HttpServletRequest request)
+    {
+        return success(portalMeetingService.hotelOverview(activityId, mpTokenService.getLoginUser(request)));
+    }
+
+    @GetMapping("/notice/{activityId}")
+    public AjaxResult notices(@PathVariable Long activityId, HttpServletRequest request)
+    {
+        return success(noticeService.publicList(activityId, mpTokenService.getLoginUser(request)));
+    }
+
+    @GetMapping("/notice/{activityId}/{noticeId}")
+    public AjaxResult notice(@PathVariable Long activityId, @PathVariable Long noticeId, HttpServletRequest request)
+    {
+        return success(noticeService.detail(activityId, noticeId, mpTokenService.getLoginUser(request)));
     }
 
     @GetMapping("/module/{moduleKey}/{activityId}")

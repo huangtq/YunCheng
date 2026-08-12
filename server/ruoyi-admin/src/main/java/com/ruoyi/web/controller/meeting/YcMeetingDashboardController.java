@@ -1,0 +1,3 @@
+package com.ruoyi.web.controller.meeting;
+import org.springframework.beans.factory.annotation.Autowired; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.web.bind.annotation.*; import com.ruoyi.common.core.controller.BaseController; import com.ruoyi.common.core.domain.AjaxResult; import com.ruoyi.system.service.IYcMeetingAnalyticsService;
+@RestController @RequestMapping("/meeting/dashboard") public class YcMeetingDashboardController extends BaseController { @Autowired private IYcMeetingAnalyticsService service; @PreAuthorize("@ss.hasPermi('meeting:dashboard:view')") @GetMapping("/{activityId}") public AjaxResult overview(@PathVariable Long activityId){return success(service.dashboard(activityId));} }

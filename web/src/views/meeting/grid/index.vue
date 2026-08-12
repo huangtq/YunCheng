@@ -54,6 +54,7 @@
             >
               保存模板
             </el-button>
+            <el-button plain @click="goHomeComposer">整页参考模板</el-button>
           </el-form-item>
           <el-form-item class="layout-settings-item">
             <el-popover placement="bottom-start" :width="384" trigger="click" popper-class="grid-visual-popper">
@@ -810,6 +811,10 @@ function saveTemplate() {
     gridTemplate: configForm.value.gridTemplate,
     remark: buildConfigRemark()
   }).then(() => proxy.$modal.msgSuccess("模板已保存"))
+}
+
+function goHomeComposer() {
+  router.push({ path: '/meeting/activity-config/home-composer', query: { id: activityId.value } })
 }
 
 function handleSelectionChange(selection) {

@@ -121,16 +121,7 @@ public class YcApplyOrderServiceImpl implements IYcApplyOrderService
         {
             throw new ServiceException("cancelled order cannot checkin");
         }
-        if ("1".equals(exist.getCheckinStatus()))
-        {
-            throw new ServiceException("already checked in");
-        }
-        YcApplyOrder order = new YcApplyOrder();
-        order.setOrderId(orderId);
-        order.setCheckinStatus("1");
-        order.setCheckinTime(new Date());
-        order.setUpdateBy(updateBy);
-        return ycApplyOrderMapper.updateYcApplyOrder(order);
+        return ycApplyOrderMapper.checkinIfPending(orderId, updateBy);
     }
 
     @Override

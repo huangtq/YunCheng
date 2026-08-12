@@ -9,7 +9,9 @@ export const MEETING_MODULES = [
   { key: 'venue', label: '会场导航', title: '会场导航' },
   { key: 'nav', label: '会议导航', title: '会议导航' },
   { key: 'exhibitor', label: '展商名录', title: '展商名录' },
-  { key: 'meal', label: '餐票服务', title: '餐票服务' }
+  { key: 'meal', label: '餐票服务', title: '餐票服务' },
+  { key: 'notice', label: '会议通知', title: '会议通知' },
+  { key: 'feedback', label: '意见反馈', title: '意见反馈' }
 ]
 
 export function getMeetingModule(key) {
@@ -22,6 +24,41 @@ export function resolveModulePage(activityId, moduleKey, title) {
   if (moduleKey === 'apply') {
     return `/pages/meeting/apply/index?activityId=${activityId}`
   }
+  if (moduleKey === 'schedule' || moduleKey === 'guest' || moduleKey === 'nav') {
+    return `/pages/meeting/${moduleKey}?activityId=${activityId}`
+  }
+  if (moduleKey === 'hotel') return `/pages/meeting/hotel?activityId=${activityId}`
+  if (moduleKey === 'notice') return `/pages/meeting/notice?activityId=${activityId}`
+  if (moduleKey === 'feedback') return `/pages/meeting/feedback?activityId=${activityId}`
+  if (moduleKey === 'meal' || moduleKey === 'my-attendance') return `/pages/meeting/apply/mine?activityId=${activityId}`
   const name = encodeURIComponent(title || mod.title || mod.label)
   return `/pages/meeting/module?activityId=${activityId}&moduleKey=${moduleKey}&title=${name}`
+}
+
+export function resolveEntryPage(activityId, entry) {
+  if (!entry || entry.enabled === false || entry.available === false) return ''
+  const targetType = entry.targetType || entry.type
+  const target = entry.target || {}
+  if (targetType === 'group') {
+    return entry.id ? `/pages/meeting/entry?activityId=${activityId}&entryId=${encodeURIComponent(entry.id)}` : ''
+  }
+  if (targetType === 'content') {
+    const contentId = typeof target === 'object' ? target.contentId : target
+    return /^\d+$/.test(String(contentId || ''))
+      ? `/pages/meeting/content?activityId=${activityId}&contentId=${contentId}` : ''
+  }
+  if (targetType === 'module') {
+    const moduleKey = typeof target === 'object' ? target.moduleKey : target
+    return moduleKey ? resolveModulePage(activityId, moduleKey, entry.title) : ''
+  }
+  if (targetType === 'external') {
+    const url = typeof target === 'object' ? target.url : target
+    return /^https?:\/\//i.test(String(url || ''))
+      ? `/pages/common/webview/index?title=${encodeURIComponent(entry.title || '')}&url=${encodeURIComponent(url)}` : ''
+  }
+  if (targetType === 'file') {
+    const fileUrl = typeof target === 'object' ? target.url : target
+    return fileUrl ? `/pages/common/webview/index?title=${encodeURIComponent(entry.title || '资料')}&url=${encodeURIComponent(fileUrl)}` : ''
+  }
+  return ''
 }

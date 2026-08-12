@@ -64,12 +64,12 @@
       <view v-else class="standard-page" :class="{ 'is-image-card-grid': isImageCardGrid }" :style="standardPageStyle">
         <view class="cover" :style="coverStyle">
           <image
-            v-if="isImageCardGrid && activity.coverUrl"
+            v-if="isImageCardGrid && (layout.heroUrl || activity.coverUrl)"
             class="cover-auto-image"
-            :src="resolveUrl(activity.coverUrl)"
+            :src="resolveUrl(layout.heroUrl || activity.coverUrl)"
             mode="widthFix"
           />
-          <view class="cover-mask">
+          <view v-if="layout.showCoverMeta" class="cover-mask">
             <view class="title">{{ activity.activityName || '会议' }}</view>
             <view v-if="layout.showRegisterCount" class="meta-row">
               已报名 {{ activity.registerCount || 0 }} 人
@@ -104,17 +104,17 @@
           {{ layout.notice }}
         </view>
 
-        <view class="section">
-          <view class="section-title">
+        <view v-for="section in entrySections" :key="section.key" class="section" :class="`section-${section.key}`">
+          <view v-if="layout.showSectionTitle" class="section-title">
             <text class="section-bar"></text>
-            <text>会议菜单</text>
+            <text>{{ section.label || '会议菜单' }}</text>
           </view>
-          <view class="grid" :class="gridClass">
+          <view class="grid" :class="gridClassFor(section)">
             <view
-              v-for="item in gridList"
+              v-for="item in section.entries"
               :key="item.gridId"
               class="grid-item"
-              :class="{ 'is-icon-only': isIconOnly, 'is-image-card': isImageCard(item) }"
+              :class="{ 'is-icon-only': isIconOnlyFor(section), 'is-image-card': isImageCard(item, section), 'is-tall-image-card': section.ratio === 'tall' }"
               @click="onGridClick(item)"
             >
               <image
@@ -129,14 +129,14 @@
                     :icon-type="item.iconType"
                     :icon-key="item.iconKey"
                     :icon-url="item.iconUrl"
-                    :size="isIconOnly ? 64 : 56"
+                    :size="isIconOnlyFor(section) ? 64 : 56"
                     color="#fff"
                   />
                 </view>
-                <text v-if="!isIconOnly" class="grid-text">{{ item.title }}</text>
+                <text v-if="!isIconOnlyFor(section)" class="grid-text">{{ item.title }}</text>
               </template>
             </view>
-            <view v-if="!gridList.length" class="empty">暂无菜单，请在后台配置九宫格</view>
+            <view v-if="!section.entries.length" class="empty">暂无菜单，请在后台配置</view>
           </view>
         </view>
       </view>
@@ -150,9 +150,9 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import MeetingIcon from '@/components/MeetingIcon/MeetingIcon.vue'
 import CountdownBoard from '@/components/CountdownBoard/CountdownBoard.vue'
-import { getPortalActivity, getPortalGrid } from '@/api/portal/meeting'
+import { getPortalHome, recordMeetingEvent } from '@/api/portal/meeting'
 import { captureMpTokenFromQuery } from '@/utils/mpAuth'
-import { resolveModulePage } from '@/utils/meetingModules'
+import { resolveEntryPage, resolveModulePage } from '@/utils/meetingModules'
 import { buildHomeLayout, formatCountdownParts } from '@/utils/meetingLayout'
 import { setupMeetingShare } from '@/utils/wxShare'
 import config from '@/config'
@@ -163,6 +163,7 @@ const activity = ref({})
 const meetingConfig = ref({})
 const layout = ref(buildHomeLayout())
 const gridList = ref([])
+const entrySections = ref([])
 const now = ref(Date.now())
 let timer = null
 
@@ -175,7 +176,7 @@ const pageThemeStyle = computed(() => ({
 }))
 
 const coverStyle = computed(() => {
-  const url = activity.value.coverUrl
+  const url = layout.value.heroUrl || activity.value.coverUrl
   const tileBg = tileSurfaceColor.value
   if (!url) {
     return {
@@ -198,12 +199,7 @@ const isImageMap = computed(() => layout.value.template === 'image-map')
 const isTile = computed(() => layout.value.template === 'standard' && layout.value.gridTemplate === 'tile')
 const isLightTile = computed(() => isTile.value && isLightColor(layout.value.themeColor))
 const tileSurfaceColor = computed(() => (isLightTile.value ? (layout.value.themeColor || '#f6f6f6') : '#061a74'))
-const isIconOnly = computed(() => layout.value.gridStyle === 'icon')
-const gridClass = computed(() => `cols-${layout.value.gridColumns || 3}`)
-const isImageCardGrid = computed(() => (
-  Number(layout.value.gridColumns) === 2
-  && gridList.value.some(item => item?.iconType === 'image' && !!gridCardUrl(item))
-))
+const isImageCardGrid = computed(() => entrySections.value.some(section => Number(section.columns) === 2 && section.entries.some(item => item?.iconType === 'image' && !!gridCardUrl(item))))
 const audioUrl = computed(() => layout.value.audioUrl ? resolveUrl(layout.value.audioUrl) : '')
 const audioPlaying = ref(false)
 let audioContext = null
@@ -293,17 +289,21 @@ onUnload(() => {
 async function loadHome() {
   loading.value = true
   try {
-    const [actRes, gridRes] = await Promise.all([
-      getPortalActivity(activityId.value),
-      getPortalGrid(activityId.value)
-    ])
-    activity.value = (actRes.data && actRes.data.activity) || {}
-    meetingConfig.value = (actRes.data && actRes.data.config) || {}
-    layout.value = buildHomeLayout(actRes.data && actRes.data.layout, meetingConfig.value)
-    gridList.value = gridRes.data || []
+    const res = await getPortalHome(activityId.value)
+    const home = res.data || {}
+    activity.value = home.activity || {}
+    const page = home.page || {}
+    meetingConfig.value = {}
+    layout.value = buildHomeLayout(page.layout || {}, { pageThemeColor: page.theme?.color })
+    gridList.value = flattenEntries(page.entryTree || page.sections?.flatMap(section => section.entries || []) || [])
+    entrySections.value = buildEntrySections(gridList.value)
+    if (page.layout?.template === 'image-map') {
+      layout.value.blocks = gridList.value.map(entry => ({ ...entry, ...(entry.bounds || {}) }))
+    }
     const meetingTitle = activity.value.activityName || '会议首页'
     uni.setNavigationBarTitle({ title: meetingTitle })
     setupMeetingShare(activityId.value, meetingTitle)
+    recordEvent('home', 'view', { source: 'home' })
     if (layout.value.notice) {
       setTimeout(showNotice, 200)
     }
@@ -313,8 +313,34 @@ async function loadHome() {
   }
 }
 
-function isImageCard(item) {
-  return item && item.iconType === 'image' && !!gridCardUrl(item) && Number(layout.value.gridColumns) === 2
+function flattenEntries(entries = []) {
+  return entries.filter(entry => entry && entry.enabled !== false).map(entry => ({
+    ...entry,
+    gridId: entry.id,
+    linkType: entry.targetType,
+    moduleKey: entry.targetType === 'module' ? (entry.target?.moduleKey || entry.target) : '',
+    externalUrl: entry.targetType === 'external' ? (entry.target?.url || entry.target) : '',
+    contentUrl: entry.targetType === 'content' ? (entry.target?.url || '') : ''
+  }))
+}
+
+function buildEntrySections(entries) {
+  const definitions = layout.value.entrySections || []
+  if (!definitions.length) return [{ key: 'menu', label: '会议菜单', columns: layout.value.gridColumns, ratio: 'wide', entries }]
+  return definitions.map(definition => ({ ...definition, entries: entries.filter(entry => (entry.sectionKey || definitions[0].key) === definition.key) }))
+}
+
+function gridClassFor(section) {
+  const columns = Number(section.columns || layout.value.gridColumns)
+  return `cols-${columns || 3}`
+}
+
+function isIconOnlyFor(section) {
+  return section.ratio === 'icon' || (Number(section.columns || layout.value.gridColumns) === 3 && layout.value.gridStyle === 'icon')
+}
+
+function isImageCard(item, section) {
+  return item && item.iconType === 'image' && !!gridCardUrl(item) && Number(section.columns || layout.value.gridColumns) === 2
 }
 
 function gridCardUrl(item) {
@@ -436,6 +462,29 @@ function toggleAudio() {
 }
 
 function onGridClick(item) {
+  recordEvent(String(item.id || item.gridId || item.entryId || item.moduleKey || item.title || 'unknown'), 'click', { targetType: item.targetType || item.linkType || 'legacy' })
+  if (item.targetType) {
+    if (item.available === false) {
+      uni.showToast({ title: item.unavailableMessage || '暂未开放', icon: 'none' })
+      return
+    }
+    if (item.targetType === 'content' && item.legacyContent) {
+      const legacyUrl = item.contentUrl || item.target || item.iconUrl || ''
+      if (item.contentType === 'image' && legacyUrl) {
+        uni.navigateTo({ url: `/pages/common/imageview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title || '图片内容')}&url=${encodeURIComponent(legacyUrl)}` })
+      } else {
+        uni.navigateTo({ url: `/pages/common/textview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title || '内容')}&content=${encodeURIComponent(item.legacyContent)}` })
+      }
+      return
+    }
+    const target = resolveEntryPage(activityId.value, item)
+    if (target) {
+      uni.navigateTo({ url: target })
+      return
+    }
+    uni.showToast({ title: '暂无可用操作', icon: 'none' })
+    return
+  }
   if (item.linkType === 'url' && item.externalUrl) {
     uni.navigateTo({
       url: `/pages/common/webview/index?activityId=${encodeURIComponent(activityId.value || '')}&title=${encodeURIComponent(item.title)}&url=${encodeURIComponent(item.externalUrl)}`
@@ -484,6 +533,11 @@ function onGridClick(item) {
     }
   }
   uni.showToast({ title: '暂无可用操作', icon: 'none' })
+}
+
+function recordEvent(entryId, eventType, context) {
+  if (!activityId.value) return
+  recordMeetingEvent({ activityId: activityId.value, entryId, eventType, context }).catch(() => {})
 }
 
 function onBlockClick(block) {
@@ -894,6 +948,7 @@ function onFooterClick() {
   display: block;
   box-shadow: 0 8rpx 20rpx rgba(30, 75, 181, 0.12);
 }
+.grid-item.is-tall-image-card .grid-card-image { aspect-ratio: 1 / 1.4; object-fit: cover; }
 .grid-icon-wrap {
   width: 96rpx;
   height: 96rpx;

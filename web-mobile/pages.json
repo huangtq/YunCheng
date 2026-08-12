@@ -22,6 +22,36 @@
       "navigationBarTitleText": "会议模块"
     }
   }, {
+    "path": "pages/meeting/content",
+    "style": {
+      "navigationStyle": "custom",
+      "navigationBarTitleText": "内容详情"
+    }
+  }, {
+    "path": "pages/meeting/entry",
+    "style": {
+      "navigationStyle": "custom",
+      "navigationBarTitleText": "会议栏目"
+    }
+  }, {
+    "path": "pages/meeting/schedule",
+    "style": { "navigationStyle": "custom", "navigationBarTitleText": "会议议程" }
+  }, {
+    "path": "pages/meeting/guest",
+    "style": { "navigationStyle": "custom", "navigationBarTitleText": "嘉宾列表" }
+  }, {
+    "path": "pages/meeting/nav",
+    "style": { "navigationStyle": "custom", "navigationBarTitleText": "会议导航" }
+  }, {
+    "path": "pages/meeting/notice",
+    "style": { "navigationStyle": "custom", "navigationBarTitleText": "会议通知" }
+  }, {
+    "path": "pages/meeting/hotel",
+    "style": { "navigationStyle": "custom", "navigationBarTitleText": "会议酒店" }
+  }, {
+    "path": "pages/meeting/feedback",
+    "style": { "navigationStyle": "custom", "navigationBarTitleText": "意见反馈" }
+  }, {
     "path": "pages/meeting/apply/index",
     "style": {
       "navigationStyle": "custom",

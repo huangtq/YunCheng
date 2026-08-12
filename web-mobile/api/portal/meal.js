@@ -1,0 +1,1 @@
+import request from '@/utils/request';import{getMpToken}from'@/utils/mpAuth';export const getMyMealCoupons=activityId=>{const h={isToken:false};const t=getMpToken();if(t)h['Mp-Authorization']='Bearer '+t;return request({url:'/portal/meeting/apply/meal-coupons',method:'get',params:{activityId},headers:h})}

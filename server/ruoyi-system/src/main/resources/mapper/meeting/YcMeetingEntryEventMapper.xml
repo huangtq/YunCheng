@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcMeetingEntryEventMapper">
+  <insert id="insert">insert into yc_meeting_entry_event(activity_id,entry_id,event_type,mp_user_id,occurred_time,context_json) values(#{activityId},#{entryId},#{eventType},#{mpUserId},sysdate(),#{contextJson})</insert>
+  <select id="topEntries" resultType="java.util.HashMap">select entry_id,event_type,count(1) as event_count from yc_meeting_entry_event where activity_id=#{activityId} group by entry_id,event_type order by event_count desc limit 20</select>
+</mapper>

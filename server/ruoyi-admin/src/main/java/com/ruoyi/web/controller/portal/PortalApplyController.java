@@ -14,6 +14,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.model.MpLoginUser;
 import com.ruoyi.framework.web.service.MpTokenService;
 import com.ruoyi.system.service.IYcPortalMeetingService;
+import com.ruoyi.system.service.IYcMealService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Anonymous
@@ -25,6 +26,7 @@ public class PortalApplyController extends BaseController
     private IYcPortalMeetingService portalMeetingService;
     @Autowired
     private MpTokenService mpTokenService;
+    @Autowired private IYcMealService mealService;
 
     @PostMapping("/submit")
     public AjaxResult submit(@RequestBody Map<String, Object> body, HttpServletRequest request)
@@ -38,5 +40,30 @@ public class PortalApplyController extends BaseController
     {
         MpLoginUser user = mpTokenService.requireLoginUser(request);
         return success(portalMeetingService.myApplyOrders(user, activityId));
+    }
+
+    @GetMapping("/attendance")
+    public AjaxResult attendance(@RequestParam Long activityId, HttpServletRequest request)
+    {
+        MpLoginUser user = mpTokenService.requireLoginUser(request);
+        return success(portalMeetingService.myAttendance(user, activityId));
+    }
+
+    @GetMapping("/meal-coupons")
+    public AjaxResult mealCoupons(@RequestParam Long activityId, HttpServletRequest request)
+    {
+        return success(mealService.myCoupons(activityId, mpTokenService.requireLoginUser(request)));
+    }
+
+    @GetMapping("/hotel/orders")
+    public AjaxResult hotelOrders(@RequestParam Long activityId, HttpServletRequest request)
+    {
+        return success(portalMeetingService.myHotelOrders(mpTokenService.requireLoginUser(request), activityId));
+    }
+
+    @PostMapping("/hotel/order")
+    public AjaxResult bookHotel(@RequestBody Map<String, Object> body, HttpServletRequest request)
+    {
+        return success(portalMeetingService.submitHotelOrder(mpTokenService.requireLoginUser(request), body));
     }
 }

@@ -27,6 +27,7 @@ create table if not exists yc_hotel_room (
   bed_type          varchar(50)     default ''                 comment '床型',
   price             decimal(10,2)   default 0                  comment '单价',
   stock             int(11)         default 0                  comment '库存 0不限',
+  reserved_stock    int(11)         default 0                  comment '已冻结库存',
   sort_order        int(11)         default 0                  comment '排序',
   del_flag          char(1)         default '0'                comment '删除标志',
   create_by         varchar(64)     default ''                 comment '创建者',
@@ -38,6 +39,8 @@ create table if not exists yc_hotel_room (
   key idx_room_hotel (hotel_id),
   key idx_room_activity (activity_id)
 ) engine=innodb auto_increment=1 comment='酒店房型';
+
+alter table yc_hotel_room add column if not exists reserved_stock int(11) default 0 comment '已冻结库存';
 
 create table if not exists yc_hotel_order (
   order_id          bigint(20)      not null auto_increment    comment '订单ID',

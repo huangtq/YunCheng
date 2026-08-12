@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcMeetingContentAttachmentMapper">
+  <resultMap type="YcMeetingContentAttachment" id="ContentAttachmentResult">
+    <result property="attachmentId" column="attachment_id"/><result property="contentId" column="content_id"/>
+    <result property="fileName" column="file_name"/><result property="fileUrl" column="file_url"/>
+    <result property="fileType" column="file_type"/><result property="fileSize" column="file_size"/>
+    <result property="visibility" column="visibility"/><result property="validStart" column="valid_start"/>
+    <result property="validEnd" column="valid_end"/><result property="sortOrder" column="sort_order"/>
+    <result property="status" column="status"/><result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/><result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/><result property="updateTime" column="update_time"/>
+    <result property="remark" column="remark"/>
+  </resultMap>
+  <sql id="selectAttachmentVo">select attachment_id,content_id,file_name,file_url,file_type,file_size,visibility,valid_start,valid_end,sort_order,status,del_flag,create_by,create_time,update_by,update_time,remark from yc_meeting_content_attachment</sql>
+  <select id="selectYcMeetingContentAttachmentById" resultMap="ContentAttachmentResult"><include refid="selectAttachmentVo"/> where attachment_id=#{attachmentId} and del_flag='0'</select>
+  <select id="selectByContentId" resultMap="ContentAttachmentResult"><include refid="selectAttachmentVo"/> where content_id=#{contentId} and status='1' and del_flag='0' order by sort_order asc,attachment_id asc</select>
+  <insert id="insertYcMeetingContentAttachment" useGeneratedKeys="true" keyProperty="attachmentId">
+    insert into yc_meeting_content_attachment(content_id,file_name,file_url,file_type,file_size,visibility,valid_start,valid_end,sort_order,status,del_flag,create_by,create_time,remark)
+    values(#{contentId},#{fileName},#{fileUrl},#{fileType},#{fileSize},#{visibility},#{validStart},#{validEnd},#{sortOrder},#{status},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcMeetingContentAttachment">update yc_meeting_content_attachment <set>
+    <if test="fileName != null">file_name=#{fileName},</if><if test="fileUrl != null">file_url=#{fileUrl},</if>
+    <if test="fileType != null">file_type=#{fileType},</if><if test="fileSize != null">file_size=#{fileSize},</if>
+    <if test="visibility != null">visibility=#{visibility},</if><if test="validStart != null">valid_start=#{validStart},</if>
+    <if test="validEnd != null">valid_end=#{validEnd},</if><if test="sortOrder != null">sort_order=#{sortOrder},</if>
+    <if test="status != null">status=#{status},</if><if test="updateBy != null">update_by=#{updateBy},</if>
+    <if test="remark != null">remark=#{remark},</if>update_time=sysdate()
+  </set> where attachment_id=#{attachmentId} and del_flag='0'</update>
+  <delete id="deleteYcMeetingContentAttachmentByIds">update yc_meeting_content_attachment set del_flag='2',update_time=sysdate() where attachment_id in <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach></delete>
+</mapper>

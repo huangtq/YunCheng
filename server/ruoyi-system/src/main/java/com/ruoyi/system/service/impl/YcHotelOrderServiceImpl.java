@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.YcHotel; import com.ruoyi.system.domain.YcHotelOrder;
-import com.ruoyi.system.mapper.YcHotelMapper; import com.ruoyi.system.mapper.YcHotelOrderMapper;
+import com.ruoyi.system.mapper.YcHotelMapper; import com.ruoyi.system.mapper.YcHotelOrderMapper; import com.ruoyi.system.mapper.YcHotelRoomMapper;
 import com.ruoyi.system.service.IYcHotelOrderService;
 @Service
 public class YcHotelOrderServiceImpl implements IYcHotelOrderService {
-    @Autowired private YcHotelOrderMapper mapper; @Autowired private YcHotelMapper hotelMapper;
+    @Autowired private YcHotelOrderMapper mapper; @Autowired private YcHotelMapper hotelMapper; @Autowired private YcHotelRoomMapper roomMapper;
     @Override public YcHotelOrder selectYcHotelOrderById(Long id){return mapper.selectYcHotelOrderById(id);}
     @Override public List<YcHotelOrder> selectYcHotelOrderList(YcHotelOrder q){return mapper.selectYcHotelOrderList(q);}
     @Override public Map<String,Object> selectHotelOrderStats(Long activityId){
@@ -21,11 +21,17 @@ public class YcHotelOrderServiceImpl implements IYcHotelOrderService {
         YcHotel h=hotelMapper.selectYcHotelById(e.getHotelId());
         if(h==null) throw new ServiceException("酒店不存在");
         e.setActivityId(h.getActivityId());
-        if(e.getPhone()==null)e.setPhone(""); if(e.getRoomCount()==null)e.setRoomCount(1);
+        if(e.getPhone()==null)e.setPhone(""); if(e.getRoomCount()==null || e.getRoomCount() < 1)e.setRoomCount(1);
+        if(e.getCheckInDate()!=null && e.getCheckOutDate()!=null && !e.getCheckOutDate().after(e.getCheckInDate())) throw new ServiceException("退房日期必须晚于入住日期");
         if(e.getAmount()==null)e.setAmount(BigDecimal.ZERO);
         if(StringUtils.isEmpty(e.getOrderStatus()))e.setOrderStatus("0");
     }
-    @Override public int insertYcHotelOrder(YcHotelOrder e){fill(e);return mapper.insertYcHotelOrder(e);}
-    @Override public int updateYcHotelOrder(YcHotelOrder e){fill(e);return mapper.updateYcHotelOrder(e);}
+    @Override public int insertYcHotelOrder(YcHotelOrder e){fill(e); if(e.getRoomId()!=null && "0".equals(e.getOrderStatus()) && roomMapper.reserveStock(e.getRoomId(),e.getRoomCount())!=1) throw new ServiceException("房型库存不足"); return mapper.insertYcHotelOrder(e);}
+    @Override public int updateYcHotelOrder(YcHotelOrder e){
+        YcHotelOrder old=mapper.selectYcHotelOrderById(e.getOrderId()); if(old==null) throw new ServiceException("订单不存在"); fill(e);
+        if("2".equals(e.getOrderStatus()) && !"2".equals(old.getOrderStatus()) && old.getRoomId()!=null) roomMapper.releaseStock(old.getRoomId(),old.getRoomCount()==null?1:old.getRoomCount());
+        if("0".equals(old.getOrderStatus()) && "1".equals(e.getOrderStatus()) && old.getRoomId()!=null) { /* stock remains frozen until cancellation */ }
+        return mapper.updateYcHotelOrder(e);
+    }
     @Override public int deleteYcHotelOrderByIds(Long[] ids){return mapper.deleteYcHotelOrderByIds(ids);}
 }

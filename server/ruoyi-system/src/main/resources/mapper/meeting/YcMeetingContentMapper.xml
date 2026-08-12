@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcMeetingContentMapper">
+  <resultMap type="YcMeetingContent" id="MeetingContentResult">
+    <result property="contentId" column="content_id"/><result property="activityId" column="activity_id"/>
+    <result property="title" column="title"/><result property="summary" column="summary"/>
+    <result property="contentHtml" column="content_html"/><result property="coverUrl" column="cover_url"/>
+    <result property="visibility" column="visibility"/><result property="status" column="status"/>
+    <result property="validStart" column="valid_start"/><result property="validEnd" column="valid_end"/>
+    <result property="sortOrder" column="sort_order"/><result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/><result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/><result property="updateTime" column="update_time"/>
+    <result property="remark" column="remark"/>
+  </resultMap>
+  <sql id="selectContentVo">
+    select content_id,activity_id,title,summary,content_html,cover_url,visibility,status,valid_start,valid_end,
+      sort_order,del_flag,create_by,create_time,update_by,update_time,remark from yc_meeting_content
+  </sql>
+  <select id="selectYcMeetingContentById" resultMap="MeetingContentResult"><include refid="selectContentVo"/> where content_id=#{contentId} and del_flag='0'</select>
+  <select id="selectYcMeetingContentList" resultMap="MeetingContentResult">
+    <include refid="selectContentVo"/><where>del_flag='0'
+      <if test="activityId != null">and activity_id=#{activityId}</if>
+      <if test="status != null and status != ''">and status=#{status}</if>
+      <if test="title != null and title != ''">and title like concat('%',#{title},'%')</if>
+    </where> order by sort_order asc, content_id desc
+  </select>
+  <insert id="insertYcMeetingContent" useGeneratedKeys="true" keyProperty="contentId">
+    insert into yc_meeting_content(activity_id,title,summary,content_html,cover_url,visibility,status,valid_start,valid_end,
+      sort_order,del_flag,create_by,create_time,remark)
+    values(#{activityId},#{title},#{summary},#{contentHtml},#{coverUrl},#{visibility},#{status},#{validStart},#{validEnd},
+      #{sortOrder},'0',#{createBy},sysdate(),#{remark})
+  </insert>
+  <update id="updateYcMeetingContent">
+    update yc_meeting_content <set>
+      <if test="title != null">title=#{title},</if><if test="summary != null">summary=#{summary},</if>
+      <if test="contentHtml != null">content_html=#{contentHtml},</if><if test="coverUrl != null">cover_url=#{coverUrl},</if>
+      <if test="visibility != null">visibility=#{visibility},</if><if test="status != null">status=#{status},</if>
+      <if test="validStart != null">valid_start=#{validStart},</if><if test="validEnd != null">valid_end=#{validEnd},</if>
+      <if test="sortOrder != null">sort_order=#{sortOrder},</if><if test="updateBy != null">update_by=#{updateBy},</if>
+      <if test="remark != null">remark=#{remark},</if>update_time=sysdate()
+    </set> where content_id=#{contentId} and del_flag='0'
+  </update>
+  <delete id="deleteYcMeetingContentByIds">update yc_meeting_content set del_flag='2',update_time=sysdate() where content_id in <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach></delete>
+</mapper>

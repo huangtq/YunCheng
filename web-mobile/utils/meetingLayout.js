@@ -37,10 +37,17 @@ export function buildHomeLayout(rawLayout = {}, config = {}) {
   const rawVisual = rawLayout.visual || {}
   return {
     template: rawLayout.template || config.mobileTemplate || 'standard',
-    themeColor: rawLayout.themeColor || config.mobileThemeColor || '#1f6feb',
+    heroUrl: rawLayout.heroUrl || config.mobileHeroUrl || '',
+    showCoverMeta: rawLayout.showCoverMeta !== false,
+    showSectionTitle: rawLayout.showSectionTitle !== false,
+    // Schema v2 keeps meeting visual preferences under page.theme. Callers
+    // may pass it through as config.pageThemeColor while old pages still use
+    // layout.themeColor or the legacy meeting configuration.
+    themeColor: rawLayout.themeColor || config.pageThemeColor || config.mobileThemeColor || '#1f6feb',
     backgroundUrl: rawLayout.backgroundUrl || config.mobileBackgroundUrl || '',
     notice: rawLayout.notice || config.mobileNotice || '',
     blocks: Array.isArray(rawLayout.blocks) ? rawLayout.blocks : [],
+    entrySections: Array.isArray(rawLayout.entrySections) ? rawLayout.entrySections : [],
     gridTemplate,
     gridColumns: Number(rawLayout.gridColumns) || resolveGridColumns(gridTemplate),
     gridStyle: rawLayout.gridStyle || resolveGridStyle(gridTemplate),

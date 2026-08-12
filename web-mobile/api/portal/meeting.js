@@ -37,3 +37,27 @@ export function submitPortalApply(data) {
 export function getMyPortalApply(activityId) {
   return request({ url: '/portal/meeting/apply/my', method: 'get', params: { activityId }, headers: portalHeaders() })
 }
+
+export function getPortalSchedule(activityId) {
+  return request({ url: '/portal/meeting/schedule/' + activityId, method: 'get', headers: portalHeaders() })
+}
+
+export function getPortalGuests(activityId) {
+  return request({ url: '/portal/meeting/guest/' + activityId, method: 'get', headers: portalHeaders() })
+}
+
+export function getPortalNavigation(activityId) {
+  return request({ url: '/portal/meeting/navigation/' + activityId, method: 'get', headers: portalHeaders() })
+}
+
+export function getPortalHome(activityId) {
+  return request({ url: '/portal/meeting/home/' + activityId, method: 'get', headers: portalHeaders() })
+}
+
+export function getPortalContent(activityId, contentId) {
+  return request({ url: '/portal/meeting/content/' + activityId + '/' + contentId, method: 'get', headers: portalHeaders() })
+}
+
+export function recordMeetingEvent(data) {
+  return request({ url: '/portal/meeting/event', method: 'post', data, headers: portalHeaders() })
+}
