@@ -11,3 +11,14 @@
 - 服务端由用户在 Cursor 中启动，并使用热更新。
 - 服务端代码修改完成后，不需要执行整个项目的全量构建验证。
 - 修改完成后，优先依赖热更新进行验证；如果需要接口或页面验证，则通知用户进行验证。
+
+## Local Integration Environment
+
+- The local services normally use Web admin `http://localhost:80`, backend `http://localhost:8080`, and H5 `http://localhost:9090/h5/`.
+- Backend processes are owned and started by the user in Cursor. Do not start, stop, or replace the backend process from the agent.
+- For terminal-based source startup with Spring Boot DevTools, use `server/start-dev.cmd`; it mirrors `.vscode/launch.json`, starts the SSH tunnels, runs `mvn.cmd spring-boot:run`, and stops the tunnels when the process exits.
+- The admin login requires a captcha. The user may enter the captcha in the browser; never store or write admin passwords, captcha values, cookies, or tokens into the repository.
+- The user manually logged into the admin browser during the 2026-08-13 integration session. This browser session may expire and must not be assumed to persist.
+- For meeting page checks, use activity IDs returned by `GET /portal/meeting/list?type=current`; the current local sample activities were `13` and `14`.
+- The unified H5 page is `/h5/pages/meeting/home?activityId={activityId}` and reads `/portal/meeting/home/{activityId}`.
+- The additive version migration is `server/sql/meeting_home_version_phase.sql`. If `yc_activity_home_version` is absent, the backend should fall back to legacy grid data, but publishing new versions still requires applying the migration.

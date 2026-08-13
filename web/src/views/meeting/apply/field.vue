@@ -192,7 +192,7 @@
       </el-col>
     </el-row>
 
-    <el-dialog :title="dialogTitle" v-model="open" width="680px" append-to-body destroy-on-close>
+    <el-dialog :title="dialogTitle" v-model="open" width="680px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <div class="dialog-section">
           <div class="dialog-section-title">基础设置</div>

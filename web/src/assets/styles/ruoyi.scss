@@ -71,6 +71,59 @@
 .el-form .el-form-item__label {
   font-weight: 700;
 }
+
+/* Meeting admin forms share one compact, scannable editing rhythm. */
+.meeting-form-dialog .el-dialog__body,
+.meeting-form-dialog :deep(.el-dialog__body) {
+  padding: 16px 20px 4px;
+  background: #f5f7fa;
+}
+.meeting-form-dialog .el-dialog__footer,
+.meeting-form-dialog :deep(.el-dialog__footer) {
+  padding: 12px 20px 16px;
+  border-top: 1px solid #ebeef5;
+}
+.meeting-form-dialog .el-dialog__footer .el-button,
+.meeting-form-dialog :deep(.el-dialog__footer .el-button) {
+  min-width: 88px;
+}
+.meeting-form-section {
+  margin-bottom: 14px;
+  padding: 16px 18px 4px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #fff;
+}
+.meeting-form-section:last-child { margin-bottom: 0; }
+.meeting-form-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: #303133;
+  font-size: 15px;
+  font-weight: 600;
+}
+.meeting-form-section__title::before {
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: #409eff;
+  content: '';
+}
+.meeting-form-section .el-form-item:last-child { margin-bottom: 14px; }
+.meeting-form-section .el-input,
+.meeting-form-section .el-select,
+.meeting-form-section .el-date-editor,
+.meeting-form-section .el-cascader { width: 100%; }
+.meeting-form-advanced {
+  margin: 2px 0 14px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #fff;
+}
+.meeting-form-advanced .el-collapse-item__header { padding: 0 16px; }
+.meeting-form-advanced .el-collapse-item__content { padding: 4px 18px 2px; }
 .el-dialog:not(.is-fullscreen) {
   margin-top: 6vh !important;
 }

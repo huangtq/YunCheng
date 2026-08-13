@@ -56,6 +56,10 @@ export function resolveEntryPage(activityId, entry) {
     return /^https?:\/\//i.test(String(url || ''))
       ? `/pages/common/webview/index?title=${encodeURIComponent(entry.title || '')}&url=${encodeURIComponent(url)}` : ''
   }
+  if (targetType === 'phone') {
+    const phone = typeof target === 'object' ? target.phone : target
+    return phone ? `tel:${encodeURIComponent(phone)}` : ''
+  }
   if (targetType === 'file') {
     const fileUrl = typeof target === 'object' ? target.url : target
     return fileUrl ? `/pages/common/webview/index?title=${encodeURIComponent(entry.title || '资料')}&url=${encodeURIComponent(fileUrl)}` : ''

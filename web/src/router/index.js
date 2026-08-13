@@ -133,17 +133,6 @@ export const dynamicRoutes = [
             }
           },
           {
-            path: 'home-composer',
-            name: 'MeetingHomeComposer',
-            component: () => import('@/views/meeting/activity/home-composer'),
-            meta: {
-              title: '首页编排与发布',
-              activeMenu: '/meeting/activity',
-              noCache: true,
-              tagsGroup: 'meeting-config'
-            }
-          },
-          {
             path: 'content',
             name: 'MeetingContent',
             component: () => import('@/views/meeting/activity/content'),

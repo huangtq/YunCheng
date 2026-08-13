@@ -40,7 +40,7 @@
 | 检查 | 结果 | 说明 |
 | --- | --- | --- |
 | Maven 编译 | 通过 | `mvn -pl ruoyi-system,ruoyi-admin -am -DskipTests compile`；全 Reactor 成功。全局 Maven `settings.xml` 有既存格式警告，但不影响编译。 |
-| Web 编排器 | 通过 | `home-composer.vue` 通过 Vue SFC 脚本与模板编译。 |
+| 九宫格会议页工作台 | 进行中 | 模板、视觉、草稿与发布已收回 `grid/index.vue`，待浏览器闭环验证。 |
 | 移动端首页模板 | 通过 | `web-mobile/pages/meeting/home.vue` 通过 Vue 模板编译。 |
 | 模板数据 | 通过 | 分区模板创建页会正确填入 `quick-menu` 默认区块及两段 `entrySections`。 |
 | Git 服务器仓库 | 已推送 | `server/master` 已到 `f3ac5ea`。 |
@@ -49,7 +49,7 @@
 
 ### 1. 将模板能力并入【九宫格配置】（最高优先级）
 
-当前新增了独立路由 `home-composer`，并在九宫格页面放置“整页参考模板”跳转。这只是过渡实现，和已确认的交互不符。
+此前新增的独立路由 `home-composer` 已移除，会议页统一由九宫格配置生成；首页版本表只保存九宫格发布快照。
 
 后续应直接改造 `web/src/views/meeting/grid/index.vue`：
 
@@ -57,7 +57,7 @@
 2. 在该页顶部提供模板卡片与参考图；
 3. 模板选中后，列表按模板的固定区块展示，而不是跳转新页面；
 4. 同页提供主视觉、主题色、倒计时、页脚、分区入口及发布版本操作；
-5. `home-composer` 迁为内部复用组件或删除路由，避免两套配置源并存。
+5. 版本草稿的 `source` 必须为 `grid-config`，避免历史独立编排数据继续覆盖九宫格。
 
 完成前，不应把独立“首页编排”入口当作最终运营方案。
 

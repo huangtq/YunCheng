@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.fastjson2.JSON;
@@ -105,12 +106,12 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     public Map<String, Object> getHomePage(Long activityId, MpLoginUser user)
     {
         YcActivity activity = requireActivity(activityId);
-        YcActivityHomeVersion version = homeVersionMapper.selectLatestPublishedByActivityId(activityId);
+        YcActivityHomeVersion version = selectLatestPublishedVersionSafely(activityId);
         JSONObject page;
         String versionStatus;
         Integer versionNo = null;
         Long versionId = null;
-        if (version != null && StringUtils.isNotEmpty(version.getPageJson()))
+        if (version != null && StringUtils.isNotEmpty(version.getPageJson()) && isGridConfigVersion(version.getPageJson()))
         {
             try
             {
@@ -150,6 +151,47 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         return data;
     }
 
+    /**
+     * Keep the public meeting page compatible while the additive version table is
+     * being rolled out. The legacy grid data remains the authoritative fallback
+     * until the migration has been applied.
+     */
+    private YcActivityHomeVersion selectLatestPublishedVersionSafely(Long activityId)
+    {
+        try
+        {
+            return homeVersionMapper.selectLatestPublishedByActivityId(activityId);
+        }
+        catch (DataAccessException e)
+        {
+            String message = e.getMessage();
+            if (message != null && message.contains("yc_activity_home_version")
+                && (message.contains("doesn't exist") || message.contains("does not exist")
+                    || message.contains("不存在")))
+            {
+                return null;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * The grid editor is the single operational source for the mobile meeting
+     * page. Older standalone composer snapshots remain in history but do not
+     * override subsequent grid configuration.
+     */
+    private boolean isGridConfigVersion(String pageJson)
+    {
+        try
+        {
+            return "grid-config".equals(JSON.parseObject(pageJson).getString("source"));
+        }
+        catch (Exception ignored)
+        {
+            return false;
+        }
+    }
+
     /** The client receives a final action state and never decides eligibility from labels or local data. */
     private void decorateEntryStates(JSONArray entries, Long activityId, MpLoginUser user)
     {
@@ -166,8 +208,9 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             String unavailableMessage = "";
             if ("content".equals(targetType) && !entry.containsKey("legacyContent"))
             {
-                Long contentId = entry.getJSONObject("target") == null ? toLong(entry.get("target"))
-                    : entry.getJSONObject("target").getLong("contentId");
+                Object target = entry.get("target");
+                Long contentId = target instanceof JSONObject
+                    ? ((JSONObject) target).getLong("contentId") : toLong(target);
                 YcMeetingContent content = contentId == null ? null : contentMapper.selectYcMeetingContentById(contentId);
                 available = enabled && content != null && activityId.equals(content.getActivityId());
                 if (available && "login".equals(content.getVisibility())) loginRequired = true;
@@ -176,8 +219,9 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             }
             else if ("module".equals(targetType))
             {
-                String moduleKey = entry.getJSONObject("target") == null ? entry.getString("target")
-                    : entry.getJSONObject("target").getString("moduleKey");
+                Object target = entry.get("target");
+                String moduleKey = target instanceof JSONObject
+                    ? ((JSONObject) target).getString("moduleKey") : entry.getString("target");
                 loginRequired = "apply".equals(moduleKey) || "my-attendance".equals(moduleKey);
                 if ("my-attendance".equals(moduleKey)) registeredRequired = true;
                 if (loginRequired && (user == null || user.getUserId() == null)) unavailableMessage = "请先登录";
@@ -509,6 +553,14 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             entry.put("id", "legacy-grid-" + grid.getGridId());
             entry.put("title", grid.getTitle());
             entry.put("iconUrl", grid.getIconUrl());
+            entry.put("iconType", grid.getIconType());
+            entry.put("contentUrl", grid.getContentUrl());
+            entry.put("content", grid.getContent());
+            entry.put("contentType", grid.getContentType());
+            entry.put("tileRow", grid.getTileRow());
+            entry.put("tileCol", grid.getTileCol());
+            entry.put("tileRowSpan", grid.getTileRowSpan());
+            entry.put("tileColSpan", grid.getTileColSpan());
             entry.put("sort", grid.getSortOrder());
             String linkType = StringUtils.isEmpty(grid.getLinkType()) ? "none" : grid.getLinkType();
             entry.put("targetType", "module".equals(linkType) ? "module" : ("url".equals(linkType) ? "external" : ("content".equals(linkType) ? "content" : "group")));

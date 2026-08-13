@@ -72,130 +72,6 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="mobileOpen" title="移动端详情布局" width="760px" append-to-body destroy-on-close>
-      <el-form :model="configForm" label-width="130px">
-        <el-form-item label="详情模板">
-          <el-select v-model="configForm.mobileTemplate" style="width: 100%">
-            <el-option label="标准会议页（九宫格，一期主推）" value="standard" />
-            <el-option label="宣传图热点页（二期）" value="image-map" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="主题色">
-          <el-color-picker v-model="configForm.mobileThemeColor" show-alpha />
-        </el-form-item>
-        <el-form-item label="九宫格高级布局">
-          <el-select v-model="configForm.gridTemplate" style="width: 100%">
-            <el-option label="标准九宫格" value="1" />
-            <el-option label="双列图卡" value="68" />
-            <el-option label="不规则 Tile 宫格" value="tile" />
-          </el-select>
-          <div class="form-tip">Tile 模板使用九宫格项中的行列跨度与背景图配置。</div>
-        </el-form-item>
-        <el-form-item label="自定义背景">
-          <material-select v-model="configForm.mobileBackgroundUrl" :show-tip="false" />
-        </el-form-item>
-        <el-form-item label="背景音乐地址">
-          <material-select v-model="configForm.audioUrl" media-type="audio" :show-tip="false" />
-        </el-form-item>
-        <el-form-item label="音乐自动播放">
-          <el-switch v-model="configForm.audioAutoplay" active-value="1" inactive-value="0" />
-        </el-form-item>
-        <el-form-item label="音乐循环播放">
-          <el-switch v-model="configForm.audioLoop" active-value="1" inactive-value="0" />
-        </el-form-item>
-        <el-divider content-position="left">会议底部区域</el-divider>
-        <el-form-item label="显示底部区域">
-          <el-switch v-model="configForm.footerEnabled" active-value="1" inactive-value="0" />
-        </el-form-item>
-        <el-form-item label="支持文案">
-          <el-input v-model="configForm.footerText" maxlength="100" placeholder="例如：会务支持" />
-        </el-form-item>
-        <el-form-item label="公司名称">
-          <el-input v-model="configForm.footerCompany" maxlength="100" placeholder="例如：厦门中天会务" />
-        </el-form-item>
-        <el-form-item label="Logo 地址">
-          <material-select v-model="configForm.footerLogoUrl" :show-tip="false" />
-        </el-form-item>
-        <el-form-item label="底部跳转链接">
-          <el-input v-model="configForm.footerLinkUrl" maxlength="500" placeholder="可选，点击底部区域打开链接" />
-        </el-form-item>
-        <el-form-item label="进入提示">
-          <el-input
-            v-model="configForm.mobileNotice"
-            type="textarea"
-            :rows="3"
-            placeholder="可选，例如会议须知、报名提示"
-          />
-        </el-form-item>
-        <el-form-item label="热点区块">
-          <div class="mobile-block-editor">
-            <div v-for="(block, index) in mobileBlocks" :key="block.id || index" class="mobile-block-card">
-              <div class="mobile-block-header">
-                <span>区块 {{ index + 1 }}</span>
-                <el-button link type="danger" @click="removeMobileBlock(index)">删除</el-button>
-              </div>
-              <el-row :gutter="12">
-                <el-col :span="8">
-                  <el-form-item label="标题" label-width="60px">
-                    <el-input v-model="block.title" maxlength="50" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="动作" label-width="60px">
-                    <el-select v-model="block.linkType" style="width: 100%">
-                      <el-option label="模块" value="module" />
-                      <el-option label="链接" value="url" />
-                      <el-option label="内容" value="content" />
-                      <el-option label="电话" value="phone" />
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="模块" label-width="60px">
-                    <el-input v-model="block.moduleKey" :disabled="block.linkType !== 'module'" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="6">
-                  <el-form-item label="左" label-width="35px">
-                    <el-input-number v-model="block.left" :min="0" :max="100" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="6">
-                  <el-form-item label="上" label-width="35px">
-                    <el-input-number v-model="block.top" :min="0" :max="100" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="6">
-                  <el-form-item label="宽" label-width="35px">
-                    <el-input-number v-model="block.width" :min="1" :max="100" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="6">
-                  <el-form-item label="高" label-width="35px">
-                    <el-input-number v-model="block.height" :min="1" :max="100" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="24">
-                  <el-form-item label="区块图标">
-                    <material-select v-model="block.iconUrl" :show-tip="false" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </div>
-            <el-button type="primary" plain @click="addMobileBlock">新增热点区块</el-button>
-          </div>
-          <div class="form-tip">
-            坐标使用百分比；图片素材从文件管理选择，linkType 支持 module、url、content、phone。
-          </div>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="previewMobile">预览 H5</el-button>
-        <el-button type="primary" :loading="switchSaving" @click="saveMobile">保 存</el-button>
-        <el-button @click="mobileOpen = false">关 闭</el-button>
-      </template>
-    </el-dialog>
-
     <el-dialog v-model="qrOpen" title="查看二维码" width="480px" append-to-body destroy-on-close>
       <el-form :model="configForm" label-width="100px">
         <el-form-item label="落地链接">
@@ -223,7 +99,6 @@ import { getActivityConfig, updateActivityConfig } from "@/api/meeting/config"
 import { listGrid } from "@/api/meeting/grid"
 import MeetingActivityForm from "./form"
 import { HUB_ACTION_MODULE_KEY, buildMeetingH5HomeUrl } from "@/utils/meetingModules"
-import MaterialSelect from "@/components/MaterialSelect"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -235,12 +110,10 @@ const activity = ref({})
 const configForm = ref({})
 const editOpen = ref(false)
 const switchOpen = ref(false)
-const mobileOpen = ref(false)
 const qrOpen = ref(false)
 const switchLoading = ref(false)
 const switchSaving = ref(false)
 const gridModuleKeys = ref(new Set())
-const mobileBlocks = ref([])
 
 const qrImageUrl = computed(() => {
   const target = configForm.value.qrUrl || buildMeetingH5HomeUrl(activityId.value)
@@ -307,11 +180,9 @@ const groups = [
       { key: "edit", label: "编辑会议信息", icon: "Edit", color: "#409EFF", action: "edit" },
       { key: "switch", label: "常用开关", icon: "Setting", color: "#67C23A", action: "switch" },
       { key: "grid", label: "九宫格配置", icon: "Menu", color: "#E6A23C", action: "grid" },
-      { key: "homeComposer", label: "首页编排与发布", icon: "SetUp", color: "#6C5CE7", action: "homeComposer" },
       { key: "content", label: "内容与资料", icon: "Document", color: "#409EFF", action: "content" },
       { key: "checkin", label: "现场核验", icon: "CircleCheck", color: "#67C23A", action: "checkin" },
       { key: "notice", label: "会议通知", icon: "Bell", color: "#E6A23C", action: "notice" },
-      { key: "mobile", label: "移动端详情", icon: "Iphone", color: "#00B894", action: "mobile" },
       { key: "qr", label: "查看二维码", icon: "Postcard", color: "#F56C6C", action: "qr" },
       { key: "nav", label: "导航管理", icon: "Guide", color: "#00B894", action: "nav", moduleKey: HUB_ACTION_MODULE_KEY.nav }
     ]
@@ -414,30 +285,8 @@ function handleCard(item) {
     })
     return
   }
-  if (item.action === "mobile") {
-    loadConfig().then(() => {
-      configForm.value.mobileTemplate = configForm.value.mobileTemplate || "standard"
-      configForm.value.mobileThemeColor = configForm.value.mobileThemeColor || "#1f6feb"
-      configForm.value.mobileBlocksJson = configForm.value.mobileBlocksJson || "[]"
-      mobileBlocks.value = parseMobileBlocks(configForm.value.mobileBlocksJson)
-      configForm.value.gridTemplate = configForm.value.gridTemplate || "1"
-      configForm.value.audioAutoplay = configForm.value.audioAutoplay || "0"
-      configForm.value.audioLoop = configForm.value.audioLoop || "1"
-      configForm.value.footerEnabled = configForm.value.footerEnabled || "0"
-      configForm.value.footerText = configForm.value.footerText || ""
-      configForm.value.footerCompany = configForm.value.footerCompany || ""
-      configForm.value.footerLogoUrl = configForm.value.footerLogoUrl || ""
-      configForm.value.footerLinkUrl = configForm.value.footerLinkUrl || ""
-      mobileOpen.value = true
-    })
-    return
-  }
   if (item.action === "grid") {
     router.push({ path: "/meeting/activity-config/grid", query: { id: activityId.value } })
-    return
-  }
-  if (item.action === "homeComposer") {
-    router.push({ path: "/meeting/activity-config/home-composer", query: { id: activityId.value } })
     return
   }
   if (item.action === "content") {
@@ -539,66 +388,6 @@ function saveSwitches() {
   }).catch(() => {
     switchSaving.value = false
   })
-}
-
-function saveMobile() {
-  configForm.value.mobileBlocksJson = JSON.stringify(mobileBlocks.value)
-  switchSaving.value = true
-  updateActivityConfig({
-    activityId: Number(activityId.value),
-    mobileTemplate: configForm.value.mobileTemplate || "standard",
-    mobileThemeColor: configForm.value.mobileThemeColor || "#1f6feb",
-    mobileBackgroundUrl: configForm.value.mobileBackgroundUrl || "",
-    mobileBlocksJson: configForm.value.mobileBlocksJson || "[]",
-    mobileNotice: configForm.value.mobileNotice || "",
-    gridTemplate: configForm.value.gridTemplate || "1",
-    audioUrl: configForm.value.audioUrl || "",
-    audioAutoplay: configForm.value.audioAutoplay || "0",
-    audioLoop: configForm.value.audioLoop || "1",
-    footerEnabled: configForm.value.footerEnabled || "0",
-    footerText: configForm.value.footerText || "",
-    footerCompany: configForm.value.footerCompany || "",
-    footerLogoUrl: configForm.value.footerLogoUrl || "",
-    footerLinkUrl: configForm.value.footerLinkUrl || ""
-  }).then(() => {
-    proxy.$modal.msgSuccess("移动端布局已保存")
-    mobileOpen.value = false
-    switchSaving.value = false
-  }).catch(() => {
-    switchSaving.value = false
-  })
-}
-
-function parseMobileBlocks(value) {
-  try {
-    const parsed = JSON.parse(value || "[]")
-    return Array.isArray(parsed) ? parsed : []
-  } catch (e) {
-    proxy.$modal.msgWarning("热点区块配置格式异常，已按空配置处理")
-    return []
-  }
-}
-
-function addMobileBlock() {
-  mobileBlocks.value.push({
-    id: `blk_${Date.now()}`,
-    title: "",
-    left: 10,
-    top: 10,
-    width: 30,
-    height: 10,
-    linkType: "module",
-    moduleKey: "apply",
-    iconUrl: ""
-  })
-}
-
-function removeMobileBlock(index) {
-  mobileBlocks.value.splice(index, 1)
-}
-
-function previewMobile() {
-  window.open(buildMeetingH5HomeUrl(activityId.value), "_blank")
 }
 
 function shouldResetQrUrl(current, preferred) {

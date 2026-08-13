@@ -21,4 +21,4 @@
 
 ## 当前实现
 
-Web 的 [首页编排与发布](../../web/src/views/meeting/activity/home-composer.vue) 是整页模板入口；旧“九宫格配置”仍用于维护历史入口和素材，并提供跳转到整页模板编排的入口。移动端从统一首页协议读取 `templateKey`、`layout` 和 `entryTree`，不读取参考站的页面代码。
+Web 的 [九宫格配置](../../web/src/views/meeting/grid/index.vue) 是会议页唯一配置入口：模板、视觉、九宫格入口、草稿和发布均在同一页面完成。首页版本表只保存该页面生成的 `page_json`；移动端从统一首页协议读取 `templateKey`、`layout` 和 `entryTree`。

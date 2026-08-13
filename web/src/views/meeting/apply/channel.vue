@@ -99,12 +99,11 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="配置情况" width="160" align="center" header-align="center">
+      <el-table-column label="字段配置" width="120" align="center" header-align="center">
         <template #default="scope">
           <div class="progress-card">
             <div class="progress-title">字段配置</div>
             <div class="progress-value">{{ scope.row.fieldCount || 0 }} 项</div>
-            <el-button link type="primary" @click="goFieldConfig(scope.row)" v-hasPermi="['meeting:apply:list']">去配置字段</el-button>
           </div>
         </template>
       </el-table-column>
@@ -128,7 +127,7 @@
       @pagination="getList"
     />
 
-    <el-dialog :title="title" v-model="open" width="820px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="820px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-scrollbar max-height="70vh">
         <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" class="apply-form">
           <section class="apply-form-section">

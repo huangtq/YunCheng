@@ -54,7 +54,26 @@
             >
               保存模板
             </el-button>
-            <el-button plain @click="goHomeComposer">整页参考模板</el-button>
+            <el-button
+              type="primary"
+              plain
+              :loading="draftSaving"
+              @click="saveHomeDraft"
+              v-hasPermi="['meeting:home:edit']"
+            >
+              保存首页草稿
+            </el-button>
+            <el-button
+              type="success"
+              plain
+              :disabled="!homeVersionId"
+              :loading="publishing"
+              @click="publishHome"
+              v-hasPermi="['meeting:home:publish']"
+            >
+              发布会议页
+            </el-button>
+            <el-button plain @click="loadHomeVersions" v-hasPermi="['meeting:home:list']">版本记录</el-button>
           </el-form-item>
           <el-form-item class="layout-settings-item">
             <el-popover placement="bottom-start" :width="384" trigger="click" popper-class="grid-visual-popper">
@@ -89,7 +108,7 @@
           </el-form-item>
         </el-form>
         <div class="template-tip">
-          当前移动端实际生效的模板：列数（1/2/3）、纯图标/图文，以及「不规则 Tile 宫格」。保存模板后右侧预览会同步。
+          九宫格入口、模板、视觉配置和发布版本共同组成移动端会议页。保存九宫格项后，点击“保存首页草稿”并发布，移动端才切换到新版本。
         </div>
           </div>
         </div>
@@ -308,7 +327,7 @@
       </aside>
     </div>
 
-    <el-dialog :title="title" v-model="open" width="820px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="820px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-scrollbar max-height="70vh">
         <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="grid-form">
           <section class="grid-form-section">
@@ -450,6 +469,22 @@
         <el-button @click="open = false">取 消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="versionsOpen" title="会议页版本记录" width="760px" append-to-body>
+      <el-table :data="homeVersions" v-loading="versionsLoading">
+        <el-table-column prop="versionNo" label="版本" width="80" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === 'published' ? 'success' : scope.row.status === 'draft' ? 'warning' : 'info'">
+              {{ scope.row.status === 'published' ? '已发布' : scope.row.status === 'draft' ? '草稿' : '已归档' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="publishRemark" label="发布备注" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="publishedTime" label="发布时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="180" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -461,6 +496,8 @@ import MaterialSelect from "@/components/MaterialSelect"
 import MeetingIcon from "@/components/MeetingIcon"
 import MeetingIconSelect from "@/components/MeetingIconSelect"
 import { MEETING_MODULE_OPTIONS, getMeetingModule, meetingModuleLabel } from "@/utils/meetingModules"
+import { listHomeVersions, publishHomeVersion, saveHomeDraft as saveHomeDraftVersion } from "@/api/meeting/homeVersion"
+import { getMeetingHomeTemplate } from "@/utils/meetingHomeTemplates"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -487,6 +524,12 @@ const gridVisual = reactive({
   itemGap: 10,
   itemPadding: 10
 })
+const homeVersionId = ref(null)
+const homeVersions = ref([])
+const versionsOpen = ref(false)
+const versionsLoading = ref(false)
+const draftSaving = ref(false)
+const publishing = ref(false)
 
 const templateOptions = [
   {
@@ -813,8 +856,150 @@ function saveTemplate() {
   }).then(() => proxy.$modal.msgSuccess("模板已保存"))
 }
 
-function goHomeComposer() {
-  router.push({ path: '/meeting/activity-config/home-composer', query: { id: activityId.value } })
+function homeTemplateKey() {
+  if (configForm.value.mobileTemplate === "image-map") return "sciconf-poster-map"
+  if (String(configForm.value.gridTemplate) === "tile") return "sciconf-tile-service"
+  if (["68", "681"].includes(String(configForm.value.gridTemplate))) return "sciconf-image-menu"
+  if (["5", "71"].includes(String(configForm.value.gridTemplate))) return "sciconf-icon-grid"
+  return "sciconf-icon-grid"
+}
+
+function homeEntryTarget(item) {
+  if (item.linkType === "module") return { targetType: "module", target: { moduleKey: item.moduleKey || "" } }
+  if (item.linkType === "url") return { targetType: "external", target: { url: item.externalUrl || "" } }
+  if (item.linkType === "phone") return { targetType: "phone", target: { phone: item.phone || item.externalUrl || "" } }
+  if (item.linkType === "content") {
+    return {
+      targetType: "content",
+      target: item.contentId ? { contentId: item.contentId } : { contentId: null },
+      legacyContent: item.content || "",
+      contentType: item.contentType || "text",
+      contentUrl: item.contentUrl || ""
+    }
+  }
+  return { targetType: "group", target: {}, children: [{ id: `grid-${item.gridId}-placeholder`, title: "未配置动作", enabled: false, targetType: "module", target: { moduleKey: "apply" } }] }
+}
+
+function parseHomeBlocks() {
+  try {
+    const blocks = JSON.parse(configForm.value.mobileBlocksJson || "[]")
+    return Array.isArray(blocks) ? blocks : []
+  } catch {
+    return []
+  }
+}
+
+function buildHomePage() {
+  const templateKey = homeTemplateKey()
+  const template = getMeetingHomeTemplate(templateKey)
+  const sectionKey = template.layout.gridTemplate === "tile" ? "tiles" : template.layout.template === "image-map" ? "hotspots" : "menu"
+  const sourceItems = template.layout.template === "image-map" && parseHomeBlocks().length
+    ? parseHomeBlocks()
+    : previewItems.value.filter(item => ["module", "url", "content"].includes(item.linkType))
+  const entries = sourceItems.map((item, index) => ({
+    id: `grid-${item.gridId || item.id || index}`,
+    title: item.title || "",
+    enabled: String(item.status) !== "0",
+    sort: item.sortOrder || index,
+    sectionKey,
+    iconType: item.iconType || "image",
+    iconKey: item.iconKey || "",
+    iconUrl: item.iconUrl || "",
+    contentId: item.contentId || null,
+    displayAsCard: item.displayAsCard === true,
+    tileRow: item.tileRow || 0,
+    tileCol: item.tileCol || 0,
+    tileRowSpan: item.tileRowSpan || 1,
+    tileColSpan: item.tileColSpan || 1,
+    showTitle: item.showTitle !== false,
+    bounds: item.bounds || {
+      left: item.left,
+      top: item.top,
+      width: item.width,
+      height: item.height
+    },
+    ...homeEntryTarget(item)
+  }))
+  const layout = {
+    ...JSON.parse(JSON.stringify(template.layout)),
+    template: configForm.value.mobileTemplate || template.layout.template,
+    heroUrl: activityInfo.value.coverUrl || "",
+    backgroundUrl: configForm.value.mobileBackgroundUrl || "",
+    themeColor: themeColor.value,
+    gridTemplate: configForm.value.gridTemplate || "1",
+    gridColumns: previewGridClass.value === "grid-one" ? 1 : previewGridClass.value === "grid-two" ? 2 : 3,
+    gridStyle: isIconOnlyPreview.value ? "icon" : hasImageCardPreview.value ? "image-card" : "icon-text",
+    showCountdown: String(configForm.value.showCountdown) === "1",
+    countdownStyle: configForm.value.countdownStyle || "classic",
+    showRegisterCount: String(configForm.value.showRegisterCount) === "1",
+    notice: configForm.value.mobileNotice || "",
+    audioUrl: configForm.value.audioUrl || "",
+    audioAutoplay: String(configForm.value.audioAutoplay) === "1",
+    audioLoop: String(configForm.value.audioLoop) !== "0",
+    footer: {
+      enabled: String(configForm.value.footerEnabled) === "1",
+      text: configForm.value.footerText || "",
+      company: configForm.value.footerCompany || "",
+      logoUrl: configForm.value.footerLogoUrl || "",
+      linkUrl: configForm.value.footerLinkUrl || ""
+    },
+    visual: { ...gridVisual }
+  }
+  layout.entrySections = [{ key: sectionKey, label: sectionKey === "tiles" ? "服务入口" : sectionKey === "hotspots" ? "海报热点" : "会议菜单", columns: layout.gridColumns, ratio: layout.gridStyle === "image-card" ? "wide" : "square", min: 0, max: entries.length || 20 }]
+  return {
+    source: "grid-config",
+    mode: "standard",
+    schemaVersion: "2",
+    templateKey,
+    theme: { color: themeColor.value },
+    layout,
+    sections: template.slots.map(slot => ({
+      id: slot,
+      type: slot,
+      enabled: true,
+      entries: slot === sectionKey ? entries : []
+    })),
+    entryTree: entries
+  }
+}
+
+function saveHomeDraft() {
+  const pageJson = JSON.stringify(buildHomePage())
+  draftSaving.value = true
+  saveHomeDraftVersion({
+    versionId: homeVersionId.value,
+    activityId: Number(activityId.value),
+    pageJson,
+    schemaVersion: "2"
+  }).then(res => {
+    homeVersionId.value = res.data?.versionId
+    proxy.$modal.msgSuccess("会议页草稿已保存")
+  }).finally(() => { draftSaving.value = false })
+}
+
+function publishHome() {
+  if (!homeVersionId.value) {
+    proxy.$modal.msgWarning("请先保存会议页草稿")
+    return
+  }
+  proxy.$modal.prompt("填写发布备注（可选）", "发布会议页").then(({ value }) => {
+    publishing.value = true
+    publishHomeVersion(homeVersionId.value, value).then(() => {
+      proxy.$modal.msgSuccess("会议页已发布")
+      homeVersionId.value = null
+      loadHomeVersions(false)
+    }).finally(() => { publishing.value = false })
+  }).catch(() => {})
+}
+
+function loadHomeVersions(openDialog = true) {
+  versionsLoading.value = true
+  listHomeVersions({ activityId: Number(activityId.value), pageNum: 1, pageSize: 100 }).then(res => {
+    homeVersions.value = res.rows || []
+    const draft = homeVersions.value.find(item => item.status === "draft" && String(item.pageJson || "").includes('"source":"grid-config"'))
+    if (draft) homeVersionId.value = draft.versionId
+    if (openDialog) versionsOpen.value = true
+  }).finally(() => { versionsLoading.value = false })
 }
 
 function handleSelectionChange(selection) {
@@ -1064,6 +1249,7 @@ onMounted(() => {
   }
   loadMeta()
   getList()
+  loadHomeVersions(false)
 })
 </script>
 

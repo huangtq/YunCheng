@@ -150,6 +150,10 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         {
             throw new ServiceException("page mode required");
         }
+        if (publishing && !"grid-config".equals(page.getString("source")))
+        {
+            throw new ServiceException("home page must be published from grid configuration");
+        }
         JSONArray sections = page.getJSONArray("sections");
         if (sections == null)
         {
@@ -162,7 +166,10 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         JSONArray entryTree = page.getJSONArray("entryTree");
         if (entryTree != null)
         {
-            validateEntries(entryTree, new ArrayList<String>(), new HashSet<String>(), publishing, page.getString("mode"), activityId);
+            JSONObject layout = page.getJSONObject("layout");
+            String pageMode = layout == null || StringUtils.isEmpty(layout.getString("template"))
+                ? page.getString("mode") : layout.getString("template");
+            validateEntries(entryTree, new ArrayList<String>(), new HashSet<String>(), publishing, pageMode, activityId);
             if (publishing) validateTemplateSections(page, entryTree);
         }
     }
@@ -173,7 +180,11 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         for (int i = 0; i < sections.size(); i++)
         {
             JSONObject section = sections.getJSONObject(i);
-            if (section != null && !Boolean.FALSE.equals(section.getBoolean("enabled"))) count++;
+            if (section != null && !Boolean.FALSE.equals(section.getBoolean("enabled")))
+            {
+                JSONArray entries = section.getJSONArray("entries");
+                if (entries != null && !entries.isEmpty()) count++;
+            }
         }
         return count;
     }
@@ -217,7 +228,7 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
             if (ancestors.contains(id)) throw new ServiceException("entryTree cannot contain cycles");
             if (!ids.add(id)) throw new ServiceException("entryTree entry id must be unique");
             if (!"group".equals(targetType) && !"content".equals(targetType) && !"module".equals(targetType)
-                && !"file".equals(targetType) && !"map".equals(targetType) && !"external".equals(targetType))
+                && !"file".equals(targetType) && !"map".equals(targetType) && !"external".equals(targetType) && !"phone".equals(targetType))
             {
                 throw new ServiceException("unsupported entry targetType: " + targetType);
             }
@@ -231,11 +242,18 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
                     throw new ServiceException("external entry requires an http or https target");
                 }
             }
+            if ("phone".equals(targetType) && StringUtils.isEmpty(target))
+            {
+                target = targetObject == null ? target : targetObject.getString("phone");
+                if (StringUtils.isEmpty(target)) throw new ServiceException("phone entry requires a phone target");
+            }
             if ("content".equals(targetType) && publishing)
             {
                 Long contentId = targetObject == null ? parseLong(target) : targetObject.getLong("contentId");
                 com.ruoyi.system.domain.YcMeetingContent content = contentId == null ? null : contentMapper.selectYcMeetingContentById(contentId);
-                if (content == null || !activityId.equals(content.getActivityId()) || !"published".equals(content.getStatus()))
+                boolean legacyGridContent = contentId == null
+                    && (StringUtils.isNotEmpty(entry.getString("legacyContent")) || StringUtils.isNotEmpty(entry.getString("contentUrl")));
+                if (!legacyGridContent && (content == null || !activityId.equals(content.getActivityId()) || !"published".equals(content.getStatus())))
                 {
                     throw new ServiceException("content entry must reference published content");
                 }

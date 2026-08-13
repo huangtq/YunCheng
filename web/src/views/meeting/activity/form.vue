@@ -103,11 +103,6 @@
               <el-switch v-model="form.isHot" active-value="1" inactive-value="0" active-text="热门" inactive-text="普通" />
             </el-form-item>
           </el-col>
-          <el-col v-if="!props.embedded" :xs="24" :md="8">
-            <el-form-item label="首页推荐" prop="isHome">
-              <el-switch v-model="form.isHome" active-value="1" inactive-value="0" active-text="推荐" inactive-text="不推荐" />
-            </el-form-item>
-          </el-col>
           <el-col v-if="!props.embedded" :xs="24">
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="请输入会议备注" />

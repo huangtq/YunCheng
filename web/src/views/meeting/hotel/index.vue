@@ -40,7 +40,7 @@
     </el-table>
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" v-model="open" width="640px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="640px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="酒店名称" prop="hotelName"><el-input v-model="form.hotelName" maxlength="200" /></el-form-item>
         <el-form-item label="联系方式"><el-input v-model="form.phone" maxlength="50" /></el-form-item>
@@ -74,7 +74,7 @@
       </el-table>
     </el-drawer>
 
-    <el-dialog :title="roomTitle" v-model="roomFormOpen" width="520px" append-to-body destroy-on-close>
+    <el-dialog :title="roomTitle" v-model="roomFormOpen" width="520px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="roomFormRef" :model="roomForm" :rules="roomRules" label-width="90px">
         <el-form-item label="房型名称" prop="roomName"><el-input v-model="roomForm.roomName" maxlength="100" /></el-form-item>
         <el-form-item label="床型"><el-input v-model="roomForm.bedType" placeholder="如：大床/双床" /></el-form-item>

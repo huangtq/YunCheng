@@ -320,7 +320,7 @@ function flattenEntries(entries = []) {
     linkType: entry.targetType,
     moduleKey: entry.targetType === 'module' ? (entry.target?.moduleKey || entry.target) : '',
     externalUrl: entry.targetType === 'external' ? (entry.target?.url || entry.target) : '',
-    contentUrl: entry.targetType === 'content' ? (entry.target?.url || '') : ''
+    contentUrl: entry.targetType === 'content' ? (entry.contentUrl || entry.target?.url || '') : ''
   }))
 }
 
@@ -468,13 +468,18 @@ function onGridClick(item) {
       uni.showToast({ title: item.unavailableMessage || '暂未开放', icon: 'none' })
       return
     }
-    if (item.targetType === 'content' && item.legacyContent) {
+    if (item.targetType === 'content' && (item.legacyContent || item.contentUrl)) {
       const legacyUrl = item.contentUrl || item.target || item.iconUrl || ''
-      if (item.contentType === 'image' && legacyUrl) {
+      if ((item.contentType === 'image' || !item.legacyContent) && legacyUrl) {
         uni.navigateTo({ url: `/pages/common/imageview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title || '图片内容')}&url=${encodeURIComponent(legacyUrl)}` })
       } else {
         uni.navigateTo({ url: `/pages/common/textview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title || '内容')}&content=${encodeURIComponent(item.legacyContent)}` })
       }
+      return
+    }
+    if (item.targetType === 'phone') {
+      const phone = typeof item.target === 'object' ? item.target.phone : item.target
+      if (phone) uni.makePhoneCall({ phoneNumber: String(phone) })
       return
     }
     const target = resolveEntryPage(activityId.value, item)
