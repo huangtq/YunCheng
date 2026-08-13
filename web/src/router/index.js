@@ -108,7 +108,7 @@ export const dynamicRoutes = [
       {
         path: '',
         component: () => import('@/views/meeting/activity/ConfigLayout'),
-        meta: { title: '会议配置', activeMenu: '/meeting/activity', breadcrumb: false },
+        meta: { title: '会议配置', activeMenu: '/meeting/activity', breadcrumb: false, tabKey: 'fullPath' },
         children: [
           {
             path: '',
@@ -118,7 +118,7 @@ export const dynamicRoutes = [
               title: '会议配置',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -129,7 +129,7 @@ export const dynamicRoutes = [
               title: '九宫格配置',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -140,16 +140,10 @@ export const dynamicRoutes = [
               title: '内容与资料',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
-          {
-            path: 'checkin',
-            name: 'MeetingCheckin',
-            component: () => import('@/views/meeting/activity/checkin'),
-            meta: { title: '现场核验', activeMenu: '/meeting/activity', noCache: true, tagsGroup: 'meeting-config' }
-          },
-          { path: 'notice', name: 'MeetingNotice', component: () => import('@/views/meeting/activity/notice'), meta: { title: '会议通知', activeMenu: '/meeting/activity', noCache: true, tagsGroup: 'meeting-config' } },
+          { path: 'notice', name: 'MeetingNotice', component: () => import('@/views/meeting/activity/notice'), meta: { title: '会议通知', activeMenu: '/meeting/activity', noCache: true, tabKey: 'fullPath' } },
           {
             path: 'file',
             name: 'MeetingFile',
@@ -158,7 +152,7 @@ export const dynamicRoutes = [
               title: '文件管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -169,7 +163,7 @@ export const dynamicRoutes = [
               title: '报名通道配置',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -180,7 +174,7 @@ export const dynamicRoutes = [
               title: '报名字段配置',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -191,7 +185,7 @@ export const dynamicRoutes = [
               title: '报名订单',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -202,7 +196,7 @@ export const dynamicRoutes = [
               title: '会场管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -213,7 +207,7 @@ export const dynamicRoutes = [
               title: '主题管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -224,7 +218,7 @@ export const dynamicRoutes = [
               title: '日程管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -235,7 +229,7 @@ export const dynamicRoutes = [
               title: '专家任务排期',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -246,7 +240,7 @@ export const dynamicRoutes = [
               title: '嘉宾管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -257,7 +251,7 @@ export const dynamicRoutes = [
               title: '嘉宾行程',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -268,7 +262,7 @@ export const dynamicRoutes = [
               title: '任务规则配置',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -279,7 +273,7 @@ export const dynamicRoutes = [
               title: '劳务费管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -290,7 +284,7 @@ export const dynamicRoutes = [
               title: '工作人员',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -301,7 +295,7 @@ export const dynamicRoutes = [
               title: '展商管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -312,7 +306,7 @@ export const dynamicRoutes = [
               title: '餐票管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -323,7 +317,7 @@ export const dynamicRoutes = [
               title: '会议酒店',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -334,7 +328,7 @@ export const dynamicRoutes = [
               title: '酒店订单',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -345,7 +339,7 @@ export const dynamicRoutes = [
               title: '分房管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
           {
@@ -356,7 +350,7 @@ export const dynamicRoutes = [
               title: '导航管理',
               activeMenu: '/meeting/activity',
               noCache: true,
-              tagsGroup: 'meeting-config'
+              tabKey: 'fullPath'
             }
           },
         ]

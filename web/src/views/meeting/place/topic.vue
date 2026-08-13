@@ -39,7 +39,7 @@
     </el-table>
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" v-model="open" width="680px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="680px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="会议会场" prop="venueId">
           <el-select v-model="form.venueId" placeholder="请选择会场" filterable style="width:100%">

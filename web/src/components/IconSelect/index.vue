@@ -12,7 +12,7 @@
     </el-input>
     <div class="icon-list">
       <div class="list-container">
-        <div v-for="(item, index) in iconList" class="icon-item-wrapper" :key="index" @click="selectedIcon(item)">
+        <div v-for="(item, index) in pagedIconList" class="icon-item-wrapper" :key="index" @click="selectedIcon(item)">
           <div :class="['icon-item', { active: activeIcon === item }]">
             <svg-icon :icon-class="item" class-name="icon" style="height: 25px;width: 16px;"/>
             <span>{{ item }}</span>
@@ -20,6 +20,16 @@
         </div>
       </div>
     </div>
+    <el-pagination
+      v-if="iconList.length > pageSize"
+      v-model:current-page="currentPage"
+      :page-size="pageSize"
+      :total="iconList.length"
+      class="icon-pagination"
+      layout="prev, pager, next"
+      small
+      background
+    />
   </div>
 </template>
 
@@ -34,13 +44,21 @@ const props = defineProps({
 
 const iconName = ref('')
 const iconList = ref(icons)
+const currentPage = ref(1)
+const pageSize = 24
 const emit = defineEmits(['selected'])
+
+const pagedIconList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return iconList.value.slice(start, start + pageSize)
+})
 
 function filterIcons() {
   iconList.value = icons
   if (iconName.value) {
     iconList.value = icons.filter(item => item.indexOf(iconName.value) !== -1)
   }
+  currentPage.value = 1
 }
 
 function selectedIcon(name) {
@@ -51,6 +69,7 @@ function selectedIcon(name) {
 function reset() {
   iconName.value = ''
   iconList.value = icons
+  currentPage.value = 1
 }
 
 defineExpose({
@@ -106,6 +125,10 @@ defineExpose({
           }
         }
       }
+    }
+    .icon-pagination {
+      justify-content: center;
+      margin-top: 8px;
     }
   }
 </style>

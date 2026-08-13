@@ -106,6 +106,37 @@
               </div>
             </el-popover>
           </el-form-item>
+          <el-form-item class="layout-settings-item">
+            <el-popover placement="bottom-start" :width="420" trigger="click" popper-class="grid-background-popper">
+              <template #reference>
+                <el-button plain icon="Picture">整体背景</el-button>
+              </template>
+              <div class="grid-background-panel">
+                <div class="grid-visual-header">
+                  <div>
+                    <div class="grid-visual-title">整体背景</div>
+                    <div class="grid-visual-hint">支持底色、渐变或背景图，保存模板后同步</div>
+                  </div>
+                </div>
+                <div class="grid-background-field">
+                  <span>背景底色</span>
+                  <div class="grid-background-color-row">
+                    <el-color-picker v-model="gridBackground.color" show-alpha />
+                    <el-input v-model="gridBackground.color" placeholder="#f5f7fa" />
+                  </div>
+                </div>
+                <div class="grid-background-field">
+                  <span>渐变背景</span>
+                  <el-input v-model="gridBackground.gradient" type="textarea" :rows="2" placeholder="linear-gradient(135deg, #eef6ff, #ffffff)" />
+                </div>
+                <div class="grid-background-field">
+                  <span>背景图片</span>
+                  <material-select v-model="gridBackground.imageUrl" :show-tip="false" />
+                </div>
+                <div class="grid-background-preview" :style="gridBackgroundPreviewStyle">预览</div>
+              </div>
+            </el-popover>
+          </el-form-item>
         </el-form>
         <div class="template-tip">
           九宫格入口、模板、视觉配置和发布版本共同组成移动端会议页。保存九宫格项后，点击“保存首页草稿”并发布，移动端才切换到新版本。
@@ -116,9 +147,6 @@
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['meeting:grid:add']">新增</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="success" plain @click="handleSyncModules" v-hasPermi="['meeting:grid:add']">同步常用模块</el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['meeting:grid:remove']">删除</el-button>
@@ -190,7 +218,7 @@
 
       <aside class="phone-preview-panel">
         <div class="phone-frame">
-          <div class="phone-screen" :class="{ 'is-tile-screen': isTilePreview }" :style="previewGridVisualStyle">
+          <div class="phone-screen" :class="{ 'is-tile-screen': isTilePreview }" :style="previewGridPageStyle">
             <div
               v-if="isTilePreview"
               class="phone-tile-page"
@@ -316,7 +344,7 @@
                       <img v-else-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
                       <el-icon v-else :size="28"><Grid /></el-icon>
                     </div>
-                    <span v-if="!isIconOnlyPreview">{{ item.title }}</span>
+                    <span v-if="!isIconOnlyPreview && gridShowTitle(item)">{{ item.title }}</span>
                   </template>
                 </div>
                 <div v-if="!previewItems.length" class="phone-empty">暂无启用的菜单项</div>
@@ -327,9 +355,17 @@
       </aside>
     </div>
 
-    <el-dialog :title="title" v-model="open" width="820px" class="meeting-form-dialog" append-to-body destroy-on-close>
-      <el-scrollbar max-height="70vh">
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="grid-form">
+    <el-drawer
+      v-model="open"
+      :title="title"
+      direction="rtl"
+      size="720px"
+      class="grid-edit-drawer"
+      append-to-body
+      destroy-on-close
+    >
+      <el-scrollbar class="grid-edit-scrollbar">
+        <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="grid-form">
           <section class="grid-form-section">
             <h3>基础信息</h3>
             <el-row :gutter="24">
@@ -356,9 +392,6 @@
             <el-form-item v-else label="图标选择" prop="iconKey">
               <meeting-icon-select v-model="form.iconKey" />
             </el-form-item>
-            <el-form-item v-if="form.iconType === 'image'" label="两列展示">
-              <el-switch v-model="form.displayAsCard" active-text="整图卡片" inactive-text="图标入口" />
-            </el-form-item>
           </section>
 
           <section class="grid-form-section">
@@ -372,7 +405,7 @@
               </el-radio-group>
             </el-form-item>
             <el-form-item v-if="form.linkType === 'module'" label="模块跳转" prop="moduleKey">
-              <el-select v-model="form.moduleKey" placeholder="请选择模块" style="width: 360px" @change="onModuleChange">
+              <el-select v-model="form.moduleKey" placeholder="请选择模块" @change="onModuleChange">
                 <el-option
                   v-for="item in moduleOptions"
                   :key="item.value"
@@ -386,22 +419,12 @@
               </div>
             </el-form-item>
             <el-form-item v-if="form.linkType === 'url'" label="外部链接" prop="externalUrl">
-              <el-input v-model="form.externalUrl" maxlength="500" placeholder="https://" style="max-width: 620px" />
+              <el-input v-model="form.externalUrl" maxlength="500" placeholder="https://" />
             </el-form-item>
-            <el-form-item v-if="form.linkType === 'content'" label="内容">
-              <el-select v-model="form.contentType" style="width: 180px; margin-bottom: 10px">
-                <el-option label="文字内容" value="text" />
-                <el-option label="长图内容" value="image" />
-              </el-select>
-              <material-select
-                v-if="form.contentType === 'image'"
-                v-model="form.contentUrl"
-                :show-tip="false"
-              />
+            <el-form-item v-if="form.linkType === 'content'" label="富文本内容">
               <editor
-                v-else
                 v-model="form.content"
-                :min-height="220"
+                :min-height="300"
                 :upload-url="contentImageUploadUrl"
               />
             </el-form-item>
@@ -409,8 +432,16 @@
 
           <section class="grid-form-section">
             <h3>展示设置</h3>
-            <el-form-item label="隐藏">
+            <el-form-item label="显示状态">
               <el-switch v-model="form.hidden" active-text="隐藏此菜单" />
+            </el-form-item>
+            <el-form-item label="显示标题">
+              <el-switch v-model="form.showTitle" active-text="显示" inactive-text="隐藏" />
+              <div class="form-field-tip">纯图标模板会始终隐藏标题；其他模板按此设置展示。</div>
+            </el-form-item>
+            <el-form-item v-if="isTwoColumnPreview && form.iconType === 'image'" label="图片展示">
+              <el-switch v-model="form.displayAsCard" active-text="整图卡片" inactive-text="图标入口" />
+              <div class="form-field-tip">仅两列图文宫格生效，整图会按原比例铺满卡片。</div>
             </el-form-item>
             <template v-if="isTilePreview">
               <el-divider content-position="left">Tile 色块与布局</el-divider>
@@ -468,7 +499,7 @@
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="open = false">取 消</el-button>
       </template>
-    </el-dialog>
+    </el-drawer>
 
     <el-dialog v-model="versionsOpen" title="会议页版本记录" width="760px" append-to-body>
       <el-table :data="homeVersions" v-loading="versionsLoading">
@@ -524,6 +555,7 @@ const gridVisual = reactive({
   itemGap: 10,
   itemPadding: 10
 })
+const gridBackground = reactive({ color: "", gradient: "", imageUrl: "" })
 const homeVersionId = ref(null)
 const homeVersions = ref([])
 const versionsOpen = ref(false)
@@ -564,7 +596,7 @@ const templateOptions = [
   },
   {
     value: "tile",
-    label: "不规则 Tile 宫格",
+    label: "自定义宫格",
     preview: "http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png",
     description: "支持色块背景、行列位置和跨行跨列，适合活动首页定制布局"
   }
@@ -599,6 +631,18 @@ const hasImageCardPreview = computed(() => previewItems.value.some(item => isIma
 const isTilePreview = computed(() => String(configForm.value.gridTemplate) === "tile")
 const isLightTilePreview = computed(() => isTilePreview.value && isLightColor(themeColor.value))
 const tileSurfaceColor = computed(() => (isLightTilePreview.value ? (themeColor.value || "#f6f6f6") : "#061a74"))
+const gridBackgroundPreviewStyle = computed(() => {
+  const style = { backgroundColor: gridBackground.color || "#f5f7fa" }
+  if (gridBackground.gradient) style.backgroundImage = gridBackground.gradient
+  if (gridBackground.imageUrl) {
+    style.backgroundImage = gridBackground.gradient
+      ? `${gridBackground.gradient}, url("${resolveUrl(gridBackground.imageUrl)}")`
+      : `url("${resolveUrl(gridBackground.imageUrl)}")`
+    style.backgroundSize = "cover"
+  }
+  return style
+})
+const isTwoColumnPreview = computed(() => ["68", "681"].includes(String(configForm.value.gridTemplate)))
 
 function isImageCardPreview(item) {
   return item && item.iconType === "image" && !!gridCardUrl(item) && previewGridClass.value === "grid-two"
@@ -748,6 +792,10 @@ const previewGridVisualStyle = computed(() => ({
   '--grid-item-gap': `${gridVisual.itemGap / 2}px`,
   '--grid-item-padding': `${gridVisual.itemPadding / 2}px`
 }))
+const previewGridPageStyle = computed(() => ({
+  ...previewGridVisualStyle.value,
+  ...gridBackgroundPreviewStyle.value
+}))
 
 const previewCoverStyle = computed(() => {
   const coverUrl = resolveUrl(activityInfo.value.coverUrl)
@@ -807,6 +855,7 @@ function loadMeta() {
       gridTemplate: normalizeTemplate(res.data?.gridTemplate)
     }
     Object.assign(gridVisual, parseGridVisual(res.data?.remark))
+    Object.assign(gridBackground, parseGridBackground(res.data?.remark))
   })
 }
 
@@ -824,12 +873,26 @@ function parseGridVisual(value) {
   }
 }
 
+function gridShowTitle(item) {
+  return item?.showTitle !== false && item?.showTitle !== 0 && item?.showTitle !== "0"
+}
+
+function parseGridBackground(value) {
+  const defaults = { color: "", gradient: "", imageUrl: "" }
+  try {
+    const parsed = JSON.parse(value || "{}")
+    return { ...defaults, ...(parsed.gridBackground || {}) }
+  } catch {
+    return defaults
+  }
+}
+
 function buildConfigRemark() {
   let parsed = {}
   try {
     parsed = JSON.parse(configForm.value.remark || "{}")
   } catch {}
-  return JSON.stringify({ ...parsed, gridVisual: { ...gridVisual } })
+  return JSON.stringify({ ...parsed, gridVisual: { ...gridVisual }, gridBackground: { ...gridBackground } })
 }
 
 function normalizeTemplate(value) {
@@ -925,6 +988,7 @@ function buildHomePage() {
     template: configForm.value.mobileTemplate || template.layout.template,
     heroUrl: activityInfo.value.coverUrl || "",
     backgroundUrl: configForm.value.mobileBackgroundUrl || "",
+    background: { ...gridBackground },
     themeColor: themeColor.value,
     gridTemplate: configForm.value.gridTemplate || "1",
     gridColumns: previewGridClass.value === "grid-one" ? 1 : previewGridClass.value === "grid-two" ? 2 : 3,
@@ -951,7 +1015,7 @@ function buildHomePage() {
     mode: "standard",
     schemaVersion: "2",
     templateKey,
-    theme: { color: themeColor.value },
+    theme: { color: themeColor.value, background: { ...gridBackground } },
     layout,
     sections: template.slots.map(slot => ({
       id: slot,
@@ -999,6 +1063,14 @@ function loadHomeVersions(openDialog = true) {
     const draft = homeVersions.value.find(item => item.status === "draft" && String(item.pageJson || "").includes('"source":"grid-config"'))
     if (draft) homeVersionId.value = draft.versionId
     if (openDialog) versionsOpen.value = true
+  }).catch(error => {
+    homeVersions.value = []
+    if (openDialog) {
+      const message = String(error?.message || "")
+      proxy.$modal.msgWarning(message.includes("yc_activity_home_version")
+        ? "版本记录表尚未初始化，请先执行会议首页迁移脚本"
+        : "版本记录加载失败")
+    }
   }).finally(() => { versionsLoading.value = false })
 }
 
@@ -1054,12 +1126,15 @@ function resolveTileBg(options = {}, depth = 0) {
 function restoreForm(data) {
   const options = parseGridOptions(data.remark)
   const tileBg = options.tileBg || ""
+  const legacyImageContent = data.contentType === "image" && data.contentUrl
+    ? `<p><img src="${resolveUrl(data.contentUrl)}" /></p>`
+    : ""
   return {
     ...data,
     iconType: data.iconType || (data.iconKey ? "icon" : "image"),
     iconKey: data.iconKey || "",
-    content: data.content || options.content || "",
-    contentType: data.contentType || "text",
+    content: data.content || options.content || legacyImageContent,
+    contentType: "text",
     contentUrl: data.contentUrl || "",
     tileRow: data.tileRow || 0,
     tileCol: data.tileCol || 0,
@@ -1070,7 +1145,8 @@ function restoreForm(data) {
     hidden: options.hidden !== undefined
       ? options.hidden === true || options.hidden === 1 || options.hidden === "1"
       : String(data.status) === "0",
-    displayAsCard: options.displayAsCard === true || options.displayAsCard === 1 || options.displayAsCard === "1"
+    displayAsCard: options.displayAsCard === true || options.displayAsCard === 1 || options.displayAsCard === "1",
+    showTitle: options.showTitle !== false && options.showTitle !== 0 && options.showTitle !== "0"
   }
 }
 
@@ -1086,11 +1162,13 @@ function buildPayload() {
   payload.iconType = form.value.iconType || "image"
   payload.iconUrl = payload.iconType === "image" ? (form.value.iconUrl || "") : ""
   payload.iconKey = payload.iconType === "icon" ? (form.value.iconKey || "") : ""
-  payload.contentType = form.value.contentType || "text"
-  payload.contentUrl = payload.contentType === "image" ? (form.value.contentUrl || "") : ""
+  payload.showTitle = form.value.showTitle !== false
+  payload.contentType = "text"
+  payload.contentUrl = ""
   const bg = String(form.value.gradientColor || form.value.tileBg || "").trim()
   const remarkObj = { __gridForm: true }
   if (form.value.displayAsCard) remarkObj.displayAsCard = true
+  if (form.value.showTitle === false) remarkObj.showTitle = false
   if (bg) {
     remarkObj.bg = bg
     remarkObj.gradientColor = bg
@@ -1132,6 +1210,7 @@ function reset() {
     gradientColor: "",
     tileBg: "",
     displayAsCard: false,
+    showTitle: true,
     hidden: false,
     sortOrder: 0,
     status: "1"
@@ -1172,46 +1251,6 @@ function goModuleConfig(key) {
   router.push({ path: mod.adminPath, query: { id: activityId.value } })
 }
 
-async function handleSyncModules() {
-  const used = new Set(
-    gridList.value
-      .filter(i => i.linkType === "module" && i.moduleKey)
-      .map(i => i.moduleKey)
-  )
-  const missing = MEETING_MODULE_OPTIONS
-    .map(o => getMeetingModule(o.value))
-    .filter(m => m && !used.has(m.key))
-  if (!missing.length) {
-    proxy.$modal.msgSuccess("常用模块均已在九宫格中")
-    return
-  }
-  try {
-    await proxy.$modal.confirm(`将补充 ${missing.length} 个常用模块入口（已有的不会重复）：${missing.map(m => m.label).join("、")}`)
-  } catch {
-    return
-  }
-  let sortBase = Math.max(0, ...gridList.value.map(i => i.sortOrder || 0))
-  for (const mod of missing) {
-    sortBase += 1
-    await addGrid({
-      activityId: Number(activityId.value),
-      title: mod.label,
-      iconType: "icon",
-      iconKey: mod.iconKey,
-      iconUrl: "",
-      linkType: "module",
-      moduleKey: mod.key,
-      externalUrl: "",
-      content: "",
-      sortOrder: sortBase,
-      status: "1",
-      remark: JSON.stringify({ __gridForm: true })
-    })
-  }
-  proxy.$modal.msgSuccess(`已同步 ${missing.length} 个模块`)
-  getList()
-}
-
 function handleUpdate(row) {
   reset()
   getGrid(row.gridId).then(res => {
@@ -1249,7 +1288,6 @@ onMounted(() => {
   }
   loadMeta()
   getList()
-  loadHomeVersions(false)
 })
 </script>
 
@@ -1325,11 +1363,40 @@ onMounted(() => {
   text-align: left;
 }
 .grid-form {
-  padding: 0 2px;
+  padding: 0 2px 8px;
+}
+
+.grid-edit-scrollbar {
+  height: 100%;
+}
+.grid-edit-drawer :deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 18px 24px;
+  border-bottom: 1px solid #ebeef5;
+}
+.grid-edit-drawer :deep(.el-drawer__title) {
+  color: #1f2937;
+  font-size: 17px;
+  font-weight: 600;
+}
+.grid-edit-drawer :deep(.el-drawer__body) {
+  padding: 18px 22px 8px;
+  background: #f5f7fa;
+}
+.grid-edit-drawer :deep(.el-drawer__footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 22px;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+}
+.grid-edit-drawer :deep(.el-drawer__footer .el-button + .el-button) {
+  margin-left: 0;
 }
 .grid-form-section {
-  margin-bottom: 12px;
-  padding: 16px 18px 4px;
+  margin-bottom: 16px;
+  padding: 18px 20px 6px;
   border: 1px solid #ebeef5;
   border-radius: 8px;
   background: #fff;
@@ -1342,7 +1409,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 14px;
+  margin: 0 0 18px;
   color: #303133;
   font-size: 15px;
   font-weight: 600;
@@ -1354,48 +1421,27 @@ onMounted(() => {
   background: #409eff;
   content: "";
 }
-.grid-form-section :deep(.el-form-item:last-child) {
-  margin-bottom: 0;
-}
+.grid-form-section :deep(.el-form-item:last-child) { margin-bottom: 0; }
+.grid-form-section :deep(.el-row:last-child .el-form-item) { margin-bottom: 0; }
 .grid-form-section :deep(.el-form-item__label) {
   color: #606266;
   padding-right: 12px;
-  line-height: 32px;
-}
-.grid-form-section :deep(.el-form-item) {
-  margin-bottom: 14px;
-}
-.grid-form-section :deep(.el-input),
-.grid-form-section :deep(.el-select),
-.grid-form-section :deep(.el-input-number) {
-  max-width: 100%;
-}
-.grid-form-section :deep(.el-input-number) {
-  width: 130px;
-}
-:deep(.el-dialog__body) {
-  padding: 14px 18px 2px;
-  background: #f5f7fa;
-}
-:deep(.el-dialog__header) {
-  margin-right: 0;
-  padding: 16px 20px 13px;
-  border-bottom: 1px solid #ebeef5;
-}
-:deep(.el-dialog__title) {
-  color: #1f2937;
-  font-size: 16px;
+  line-height: 22px;
   font-weight: 600;
 }
-:deep(.el-dialog__footer) {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 20px 14px;
-  border-top: 1px solid #ebeef5;
+.grid-form-section :deep(.el-form-item) {
+  margin-bottom: 18px;
 }
-:deep(.el-dialog__footer .el-button + .el-button) {
-  margin-left: 0;
+.grid-form-section :deep(.el-form-item__content) {
+  min-height: 32px;
+  line-height: 32px;
+}
+.grid-form-section :deep(.el-row) { row-gap: 0; }
+.grid-form-section :deep(.el-input),
+.grid-form-section :deep(.el-select),
+.grid-form-section :deep(.el-input-number) { width: 100%; max-width: 100%; }
+.grid-form-section :deep(.el-input-number) {
+  width: 130px;
 }
 .grid-form-section :deep(.material-preview) {
   align-items: center;
@@ -1426,7 +1472,7 @@ onMounted(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
   color: #909399;
   font-size: 13px;
 }
@@ -1434,7 +1480,7 @@ onMounted(() => {
   width: min(100%, 620px);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .tile-bg-toolbar {
   display: flex;
@@ -1456,8 +1502,14 @@ onMounted(() => {
 .grid-form-section :deep(.editor) {
   width: min(100%, 700px);
 }
+.form-field-tip {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .grid-form-section :deep(.el-divider) {
-  margin: 4px 0 16px;
+  margin: 6px 0 18px;
 }
 .tile-bg-editor {
   width: min(100%, 560px);
@@ -1465,10 +1517,15 @@ onMounted(() => {
 .tile-bg-toolbar {
   flex-wrap: wrap;
 }
+.grid-form-section :deep(.el-form-item + .el-divider) { margin-top: 2px; }
+.grid-form-section :deep(.el-divider + .el-form-item) { margin-top: 0; }
+.grid-background-panel { display: flex; flex-direction: column; gap: 14px; }
+.grid-background-field { display: flex; flex-direction: column; gap: 6px; color: #606266; font-size: 13px; font-weight: 600; }
+.grid-background-color-row { display: flex; align-items: center; gap: 8px; }
+.grid-background-color-row .el-input { flex: 1; }
+.grid-background-preview { height: 54px; display: flex; align-items: center; justify-content: center; border: 1px solid #ebeef5; border-radius: 8px; color: #606266; font-size: 12px; }
 @media (max-width: 700px) {
-  :deep(.el-dialog) {
-    width: calc(100vw - 24px) !important;
-  }
+  .grid-edit-drawer { width: min(100vw, 720px) !important; }
   .grid-form-section :deep(.el-form-item__label) {
     float: none;
     display: block;
@@ -1480,6 +1537,9 @@ onMounted(() => {
   .grid-form-section :deep(.el-form-item__content) {
     margin-left: 0 !important;
   }
+  .grid-form-section { padding: 16px 14px 4px; }
+  .grid-form-section h3 { margin-bottom: 16px; }
+  .grid-form-section :deep(.el-form-item) { margin-bottom: 16px; }
   .action-type-group :deep(.el-radio-button__inner) {
     min-width: 0;
     padding: 8px 10px;

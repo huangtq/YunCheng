@@ -47,7 +47,7 @@
     </el-table>
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" v-model="open" width="640px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="640px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="酒店" prop="hotelId">
           <el-select v-model="form.hotelId" filterable style="width:100%" @change="onFormHotelChange">

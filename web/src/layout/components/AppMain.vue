@@ -3,7 +3,7 @@
     <router-view v-slot="{ Component, route }">
       <transition name="fade-transform" mode="out-in">
         <keep-alive :include="tagsViewStore.cachedViews">
-          <component v-if="!route.meta.link" :is="Component" :key="route.meta.tagsGroup || route.path"/>
+          <component v-if="!route.meta.link" :is="Component" :key="route.path.startsWith('/meeting/activity-config') || route.meta.tabKey === 'fullPath' ? route.fullPath : (route.meta.tagsGroup || route.path)"/>
         </keep-alive>
       </transition>
     </router-view>

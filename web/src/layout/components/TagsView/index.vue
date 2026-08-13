@@ -9,8 +9,8 @@
     <scroll-pane ref="scrollPaneRef" class="tags-view-wrapper" @scroll="handleScroll" @update-arrows="updateArrowState">
       <router-link
         v-for="tag in visitedViews"
-        :key="tag.path"
-        :data-path="tag.path"
+        :key="tag.fullPath"
+        :data-path="tag.fullPath"
         :class="{ 'active': isActive(tag), 'has-icon': tagsIcon }"
         :to="{ path: tag.path, query: tag.query, fullPath: tag.fullPath }"
         class="tags-view-item"
@@ -138,10 +138,10 @@ function handleKeyDown(event) {
 }
 
 function isActive(r) {
-  if (r.path === route.path) {
+  if (r.fullPath === route.fullPath) {
     return true
   }
-  const group = route.meta && route.meta.tagsGroup
+  const group = route.meta && route.meta.tagsGroup && !route.meta.tabKey && !route.path.startsWith('/meeting/activity-config')
   return !!(group && r.meta && r.meta.tagsGroup === group)
 }
 
@@ -219,9 +219,9 @@ function addTags() {
 
 function moveToCurrentTag() {
   nextTick(() => {
-    const group = route.meta && route.meta.tagsGroup
+    const group = route.meta && route.meta.tagsGroup && !route.meta.tabKey && !route.path.startsWith('/meeting/activity-config')
     for (const r of visitedViews.value) {
-      const samePath = r.path === route.path
+      const samePath = r.fullPath === route.fullPath
       const sameGroup = group && r.meta && r.meta.tagsGroup === group
       if (samePath || sameGroup) {
         scrollPaneRef.value.moveToTarget(r)

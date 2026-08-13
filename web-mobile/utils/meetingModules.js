@@ -10,7 +10,6 @@ export const MEETING_MODULES = [
   { key: 'nav', label: '会议导航', title: '会议导航' },
   { key: 'exhibitor', label: '展商名录', title: '展商名录' },
   { key: 'meal', label: '餐票服务', title: '餐票服务' },
-  { key: 'notice', label: '会议通知', title: '会议通知' },
   { key: 'feedback', label: '意见反馈', title: '意见反馈' }
 ]
 
@@ -19,6 +18,8 @@ export function getMeetingModule(key) {
 }
 
 export function resolveModulePage(activityId, moduleKey, title) {
+  // Legacy entries remain routable even though new configurations use rich-text content cards.
+  if (moduleKey === 'notice') return `/pages/meeting/notice?activityId=${activityId}`
   const mod = getMeetingModule(moduleKey)
   if (!mod) return ''
   if (moduleKey === 'apply') {
@@ -28,7 +29,6 @@ export function resolveModulePage(activityId, moduleKey, title) {
     return `/pages/meeting/${moduleKey}?activityId=${activityId}`
   }
   if (moduleKey === 'hotel') return `/pages/meeting/hotel?activityId=${activityId}`
-  if (moduleKey === 'notice') return `/pages/meeting/notice?activityId=${activityId}`
   if (moduleKey === 'feedback') return `/pages/meeting/feedback?activityId=${activityId}`
   if (moduleKey === 'meal' || moduleKey === 'my-attendance') return `/pages/meeting/apply/mine?activityId=${activityId}`
   const name = encodeURIComponent(title || mod.title || mod.label)

@@ -66,7 +66,7 @@
       <pagination
         v-show="total > 0"
         :total="total"
-        :page-sizes="[12, 24, 48]"
+        :page-sizes="[20, 40, 60]"
         :page="queryParams.pageNum"
         :limit="queryParams.pageSize"
         @update:page="queryParams.pageNum = $event"
@@ -112,7 +112,7 @@ const selected = ref(null)
 const total = ref(0)
 const queryParams = ref({
   pageNum: 1,
-  pageSize: 12,
+  pageSize: 20,
   originalName: undefined,
   params: {
     mediaType: "image"
@@ -217,7 +217,7 @@ function clearValue() {
 }
 .material-image-wrap .material-image {
   width: 100%;
-  height: 110px;
+  height: 96px;
 }
 .material-image-wrap.is-selected .material-image {
   height: 100%;
@@ -233,9 +233,9 @@ function clearValue() {
 }
 .material-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  min-height: 160px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 468px;
 }
 .material-item {
   border: 2px solid transparent;
@@ -262,6 +262,12 @@ function clearValue() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .material-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+  }
 }
 .el-upload__tip {
   margin-top: 8px;

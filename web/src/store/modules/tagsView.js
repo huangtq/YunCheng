@@ -21,6 +21,22 @@ function clearVisitedViews() {
   cache.local.remove(PERSIST_KEY)
 }
 
+function getViewKey(view) {
+  const isMeetingConfig = view?.path?.startsWith('/meeting/activity-config')
+  return view?.meta?.tabKey === 'fullPath' || isMeetingConfig ? view.fullPath : view.path
+}
+
+function getViewTitle(view) {
+  const title = view.meta?.title || 'no-name'
+  const isMeetingConfig = view?.path?.startsWith('/meeting/activity-config')
+  const activityId = view.meta?.tabKey === 'fullPath' || isMeetingConfig ? view.query?.id : ''
+  return activityId ? `${title}（会议 ${activityId}）` : title
+}
+
+function isSameView(first, second) {
+  return getViewKey(first) === getViewKey(second)
+}
+
 const useTagsViewStore = defineStore(
   'tags-view',
   {
@@ -43,11 +59,11 @@ const useTagsViewStore = defineStore(
         )
       },
       addVisitedView(view) {
-        const tagsGroup = view.meta && view.meta.tagsGroup
+        const tagsGroup = view.meta && view.meta.tagsGroup && !view.meta.tabKey
         if (tagsGroup) {
           const idx = this.visitedViews.findIndex(v => v.meta && v.meta.tagsGroup === tagsGroup)
           const next = Object.assign({}, view, {
-            title: (view.meta && view.meta.title) || 'no-name'
+            title: getViewTitle(view)
           })
           if (idx > -1) {
             this.visitedViews.splice(idx, 1, next)
@@ -58,19 +74,24 @@ const useTagsViewStore = defineStore(
           saveVisitedViews(this.visitedViews)
           return
         }
-        if (this.visitedViews.some(v => v.path === view.path)) return
+        const existing = this.visitedViews.find(v => getViewKey(v) === getViewKey(view))
+        if (existing) {
+          Object.assign(existing, view, { title: getViewTitle(view) })
+          saveVisitedViews(this.visitedViews)
+          return
+        }
         this.visitedViews.push(
           Object.assign({}, view, {
-            title: view.meta.title || 'no-name'
+            title: getViewTitle(view)
           })
         )
         saveVisitedViews(this.visitedViews)
       },
       addAffixView(view) {
-        if (this.visitedViews.some(v => v.path === view.path)) return
+        if (this.visitedViews.some(v => getViewKey(v) === getViewKey(view))) return
         this.visitedViews.unshift(
           Object.assign({}, view, {
-            title: view.meta.title || 'no-name'
+            title: getViewTitle(view)
           })
         )
       },
@@ -93,7 +114,7 @@ const useTagsViewStore = defineStore(
       delVisitedView(view) {
         return new Promise(resolve => {
           for (const [i, v] of this.visitedViews.entries()) {
-            if (v.path === view.path) {
+            if (getViewKey(v) === getViewKey(view)) {
               this.visitedViews.splice(i, 1)
               break
             }
@@ -129,9 +150,9 @@ const useTagsViewStore = defineStore(
       delOthersVisitedViews(view) {
         return new Promise(resolve => {
           this.visitedViews = this.visitedViews.filter(v => {
-            return v.meta.affix || v.path === view.path
+            return v.meta.affix || getViewKey(v) === getViewKey(view)
           })
-          this.iframeViews = this.iframeViews.filter(item => item.path === view.path)
+          this.iframeViews = this.iframeViews.filter(item => isSameView(item, view))
           saveVisitedViews(this.visitedViews)
           resolve([...this.visitedViews])
         })
@@ -173,13 +194,13 @@ const useTagsViewStore = defineStore(
         })
       },
       updateVisitedView(view) {
-        const tagsGroup = view.meta && view.meta.tagsGroup
+        const tagsGroup = view.meta && view.meta.tagsGroup && !view.meta.tabKey
         for (let v of this.visitedViews) {
-          const samePath = v.path === view.path
+          const samePath = getViewKey(v) === getViewKey(view)
           const sameGroup = tagsGroup && v.meta && v.meta.tagsGroup === tagsGroup
           if (samePath || sameGroup) {
             Object.assign(v, view, {
-              title: (view.meta && view.meta.title) || v.title
+              title: getViewTitle(view)
             })
             break
           }
@@ -188,7 +209,7 @@ const useTagsViewStore = defineStore(
       },
       delRightTags(view) {
         return new Promise(resolve => {
-          const index = this.visitedViews.findIndex(v => v.path === view.path)
+          const index = this.visitedViews.findIndex(v => getViewKey(v) === getViewKey(view))
           if (index === -1) {
             return
           }
@@ -212,7 +233,7 @@ const useTagsViewStore = defineStore(
       },
       delLeftTags(view) {
         return new Promise(resolve => {
-          const index = this.visitedViews.findIndex(v => v.path === view.path)
+          const index = this.visitedViews.findIndex(v => getViewKey(v) === getViewKey(view))
           if (index === -1) {
             return
           }

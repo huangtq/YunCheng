@@ -34,8 +34,6 @@ public interface IYcPortalMeetingService
 
     List<YcApplyOrder> myApplyOrders(MpLoginUser user, Long activityId);
 
-    Map<String, Object> myAttendance(MpLoginUser user, Long activityId);
-
     Map<String, Object> hotelOverview(Long activityId, MpLoginUser user);
 
     Map<String, Object> myHotelOrders(MpLoginUser user, Long activityId);

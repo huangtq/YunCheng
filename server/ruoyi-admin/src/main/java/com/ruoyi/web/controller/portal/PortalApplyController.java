@@ -42,13 +42,6 @@ public class PortalApplyController extends BaseController
         return success(portalMeetingService.myApplyOrders(user, activityId));
     }
 
-    @GetMapping("/attendance")
-    public AjaxResult attendance(@RequestParam Long activityId, HttpServletRequest request)
-    {
-        MpLoginUser user = mpTokenService.requireLoginUser(request);
-        return success(portalMeetingService.myAttendance(user, activityId));
-    }
-
     @GetMapping("/meal-coupons")
     public AjaxResult mealCoupons(@RequestParam Long activityId, HttpServletRequest request)
     {

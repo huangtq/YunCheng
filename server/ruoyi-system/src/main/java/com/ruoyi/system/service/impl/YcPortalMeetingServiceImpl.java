@@ -55,7 +55,6 @@ import com.ruoyi.system.mapper.YcMeetingContentMapper;
 import com.ruoyi.system.mapper.YcMeetingContentAttachmentMapper;
 import com.ruoyi.system.service.IYcApplyOrderService;
 import com.ruoyi.system.service.IYcPortalMeetingService;
-import com.ruoyi.system.service.IYcOnSiteService;
 
 @Service
 public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
@@ -77,7 +76,6 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     @Autowired private YcApplyFieldMapper fieldMapper;
     @Autowired private YcApplyOrderMapper orderMapper;
     @Autowired private IYcApplyOrderService applyOrderService;
-    @Autowired private IYcOnSiteService onSiteService;
     @Autowired private com.ruoyi.system.mapper.YcActivityHomeVersionMapper homeVersionMapper;
     @Autowired private YcMeetingContentMapper contentMapper;
     @Autowired private YcMeetingContentAttachmentMapper contentAttachmentMapper;
@@ -528,6 +526,7 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         JSONObject theme = new JSONObject();
         theme.put("color", StringUtils.isEmpty(config.getMobileThemeColor()) ? "#1f6feb" : config.getMobileThemeColor());
         theme.put("backgroundUrl", config.getMobileBackgroundUrl());
+        theme.put("background", parseGridBackground(config.getRemark()));
         page.put("theme", theme);
         page.put("layout", mobileLayout(config));
         JSONArray sections = new JSONArray();
@@ -588,6 +587,12 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         List<Map<String, Object>> result = new ArrayList<>();
         for (YcActivity activity : activities)
         {
+            YcActivityConfig config = configMapper.selectYcActivityConfigById(activity.getActivityId());
+            // Keep existing visibility for meetings without a config row.
+            if (config != null && "0".equals(config.getMpShow()))
+            {
+                continue;
+            }
             Date endTime = activity.getEndTime();
             boolean ended = endTime != null && endTime.before(now);
             if (history != ended)
@@ -605,7 +610,8 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             item.put("address", activity.getAddress());
             item.put("thirdPartyUrl", activity.getThirdPartyUrl());
             item.put("registerCount", activity.getRegisterCount());
-            item.put("isHot", activity.getIsHot());
+            // hotShow controls whether the activity participates in the H5 hot section.
+            item.put("isHot", config != null && "0".equals(config.getHotShow()) ? "0" : activity.getIsHot());
             result.add(item);
         }
         result.sort((a, b) -> {
@@ -828,12 +834,6 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     }
 
     @Override
-    public Map<String, Object> myAttendance(MpLoginUser user, Long activityId)
-    {
-        return onSiteService.getMyAttendance(activityId, user);
-    }
-
-    @Override
     public Map<String, Object> hotelOverview(Long activityId, MpLoginUser user)
     {
         requireActivity(activityId);
@@ -928,6 +928,21 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         return v == null ? "" : String.valueOf(v);
     }
 
+    private Map<String, Object> parseGridBackground(String value)
+    {
+        Map<String, Object> background = new HashMap<>();
+        try
+        {
+            JSONObject remark = StringUtils.isEmpty(value) ? null : JSON.parseObject(value);
+            if (remark != null && remark.get("gridBackground") instanceof JSONObject)
+            {
+                background.putAll((JSONObject) remark.get("gridBackground"));
+            }
+        }
+        catch (Exception ignored) { }
+        return background;
+    }
+
     private Map<String, Object> mobileLayout(YcActivityConfig config)
     {
         Map<String, Object> layout = new HashMap<>();
@@ -941,6 +956,7 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         layout.put("themeColor", StringUtils.isEmpty(config.getMobileThemeColor())
             ? "#1f6feb" : config.getMobileThemeColor());
         layout.put("backgroundUrl", config.getMobileBackgroundUrl());
+        layout.put("background", parseGridBackground(config.getRemark()));
         layout.put("notice", config.getMobileNotice());
         layout.put("gridTemplate", normalizeGridTemplate(gridTemplate));
         layout.put("gridColumns", resolveGridColumns(gridTemplate));

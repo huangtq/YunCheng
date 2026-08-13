@@ -45,6 +45,7 @@ export function buildHomeLayout(rawLayout = {}, config = {}) {
     // layout.themeColor or the legacy meeting configuration.
     themeColor: rawLayout.themeColor || config.pageThemeColor || config.mobileThemeColor || '#1f6feb',
     backgroundUrl: rawLayout.backgroundUrl || config.mobileBackgroundUrl || '',
+    background: rawLayout.background || {},
     notice: rawLayout.notice || config.mobileNotice || '',
     blocks: Array.isArray(rawLayout.blocks) ? rawLayout.blocks : [],
     entrySections: Array.isArray(rawLayout.entrySections) ? rawLayout.entrySections : [],

@@ -125,7 +125,7 @@
       @pagination="getList"
     />
 
-    <el-dialog :title="title" v-model="open" width="680px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="680px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="报名通道" prop="channelId">
           <el-select v-model="form.channelId" placeholder="请选择报名通道" filterable style="width: 100%">

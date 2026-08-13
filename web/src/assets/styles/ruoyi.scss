@@ -69,12 +69,16 @@
 }
 
 .el-form .el-form-item__label {
-  font-weight: 700;
+  color: #606266;
+  font-weight: 600;
 }
 
 /* Meeting admin forms share one compact, scannable editing rhythm. */
 .meeting-form-dialog .el-dialog__body,
 .meeting-form-dialog :deep(.el-dialog__body) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(88vh - 128px);
   padding: 16px 20px 4px;
   background: #f5f7fa;
 }
@@ -87,6 +91,16 @@
 .meeting-form-dialog :deep(.el-dialog__footer .el-button) {
   min-width: 88px;
 }
+.meeting-form-dialog .el-form-item,
+.meeting-form-dialog :deep(.el-form-item) { margin-bottom: 18px; }
+.meeting-form-dialog .el-form-item:last-child,
+.meeting-form-dialog :deep(.el-form-item:last-child) { margin-bottom: 6px; }
+.meeting-form-dialog .el-input,
+.meeting-form-dialog .el-select,
+.meeting-form-dialog .el-date-editor,
+.meeting-form-dialog .el-cascader,
+.meeting-form-dialog .el-input-number { max-width: 100%; }
+.meeting-form-dialog .el-input-number { width: 100%; }
 .meeting-form-section {
   margin-bottom: 14px;
   padding: 16px 18px 4px;
@@ -124,6 +138,15 @@
 }
 .meeting-form-advanced .el-collapse-item__header { padding: 0 16px; }
 .meeting-form-advanced .el-collapse-item__content { padding: 4px 18px 2px; }
+@media (max-width: 768px) {
+  .meeting-form-dialog { width: calc(100vw - 24px) !important; }
+  .meeting-form-dialog .el-dialog__body,
+  .meeting-form-dialog :deep(.el-dialog__body) { padding: 14px 14px 2px; }
+  .meeting-form-dialog .el-row { margin-left: -6px !important; margin-right: -6px !important; }
+  .meeting-form-dialog .el-col { width: 100%; max-width: 100%; padding-left: 6px !important; padding-right: 6px !important; }
+  .meeting-form-dialog .el-form-item__label { float: none; display: block; width: 100% !important; text-align: left; }
+  .meeting-form-dialog .el-form-item__content { display: flex; margin-left: 0 !important; }
+}
 .el-dialog:not(.is-fullscreen) {
   margin-top: 6vh !important;
 }

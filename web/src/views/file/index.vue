@@ -24,32 +24,44 @@
 
     <el-table v-loading="loading" :data="fileList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="ID" align="center" prop="fileId" width="100" />
-      <el-table-column label="URL地址" align="center" min-width="280">
+      <el-table-column label="文件" min-width="240">
         <template #default="scope">
-          <el-image
-            v-if="isImage(scope.row.fileSuffix)"
-            style="width: 80px; height: 80px"
-            :src="resolveUrl(scope.row)"
-            :preview-src-list="[resolveUrl(scope.row)]"
-            fit="cover"
-            preview-teleported
-          />
-          <el-link
-            v-else
-            type="primary"
-            :href="resolveUrl(scope.row)"
-            target="_blank"
-            :underline="false"
-          >{{ resolveUrl(scope.row) }}</el-link>
+          <div v-if="isImage(scope.row.fileSuffix)" class="file-image-cell">
+            <el-image
+              class="file-thumbnail"
+              :src="resolveUrl(scope.row)"
+              :preview-src-list="[resolveUrl(scope.row)]"
+              fit="cover"
+              preview-teleported
+            />
+            <el-tooltip :content="scope.row.originalName || '未命名文件'" placement="top">
+              <span class="file-name text-overflow">{{ scope.row.originalName || '未命名文件' }}</span>
+            </el-tooltip>
+          </div>
+          <div v-else class="file-document-cell">
+            <el-icon class="file-document-icon"><Document /></el-icon>
+            <el-link
+              type="primary"
+              :href="resolveUrl(scope.row)"
+              target="_blank"
+              :underline="false"
+              class="file-name text-overflow"
+            >{{ scope.row.originalName || '未命名文件' }}</el-link>
+          </div>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column label="类型" align="center" prop="fileSuffix" width="70">
+        <template #default="scope">{{ (scope.row.fileSuffix || "未知").toUpperCase() }}</template>
+      </el-table-column>
+      <el-table-column label="大小" align="right" prop="fileSize" width="90">
+        <template #default="scope">{{ formatFileSize(scope.row.fileSize) }}</template>
+      </el-table-column>
+      <el-table-column label="创建时间" align="center" prop="createTime" width="165">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="90" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
             link
@@ -105,7 +117,7 @@
 <script setup name="File">
 import { delActivityFile, delFile, listActivityFile, listFile } from "@/api/system/file"
 import { getToken } from "@/utils/auth"
-import { UploadFilled } from "@element-plus/icons-vue"
+import { Document, UploadFilled } from "@element-plus/icons-vue"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -137,6 +149,21 @@ function isImage(suffix) {
     return false
   }
   return imageSuffixes.includes(String(suffix).toLowerCase())
+}
+
+/** 格式化文件大小 */
+function formatFileSize(size) {
+  const bytes = Number(size)
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return "-"
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 /** 解析访问地址 */
@@ -235,3 +262,44 @@ function handleDelete(row) {
 
 getList()
 </script>
+
+<style scoped>
+.file-image-cell {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.file-thumbnail {
+  width: 80px;
+  height: 80px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+}
+
+.file-document-cell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-document-icon {
+  flex: 0 0 auto;
+  color: var(--el-color-primary);
+  font-size: 24px;
+}
+
+.file-name {
+  display: block;
+  max-width: 200px;
+}
+
+.text-overflow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

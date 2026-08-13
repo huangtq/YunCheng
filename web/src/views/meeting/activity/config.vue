@@ -43,8 +43,37 @@
           <el-row :gutter="12">
             <el-col v-for="item in group.items" :key="item.prop" :span="item.span || 12">
               <el-form-item :label="item.label">
+                <el-tooltip
+                  v-if="item.disabled"
+                  :content="item.disabledReason || '移动端暂未接入此配置'"
+                  placement="top"
+                >
+                  <div class="switch-disabled-control">
+                    <el-select
+                      v-if="item.type === 'select'"
+                      v-model="configForm[item.prop]"
+                      disabled
+                      style="width: 100%"
+                    >
+                      <el-option
+                        v-for="opt in item.options"
+                        :key="opt.value"
+                        :label="opt.label"
+                        :value="opt.value"
+                      />
+                    </el-select>
+                    <el-switch
+                      v-else
+                      v-model="configForm[item.prop]"
+                      disabled
+                      active-value="1"
+                      inactive-value="0"
+                    />
+                    <el-tag size="small" type="info" effect="plain" class="switch-disabled-tag">暂不可用</el-tag>
+                  </div>
+                </el-tooltip>
                 <el-select
-                  v-if="item.type === 'select'"
+                  v-else-if="item.type === 'select'"
                   v-model="configForm[item.prop]"
                   style="width: 100%"
                 >
@@ -126,7 +155,7 @@ const switchGroups = [
     title: "展示设置",
     items: [
       { prop: "mpShow", label: "公众号显示" },
-      { prop: "homeBanner", label: "首页轮播" },
+      { prop: "homeBanner", label: "首页轮播", disabled: true },
       { prop: "hotShow", label: "热门会议" },
       { prop: "showRegisterCount", label: "显示报名人数" }
     ]
@@ -150,19 +179,19 @@ const switchGroups = [
   {
     title: "酒店与直播",
     items: [
-      { prop: "hotelNeedRegister", label: "酒店需先报名" },
-      { prop: "liveNeedRegister", label: "直播需先报名" },
-      { prop: "registerShowLive", label: "报名成功显示直播" },
-      { prop: "registerShowHotel", label: "报名成功显示酒店" },
-      { prop: "hotelOnce", label: "只能订一次酒店" },
-      { prop: "cancelRegisterCancelHotel", label: "取消报名同步取消酒店" }
+      { prop: "hotelNeedRegister", label: "酒店需先报名", disabled: true },
+      { prop: "liveNeedRegister", label: "直播需先报名", disabled: true },
+      { prop: "registerShowLive", label: "报名成功显示直播", disabled: true },
+      { prop: "registerShowHotel", label: "报名成功显示酒店", disabled: true },
+      { prop: "hotelOnce", label: "只能订一次酒店", disabled: true },
+      { prop: "cancelRegisterCancelHotel", label: "取消报名同步取消酒店", disabled: true }
     ]
   },
   {
     title: "登录设置",
     items: [
-      { prop: "loginSms", label: "登录需要短信验证码" },
-      { prop: "registerForceMobile", label: "报名强制手机号登录" }
+      { prop: "loginSms", label: "登录需要短信验证码", disabled: true },
+      { prop: "registerForceMobile", label: "报名强制手机号登录", disabled: true }
     ]
   }
 ]
@@ -180,9 +209,6 @@ const groups = [
       { key: "edit", label: "编辑会议信息", icon: "Edit", color: "#409EFF", action: "edit" },
       { key: "switch", label: "常用开关", icon: "Setting", color: "#67C23A", action: "switch" },
       { key: "grid", label: "九宫格配置", icon: "Menu", color: "#E6A23C", action: "grid" },
-      { key: "content", label: "内容与资料", icon: "Document", color: "#409EFF", action: "content" },
-      { key: "checkin", label: "现场核验", icon: "CircleCheck", color: "#67C23A", action: "checkin" },
-      { key: "notice", label: "会议通知", icon: "Bell", color: "#E6A23C", action: "notice" },
       { key: "qr", label: "查看二维码", icon: "Postcard", color: "#F56C6C", action: "qr" },
       { key: "nav", label: "导航管理", icon: "Guide", color: "#00B894", action: "nav", moduleKey: HUB_ACTION_MODULE_KEY.nav }
     ]
@@ -287,18 +313,6 @@ function handleCard(item) {
   }
   if (item.action === "grid") {
     router.push({ path: "/meeting/activity-config/grid", query: { id: activityId.value } })
-    return
-  }
-  if (item.action === "content") {
-    router.push({ path: "/meeting/activity-config/content", query: { id: activityId.value } })
-    return
-  }
-  if (item.action === "checkin") {
-    router.push({ path: "/meeting/activity-config/checkin", query: { id: activityId.value } })
-    return
-  }
-  if (item.action === "notice") {
-    router.push({ path: "/meeting/activity-config/notice", query: { id: activityId.value } })
     return
   }
   if (item.action === "file") {
@@ -532,6 +546,18 @@ onMounted(() => {
 .switch-group :deep(.el-form-item__label) {
   color: #606266;
 }
+.switch-disabled-tag {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+.switch-disabled-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  cursor: not-allowed;
+}
+.switch-disabled-control .el-select { flex: 1; }
 .mobile-block-editor {
   width: 100%;
 }

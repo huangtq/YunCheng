@@ -51,7 +51,7 @@
     </el-table>
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" v-model="open" width="560px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="560px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="餐票名称" prop="ticketName"><el-input v-model="form.ticketName" maxlength="100" /></el-form-item>
         <el-form-item label="餐次" prop="mealType">

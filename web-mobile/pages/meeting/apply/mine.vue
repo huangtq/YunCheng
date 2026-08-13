@@ -14,12 +14,6 @@
           <view class="success-title">报名成功</view>
           <view class="success-desc">您已完成报名，请留意会议通知</view>
         </view>
-        <view v-if="attendance.pass" class="pass-card">
-          <view class="title">电子参会凭证</view>
-          <view class="sub">{{ attendance.status === 'checked_in' ? '您已完成签到' : '请在现场向工作人员出示此动态凭证' }}</view>
-          <view class="credential">{{ attendance.pass.credential }}</view>
-          <view class="sub">凭证将在 {{ attendance.pass.expiresIn }} 秒后刷新</view>
-        </view>
         <view v-if="meal.coupons && meal.coupons.length" class="pass-card meal-card">
           <view class="title">我的餐券</view>
           <view v-for="coupon in meal.coupons" :key="coupon.couponId" class="meal-row">
@@ -45,10 +39,9 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import MeetingContentHeader from '@/components/MeetingContentHeader.vue'
 import { getMyPortalApply } from '@/api/portal/meeting'
-import { getMyAttendance } from '@/api/portal/attendance'
 import { getMyMealCoupons } from '@/api/portal/meal'
 import { getOauthUrl, buildMockOauthJump } from '@/api/portal/wx'
 import { captureMpTokenFromQuery, hasMpToken, removeMpToken } from '@/utils/mpAuth'
@@ -59,9 +52,7 @@ const loading = ref(true)
 const list = ref([])
 const activityId = ref('')
 const authError = ref('')
-const attendance = ref({})
 const meal = ref({ coupons: [] })
-let passTimer = null
 
 const activeOrders = computed(() =>
   (list.value || []).filter((item) => String(item.orderStatus) === '0')
@@ -78,7 +69,6 @@ onShow(() => {
   if (activityId.value) setupMeetingShare(activityId.value)
 })
 
-onUnload(() => { if (passTimer) clearInterval(passTimer) })
 
 function statusLabel(v) {
   return ({ '0': '已报名', '2': '已取消' })[v] || v || '-'
@@ -145,12 +135,9 @@ async function ensureMpLogin() {
 async function loadData() {
   loading.value = true
   try {
-    const [orderRes, attendanceRes, mealRes] = await Promise.all([getMyPortalApply(activityId.value), getMyAttendance(activityId.value), getMyMealCoupons(activityId.value)])
+    const [orderRes, mealRes] = await Promise.all([getMyPortalApply(activityId.value), getMyMealCoupons(activityId.value)])
     list.value = orderRes.data || []
-    attendance.value = attendanceRes.data || {}
     meal.value = mealRes.data || { coupons: [] }
-    if (passTimer) clearInterval(passTimer)
-    passTimer = setInterval(() => getMyAttendance(activityId.value).then(res => { attendance.value = res.data || attendance.value }).catch(() => {}), 45000)
   } catch (e) {
     list.value = []
     authError.value = '加载报名记录失败，请重试'

@@ -30,7 +30,7 @@
     </el-table>
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" v-model="open" width="520px" append-to-body destroy-on-close>
+    <el-dialog :title="title" v-model="open" width="520px" class="meeting-form-dialog" append-to-body destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="姓名" prop="staffName"><el-input v-model="form.staffName" maxlength="100" /></el-form-item>
         <el-form-item label="手机号"><el-input v-model="form.phone" maxlength="20" /></el-form-item>

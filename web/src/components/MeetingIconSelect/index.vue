@@ -21,7 +21,7 @@
       />
       <div class="icon-option-grid">
         <button
-          v-for="item in filteredIcons"
+          v-for="item in pagedIcons"
           :key="item.key"
           type="button"
           class="icon-option"
@@ -35,6 +35,16 @@
       <el-empty
         v-if="filteredIcons.length === 0"
         description="&#x672A;&#x627E;&#x5230;&#x5339;&#x914D;&#x56FE;&#x6807;"
+      />
+      <el-pagination
+        v-if="filteredIcons.length > pageSize"
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="filteredIcons.length"
+        class="icon-pagination"
+        layout="prev, pager, next"
+        small
+        background
       />
     </el-dialog>
   </div>
@@ -55,6 +65,8 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"])
 const visible = ref(false)
 const keyword = ref("")
+const currentPage = ref(1)
+const pageSize = 16
 
 const currentLabel = computed(() => {
   return meetingIconFiles.find(item => item.key === props.modelValue)?.label
@@ -70,10 +82,20 @@ const filteredIcons = computed(() => {
   return meetingIconFiles.filter(item => item.label.toLowerCase().includes(value))
 })
 
+const pagedIcons = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredIcons.value.slice(start, start + pageSize)
+})
+
 function openDialog() {
   keyword.value = ""
+  currentPage.value = 1
   visible.value = true
 }
+
+watch(keyword, () => {
+  currentPage.value = 1
+})
 
 function selectIcon(key) {
   emit("update:modelValue", key)
@@ -125,5 +147,10 @@ function selectIcon(key) {
   border-color: var(--el-color-primary);
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
+}
+
+.icon-pagination {
+  justify-content: center;
+  margin-top: 16px;
 }
 </style>

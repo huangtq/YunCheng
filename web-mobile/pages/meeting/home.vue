@@ -133,7 +133,7 @@
                     color="#fff"
                   />
                 </view>
-                <text v-if="!isIconOnlyFor(section)" class="grid-text">{{ item.title }}</text>
+                <text v-if="!isIconOnlyFor(section) && item.showTitle !== false" class="grid-text">{{ item.title }}</text>
               </template>
             </view>
             <view v-if="!section.entries.length" class="empty">暂无菜单，请在后台配置</view>
@@ -172,7 +172,11 @@ const pageThemeStyle = computed(() => ({
   backgroundColor: layout.value.gridTemplate === 'tile'
     ? (isLightTile.value ? tileSurfaceColor.value : '#000')
     : '#f5f7fa',
-  paddingBottom: layout.value.gridTemplate === 'tile' ? '0' : undefined
+  paddingBottom: layout.value.gridTemplate === 'tile' ? '0' : undefined,
+  backgroundImage: layout.value.background?.gradient || layout.value.background?.imageUrl
+    ? `${layout.value.background?.gradient || ''}${layout.value.background?.imageUrl ? `${layout.value.background?.gradient ? ', ' : ''}url(${resolveUrl(layout.value.background.imageUrl)})` : ''}`
+    : undefined,
+  backgroundSize: layout.value.background?.imageUrl ? 'cover' : undefined
 }))
 
 const coverStyle = computed(() => {

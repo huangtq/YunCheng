@@ -52,7 +52,7 @@ export const MEETING_HOME_TEMPLATES = [
   },
   {
     key: 'sciconf-tile-service',
-    label: '服务台：不规则 Tile',
+    label: '服务台：自定义宫格',
     description: '适合把报名、日程、导航、酒店等会务服务做成不同大小的功能块。',
     preview: 'http://mpjoy.oss-cn-beijing.aliyuncs.com/20260428/902a51e381f7464abb1441a5f6fc220a.png',
     layout: { template: 'standard', gridTemplate: 'tile', gridColumns: 6, gridStyle: 'tile', showCoverMeta: false, showSectionTitle: false, showCountdown: true, countdownStyle: 'simple', visual: { heroHeight: 0, countdownTop: 14, countdownBottom: 14, itemGap: 8, itemPadding: 12 } },
