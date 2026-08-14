@@ -2,10 +2,44 @@
   <div class="app-container">
     <div class="grid-workbench">
       <div class="grid-editor">
-        <div class="template-config-card mb8">
-          <div class="template-config-form">
-        <el-form :model="configForm" inline>
-          <el-form-item label="会议模板">
+        <section class="template-config-card mb8">
+          <div class="editor-toolbar">
+            <div class="editor-toolbar__summary">
+              <span class="editor-toolbar__title">页面草稿</span>
+              <span class="home-editor-status" :class="{ 'is-dirty': editorDirty }">{{ editorStatus }}</span>
+            </div>
+            <div class="home-editor-actions">
+              <el-button
+                type="primary"
+                icon="DocumentChecked"
+                :loading="draftSaving"
+                @click="saveHomeDraft()"
+                v-hasPermi="['meeting:home:edit']"
+              >
+                保存草稿
+              </el-button>
+              <el-button
+                type="success"
+                icon="Promotion"
+                :loading="publishing"
+                @click="publishHome"
+                v-hasPermi="['meeting:home:publish']"
+              >
+                发布
+              </el-button>
+              <el-tooltip content="版本记录" placement="top">
+                <el-button
+                  circle
+                  icon="Clock"
+                  aria-label="版本记录"
+                  @click="loadHomeVersions(true)"
+                  v-hasPermi="['meeting:home:list']"
+                />
+              </el-tooltip>
+            </div>
+          </div>
+          <el-form :model="configForm" inline class="template-settings-bar">
+          <el-form-item label="会议模板" class="template-select-item">
             <el-select
               v-model="configForm.gridTemplate"
               filterable
@@ -46,45 +80,23 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item>
-            <el-button
-              type="primary"
-              @click="saveTemplate"
-              v-hasPermi="['meeting:activity:edit']"
-            >
-              保存模板
-            </el-button>
-            <el-button
-              type="primary"
-              plain
-              :loading="draftSaving"
-              @click="saveHomeDraft"
-              v-hasPermi="['meeting:home:edit']"
-            >
-              保存首页草稿
-            </el-button>
-            <el-button
-              type="success"
-              plain
-              :disabled="!homeVersionId"
-              :loading="publishing"
-              @click="publishHome"
-              v-hasPermi="['meeting:home:publish']"
-            >
-              发布会议页
-            </el-button>
-            <el-button plain @click="loadHomeVersions" v-hasPermi="['meeting:home:list']">版本记录</el-button>
+          <el-form-item class="page-settings-launcher">
+            <el-button plain icon="Setting" @click="pageSettingsOpen = true">页面设置</el-button>
           </el-form-item>
-          <el-form-item class="layout-settings-item">
-            <el-popover placement="bottom-start" :width="384" trigger="click" popper-class="grid-visual-popper">
-              <template #reference>
-                <el-button plain icon="Operation">移动端布局</el-button>
-              </template>
+        </el-form>
+        <div class="template-tip">
+          九宫格入口、模板和视觉配置共同组成移动端会议页。保存草稿生成待发布版本，发布后移动端才会切换到新版本。
+        </div>
+        </section>
+
+        <el-drawer v-model="pageSettingsOpen" title="页面设置" direction="rtl" size="420px" append-to-body class="page-settings-drawer">
+          <el-tabs v-model="pageSettingsTab" stretch>
+            <el-tab-pane label="布局" name="layout">
               <div class="grid-visual-panel">
                 <div class="grid-visual-header">
                   <div>
                     <div class="grid-visual-title">移动端布局</div>
-                    <div class="grid-visual-hint">调整后点击“保存模板”才会同步到报名页</div>
+                    <div class="grid-visual-hint">保存草稿后，变更才会进入待发布版本</div>
                   </div>
                   <span class="grid-visual-unit">单位：rpx</span>
                 </div>
@@ -104,45 +116,39 @@
                   <label>外侧留白<el-input-number v-model="gridVisual.itemPadding" :min="0" :max="100" :step="2" /></label>
                 </div>
               </div>
-            </el-popover>
-          </el-form-item>
-          <el-form-item class="layout-settings-item">
-            <el-popover placement="bottom-start" :width="420" trigger="click" popper-class="grid-background-popper">
-              <template #reference>
-                <el-button plain icon="Picture">整体背景</el-button>
-              </template>
+            </el-tab-pane>
+            <el-tab-pane label="整体背景" name="background">
               <div class="grid-background-panel">
                 <div class="grid-visual-header">
                   <div>
                     <div class="grid-visual-title">整体背景</div>
-                    <div class="grid-visual-hint">支持底色、渐变或背景图，保存模板后同步</div>
+                    <div class="grid-visual-hint">选择一种背景类型，保存草稿后同步</div>
                   </div>
                 </div>
-                <div class="grid-background-field">
+                <el-radio-group v-model="gridBackgroundMode" class="grid-background-mode">
+                  <el-radio-button value="color">纯色</el-radio-button>
+                  <el-radio-button value="gradient">渐变</el-radio-button>
+                  <el-radio-button value="image">图片</el-radio-button>
+                </el-radio-group>
+                <div v-if="gridBackgroundMode === 'color'" class="grid-background-field">
                   <span>背景底色</span>
                   <div class="grid-background-color-row">
                     <el-color-picker v-model="gridBackground.color" show-alpha />
                     <el-input v-model="gridBackground.color" placeholder="#f5f7fa" />
                   </div>
                 </div>
-                <div class="grid-background-field">
+                <div v-else-if="gridBackgroundMode === 'gradient'" class="grid-background-field">
                   <span>渐变背景</span>
                   <el-input v-model="gridBackground.gradient" type="textarea" :rows="2" placeholder="linear-gradient(135deg, #eef6ff, #ffffff)" />
                 </div>
-                <div class="grid-background-field">
+                <div v-else class="grid-background-field">
                   <span>背景图片</span>
                   <material-select v-model="gridBackground.imageUrl" :show-tip="false" />
                 </div>
-                <div class="grid-background-preview" :style="gridBackgroundPreviewStyle">预览</div>
               </div>
-            </el-popover>
-          </el-form-item>
-        </el-form>
-        <div class="template-tip">
-          九宫格入口、模板、视觉配置和发布版本共同组成移动端会议页。保存九宫格项后，点击“保存首页草稿”并发布，移动端才切换到新版本。
-        </div>
-          </div>
-        </div>
+            </el-tab-pane>
+          </el-tabs>
+        </el-drawer>
 
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
@@ -522,7 +528,7 @@
 <script setup name="MeetingGrid">
 import { listGrid, getGrid, addGrid, updateGrid, delGrid } from "@/api/meeting/grid"
 import { getActivity } from "@/api/meeting/activity"
-import { getActivityConfig, updateActivityConfig } from "@/api/meeting/config"
+import { getActivityConfig } from "@/api/meeting/config"
 import MaterialSelect from "@/components/MaterialSelect"
 import MeetingIcon from "@/components/MeetingIcon"
 import MeetingIconSelect from "@/components/MeetingIconSelect"
@@ -556,12 +562,22 @@ const gridVisual = reactive({
   itemPadding: 10
 })
 const gridBackground = reactive({ color: "", gradient: "", imageUrl: "" })
+const gridBackgroundMode = ref("color")
+const pageSettingsOpen = ref(false)
+const pageSettingsTab = ref("layout")
+const activeGridBackground = computed(() => ({
+  color: gridBackgroundMode.value === "color" ? gridBackground.color : "",
+  gradient: gridBackgroundMode.value === "gradient" ? gridBackground.gradient : "",
+  imageUrl: gridBackgroundMode.value === "image" ? gridBackground.imageUrl : ""
+}))
 const homeVersionId = ref(null)
 const homeVersions = ref([])
 const versionsOpen = ref(false)
 const versionsLoading = ref(false)
 const draftSaving = ref(false)
 const publishing = ref(false)
+const editorLoaded = ref(false)
+const editorDirty = ref(false)
 
 const templateOptions = [
   {
@@ -613,6 +629,15 @@ const previewItems = computed(() => {
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
 })
 
+const publishedHomeVersion = computed(() => homeVersions.value.find(item => item.status === "published"))
+const editorStatus = computed(() => {
+  if (!editorLoaded.value) return "正在加载编辑器"
+  if (editorDirty.value) return "草稿未保存"
+  if (homeVersionId.value) return "草稿已保存，待发布"
+  if (publishedHomeVersion.value) return `当前线上 v${publishedHomeVersion.value.versionNo}`
+  return "尚未创建草稿"
+})
+
 const themeColor = computed(() => configForm.value.mobileThemeColor || "#1f6feb")
 const previewIconSurfaceColor = computed(() => (
   isLightColor(themeColor.value) ? "#4f46e5" : themeColor.value
@@ -632,12 +657,13 @@ const isTilePreview = computed(() => String(configForm.value.gridTemplate) === "
 const isLightTilePreview = computed(() => isTilePreview.value && isLightColor(themeColor.value))
 const tileSurfaceColor = computed(() => (isLightTilePreview.value ? (themeColor.value || "#f6f6f6") : "#061a74"))
 const gridBackgroundPreviewStyle = computed(() => {
-  const style = { backgroundColor: gridBackground.color || "#f5f7fa" }
-  if (gridBackground.gradient) style.backgroundImage = gridBackground.gradient
-  if (gridBackground.imageUrl) {
-    style.backgroundImage = gridBackground.gradient
-      ? `${gridBackground.gradient}, url("${resolveUrl(gridBackground.imageUrl)}")`
-      : `url("${resolveUrl(gridBackground.imageUrl)}")`
+  const style = { backgroundColor: "#f5f7fa" }
+  if (gridBackgroundMode.value === "color") {
+    style.backgroundColor = gridBackground.color || "#f5f7fa"
+  } else if (gridBackgroundMode.value === "gradient") {
+    style.backgroundImage = gridBackground.gradient || "none"
+  } else if (gridBackground.imageUrl) {
+    style.backgroundImage = `url("${resolveUrl(gridBackground.imageUrl)}")`
     style.backgroundSize = "cover"
   }
   return style
@@ -844,20 +870,36 @@ function getList() {
   }).catch(() => { loading.value = false })
 }
 
+function markEditorDirty() {
+  if (editorLoaded.value) editorDirty.value = true
+}
+
 function loadMeta() {
   getActivity(activityId.value).then(res => {
     activityInfo.value = res.data || {}
   })
   getActivityConfig(activityId.value).then(res => {
+    const config = res.data || {}
     configForm.value = {
       ...configForm.value,
-      ...(res.data || {}),
-      gridTemplate: normalizeTemplate(res.data?.gridTemplate)
+      ...config,
+      gridTemplate: normalizeTemplate(config.gridTemplate)
     }
-    Object.assign(gridVisual, parseGridVisual(res.data?.remark))
-    Object.assign(gridBackground, parseGridBackground(res.data?.remark))
+    Object.assign(gridVisual, parseGridVisual(config.remark))
+    Object.assign(gridBackground, parseGridBackground(config.remark, config.mobileBackgroundUrl))
+    gridBackgroundMode.value = resolveGridBackgroundMode(gridBackground)
+  }).finally(() => {
+    nextTick(() => {
+      editorLoaded.value = true
+      editorDirty.value = false
+    })
   })
 }
+
+watch(() => configForm.value.gridTemplate, markEditorDirty)
+watch(gridVisual, markEditorDirty, { deep: true })
+watch(gridBackground, markEditorDirty, { deep: true })
+watch(gridBackgroundMode, markEditorDirty)
 
 function defaultGridVisual() {
   return { heroHeight: 0, countdownTop: 16, countdownBottom: 20, itemGap: 10, itemPadding: 10 }
@@ -877,14 +919,24 @@ function gridShowTitle(item) {
   return item?.showTitle !== false && item?.showTitle !== 0 && item?.showTitle !== "0"
 }
 
-function parseGridBackground(value) {
+function parseGridBackground(value, mobileBackgroundUrl = "") {
   const defaults = { color: "", gradient: "", imageUrl: "" }
   try {
     const parsed = JSON.parse(value || "{}")
-    return { ...defaults, ...(parsed.gridBackground || {}) }
+    return {
+      ...defaults,
+      ...(parsed.gridBackground || {}),
+      imageUrl: parsed.gridBackground?.imageUrl || mobileBackgroundUrl || ""
+    }
   } catch {
-    return defaults
+    return { ...defaults, imageUrl: mobileBackgroundUrl || "" }
   }
+}
+
+function resolveGridBackgroundMode(background) {
+  if (background.imageUrl) return "image"
+  if (background.gradient) return "gradient"
+  return "color"
 }
 
 function buildConfigRemark() {
@@ -892,7 +944,7 @@ function buildConfigRemark() {
   try {
     parsed = JSON.parse(configForm.value.remark || "{}")
   } catch {}
-  return JSON.stringify({ ...parsed, gridVisual: { ...gridVisual }, gridBackground: { ...gridBackground } })
+  return JSON.stringify({ ...parsed, gridVisual: { ...gridVisual }, gridBackground: activeGridBackground.value })
 }
 
 function normalizeTemplate(value) {
@@ -909,14 +961,6 @@ function normalizeTemplate(value) {
   }
   const normalized = legacyMap[value] || String(value || "")
   return templateOptions.some(item => item.value === normalized) ? normalized : "1"
-}
-
-function saveTemplate() {
-  updateActivityConfig({
-    activityId: Number(activityId.value),
-    gridTemplate: configForm.value.gridTemplate,
-    remark: buildConfigRemark()
-  }).then(() => proxy.$modal.msgSuccess("模板已保存"))
 }
 
 function homeTemplateKey() {
@@ -987,8 +1031,8 @@ function buildHomePage() {
     ...JSON.parse(JSON.stringify(template.layout)),
     template: configForm.value.mobileTemplate || template.layout.template,
     heroUrl: activityInfo.value.coverUrl || "",
-    backgroundUrl: configForm.value.mobileBackgroundUrl || "",
-    background: { ...gridBackground },
+    backgroundUrl: activeGridBackground.value.imageUrl,
+    background: { ...activeGridBackground.value },
     themeColor: themeColor.value,
     gridTemplate: configForm.value.gridTemplate || "1",
     gridColumns: previewGridClass.value === "grid-one" ? 1 : previewGridClass.value === "grid-two" ? 2 : 3,
@@ -1015,7 +1059,7 @@ function buildHomePage() {
     mode: "standard",
     schemaVersion: "2",
     templateKey,
-    theme: { color: themeColor.value, background: { ...gridBackground } },
+    theme: { color: themeColor.value, background: { ...activeGridBackground.value } },
     layout,
     sections: template.slots.map(slot => ({
       id: slot,
@@ -1027,43 +1071,63 @@ function buildHomePage() {
   }
 }
 
-function saveHomeDraft() {
+async function saveHomeDraft(options = {}) {
+  const silent = options.silent === true
   const pageJson = JSON.stringify(buildHomePage())
+  const configRemark = buildConfigRemark()
+  const mobileBackgroundUrl = activeGridBackground.value.imageUrl
   draftSaving.value = true
-  saveHomeDraftVersion({
-    versionId: homeVersionId.value,
-    activityId: Number(activityId.value),
-    pageJson,
-    schemaVersion: "2"
-  }).then(res => {
+  try {
+    const res = await saveHomeDraftVersion({
+      versionId: homeVersionId.value,
+      activityId: Number(activityId.value),
+      pageJson,
+      schemaVersion: "2",
+      gridTemplate: configForm.value.gridTemplate,
+      configRemark,
+      mobileBackgroundUrl
+    })
     homeVersionId.value = res.data?.versionId
-    proxy.$modal.msgSuccess("会议页草稿已保存")
-  }).finally(() => { draftSaving.value = false })
-}
-
-function publishHome() {
-  if (!homeVersionId.value) {
-    proxy.$modal.msgWarning("请先保存会议页草稿")
-    return
+    configForm.value.remark = configRemark
+    configForm.value.mobileBackgroundUrl = mobileBackgroundUrl
+    editorDirty.value = false
+    await loadHomeVersions(false)
+    if (!silent) proxy.$modal.msgSuccess("草稿已保存")
+    return res.data
+  } finally {
+    draftSaving.value = false
   }
-  proxy.$modal.prompt("填写发布备注（可选）", "发布会议页").then(({ value }) => {
-    publishing.value = true
-    publishHomeVersion(homeVersionId.value, value).then(() => {
-      proxy.$modal.msgSuccess("会议页已发布")
-      homeVersionId.value = null
-      loadHomeVersions(false)
-    }).finally(() => { publishing.value = false })
-  }).catch(() => {})
 }
 
-function loadHomeVersions(openDialog = true) {
+async function publishHome() {
+  try {
+    if (editorDirty.value || !homeVersionId.value) {
+      await saveHomeDraft({ silent: true })
+    }
+    if (!homeVersionId.value) return
+    const { value } = await proxy.$modal.prompt("填写发布备注（可选）", "发布会议页")
+    publishing.value = true
+    await publishHomeVersion(homeVersionId.value, value)
+    homeVersionId.value = null
+    editorDirty.value = false
+    await loadHomeVersions(false)
+    proxy.$modal.msgSuccess("会议页已发布")
+  } catch {
+    // Dialog cancellation and request failures are handled by the shared modal/request layers.
+  } finally {
+    publishing.value = false
+  }
+}
+
+async function loadHomeVersions(openDialog = true) {
   versionsLoading.value = true
-  listHomeVersions({ activityId: Number(activityId.value), pageNum: 1, pageSize: 100 }).then(res => {
+  try {
+    const res = await listHomeVersions({ activityId: Number(activityId.value), pageNum: 1, pageSize: 100 })
     homeVersions.value = res.rows || []
     const draft = homeVersions.value.find(item => item.status === "draft" && String(item.pageJson || "").includes('"source":"grid-config"'))
-    if (draft) homeVersionId.value = draft.versionId
+    homeVersionId.value = draft ? draft.versionId : null
     if (openDialog) versionsOpen.value = true
-  }).catch(error => {
+  } catch (error) {
     homeVersions.value = []
     if (openDialog) {
       const message = String(error?.message || "")
@@ -1071,7 +1135,9 @@ function loadHomeVersions(openDialog = true) {
         ? "版本记录表尚未初始化，请先执行会议首页迁移脚本"
         : "版本记录加载失败")
     }
-  }).finally(() => { versionsLoading.value = false })
+  } finally {
+    versionsLoading.value = false
+  }
 }
 
 function handleSelectionChange(selection) {
@@ -1269,6 +1335,7 @@ function submitForm() {
       proxy.$modal.msgSuccess("操作成功")
       open.value = false
       getList()
+      markEditorDirty()
     })
   })
 }
@@ -1277,6 +1344,7 @@ function handleDelete(row) {
   const gridIds = row?.gridId || ids.value
   proxy.$modal.confirm("是否确认删除选中的九宫格项？").then(() => delGrid(gridIds)).then(() => {
     getList()
+    markEditorDirty()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => {})
 }
@@ -1288,6 +1356,7 @@ onMounted(() => {
   }
   loadMeta()
   getList()
+  loadHomeVersions(false)
 })
 </script>
 
@@ -1300,6 +1369,81 @@ onMounted(() => {
 .grid-editor {
   flex: 1;
   min-width: 0;
+}
+.template-config-card {
+  padding: 0 0 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+}
+.editor-toolbar__summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.editor-toolbar__title {
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.home-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.home-editor-status {
+  color: #606266;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.home-editor-status.is-dirty {
+  color: #e6a23c;
+}
+.template-settings-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f2f5;
+}
+.template-settings-bar :deep(.el-form-item) {
+  margin: 0;
+}
+.template-select-item :deep(.el-form-item__label) {
+  color: #526174;
+  font-weight: 600;
+}
+.page-settings-launcher :deep(.el-button) {
+  color: #526174;
+  border-color: #d9e1ea;
+  background: #fff;
+}
+.page-settings-launcher :deep(.el-button:hover) {
+  color: #1f6feb;
+  border-color: #9fc5ee;
+  background: #f3f8ff;
+}
+.page-settings-drawer :deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 18px 22px;
+  border-bottom: 1px solid #ebeef5;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+}
+.page-settings-drawer :deep(.el-drawer__body) {
+  padding: 0 22px 24px;
+}
+.page-settings-drawer :deep(.el-tabs__header) {
+  margin-bottom: 18px;
 }
 .grid-icon-thumb {
   width: 40px;
@@ -1319,15 +1463,6 @@ onMounted(() => {
 .grid-icon-thumb :deep(.el-image) {
   width: 100%;
   height: 100%;
-}
-.template-config-card {
-  padding: 20px;
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-}
-.template-config-form {
-  width: 100%;
 }
 .template-tip {
   margin-top: 4px;
@@ -1520,11 +1655,25 @@ onMounted(() => {
 .grid-form-section :deep(.el-form-item + .el-divider) { margin-top: 2px; }
 .grid-form-section :deep(.el-divider + .el-form-item) { margin-top: 0; }
 .grid-background-panel { display: flex; flex-direction: column; gap: 14px; }
+.grid-background-mode { margin-bottom: 2px; }
 .grid-background-field { display: flex; flex-direction: column; gap: 6px; color: #606266; font-size: 13px; font-weight: 600; }
 .grid-background-color-row { display: flex; align-items: center; gap: 8px; }
 .grid-background-color-row .el-input { flex: 1; }
-.grid-background-preview { height: 54px; display: flex; align-items: center; justify-content: center; border: 1px solid #ebeef5; border-radius: 8px; color: #606266; font-size: 12px; }
 @media (max-width: 700px) {
+  .editor-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .home-editor-actions {
+    flex-wrap: wrap;
+  }
+  .template-settings-bar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .template-select-item :deep(.el-select) {
+    width: min(330px, calc(100vw - 92px)) !important;
+  }
   .grid-edit-drawer { width: min(100vw, 720px) !important; }
   .grid-form-section :deep(.el-form-item__label) {
     float: none;
@@ -1570,26 +1719,11 @@ onMounted(() => {
 .phone-screen.is-tile-screen {
   background: transparent;
 }
-.template-config-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .template-tip {
   color: #606266;
   font-size: 13px;
   line-height: 1.5;
   padding: 0 2px 4px;
-}
-.layout-settings-item :deep(.el-button) {
-  color: #526174;
-  border-color: #d9e1ea;
-  background: #fff;
-}
-.layout-settings-item :deep(.el-button:hover) {
-  color: #1f6feb;
-  border-color: #9fc5ee;
-  background: #f3f8ff;
 }
 .grid-visual-panel {
   padding: 2px 0;

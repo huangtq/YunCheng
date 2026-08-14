@@ -15,10 +15,13 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.YcActivityConfig;
+import com.ruoyi.system.domain.YcActivityHomeDraft;
 import com.ruoyi.system.domain.YcActivityHomeVersion;
 import com.ruoyi.system.mapper.YcActivityHomeVersionMapper;
 import com.ruoyi.system.mapper.YcActivityMapper;
 import com.ruoyi.system.mapper.YcMeetingContentMapper;
+import com.ruoyi.system.service.IYcActivityConfigService;
 import com.ruoyi.system.service.IYcActivityHomeVersionService;
 
 @Service
@@ -34,6 +37,9 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
 
     @Autowired
     private YcMeetingContentMapper contentMapper;
+
+    @Autowired
+    private IYcActivityConfigService activityConfigService;
 
     @Override
     public YcActivityHomeVersion selectYcActivityHomeVersionById(Long versionId)
@@ -61,25 +67,66 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         version.setSchemaVersion(StringUtils.isEmpty(version.getSchemaVersion()) ? DEFAULT_SCHEMA_VERSION : version.getSchemaVersion());
         if (version.getVersionId() == null)
         {
-            version.setVersionNo(homeVersionMapper.selectNextVersionNo(version.getActivityId()));
-            version.setStatus("draft");
-            homeVersionMapper.insertYcActivityHomeVersion(version);
+            YcActivityHomeVersion existingDraft = homeVersionMapper.selectLatestGridConfigDraftByActivityId(version.getActivityId());
+            if (existingDraft != null)
+            {
+                version.setVersionId(existingDraft.getVersionId());
+            }
+            else
+            {
+                version.setVersionNo(homeVersionMapper.selectNextVersionNo(version.getActivityId()));
+                version.setStatus("draft");
+                homeVersionMapper.insertYcActivityHomeVersion(version);
+            }
         }
-        else
+        if (version.getVersionId() != null)
         {
             YcActivityHomeVersion existing = homeVersionMapper.selectYcActivityHomeVersionById(version.getVersionId());
             if (existing == null || !existing.getActivityId().equals(version.getActivityId()))
             {
                 throw new ServiceException("home version not found");
             }
-            if ("published".equals(existing.getStatus()))
+            if (!"draft".equals(existing.getStatus()))
             {
-                throw new ServiceException("published version cannot be edited; create a new draft");
+                throw new ServiceException("only the current draft can be edited");
             }
             version.setStatus("draft");
             homeVersionMapper.updateYcActivityHomeVersion(version);
         }
-        return homeVersionMapper.selectYcActivityHomeVersionById(version.getVersionId());
+        YcActivityHomeVersion saved = homeVersionMapper.selectYcActivityHomeVersionById(version.getVersionId());
+        homeVersionMapper.archiveOtherGridConfigDraftsByActivityId(saved.getActivityId(), saved.getVersionId());
+        return saved;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public YcActivityHomeVersion saveDraft(YcActivityHomeDraft draft, String username)
+    {
+        if (draft == null || draft.getActivityId() == null)
+        {
+            throw new ServiceException("activityId required");
+        }
+        YcActivityHomeVersion version = new YcActivityHomeVersion();
+        version.setVersionId(draft.getVersionId());
+        version.setActivityId(draft.getActivityId());
+        version.setPageJson(draft.getPageJson());
+        version.setSchemaVersion(draft.getSchemaVersion());
+        version.setCreateBy(username);
+        version.setUpdateBy(username);
+
+        YcActivityHomeVersion saved = saveDraft(version);
+        syncEditorConfig(draft, username);
+        return saved;
+    }
+
+    private void syncEditorConfig(YcActivityHomeDraft draft, String username)
+    {
+        YcActivityConfig config = activityConfigService.getOrCreate(draft.getActivityId(), username);
+        config.setGridTemplate(draft.getGridTemplate());
+        config.setRemark(draft.getConfigRemark());
+        config.setMobileBackgroundUrl(draft.getMobileBackgroundUrl());
+        config.setUpdateBy(username);
+        activityConfigService.updateYcActivityConfig(config);
     }
 
     @Override
@@ -90,6 +137,10 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         if (version == null)
         {
             throw new ServiceException("home version not found");
+        }
+        if (!"draft".equals(version.getStatus()))
+        {
+            throw new ServiceException("only a draft version can be published");
         }
         validatePage(version.getPageJson(), true, version.getActivityId());
         homeVersionMapper.archivePublishedByActivityId(version.getActivityId());
