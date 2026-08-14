@@ -3,6 +3,7 @@ package com.ruoyi.system.service;
 import java.util.List;
 import java.util.Date;
 import com.ruoyi.system.domain.YcActivityHomeVersion;
+import com.ruoyi.system.domain.YcActivityHomeDraft;
 
 public interface IYcActivityHomeVersionService
 {
@@ -13,6 +14,8 @@ public interface IYcActivityHomeVersionService
     YcActivityHomeVersion selectLatestPublishedByActivityId(Long activityId);
 
     YcActivityHomeVersion saveDraft(YcActivityHomeVersion version);
+
+    YcActivityHomeVersion saveDraft(YcActivityHomeDraft draft, String username);
 
     YcActivityHomeVersion publish(Long versionId, String publishedBy, String publishRemark);
 

@@ -74,10 +74,9 @@
       <el-table-column label="报名人数" align="center" prop="registerCount" width="90" />
       <el-table-column label="点击/访问" align="center" prop="visitCount" width="100" />
       <el-table-column label="流量/观看" align="center" prop="viewCount" width="100" />
-      <el-table-column label="操作" align="center" width="260" fixed="right" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="190" fixed="right" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" @click="handleConfig(scope.row)">会议配置</el-button>
-          <el-button link type="primary" @click="handleVenue(scope.row)">会场管理</el-button>
+          <el-button link type="primary" icon="Setting" @click="handleConfig(scope.row)">会议配置</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['meeting:activity:edit']">修改</el-button>
         </template>
       </el-table-column>
@@ -184,10 +183,6 @@ function handleFormCancel() {
 
 function handleConfig(row) {
   proxy.$router.push({ path: "/meeting/activity-config", query: { id: row.activityId } })
-}
-
-function handleVenue(row) {
-  proxy.$router.push({ path: "/meeting/activity-config/venue", query: { id: row.activityId } })
 }
 
 function handleDelete(row) {

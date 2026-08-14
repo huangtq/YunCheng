@@ -20,6 +20,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.YcActivityHomeVersion;
+import com.ruoyi.system.domain.YcActivityHomeDraft;
 import com.ruoyi.system.service.IYcActivityHomeVersionService;
 
 @RestController
@@ -47,11 +48,9 @@ public class YcActivityHomeVersionController extends BaseController
     @PreAuthorize("@ss.hasPermi('meeting:home:edit')")
     @Log(title = "移动端首页草稿", businessType = BusinessType.UPDATE)
     @PostMapping("/draft")
-    public AjaxResult saveDraft(@RequestBody YcActivityHomeVersion version)
+    public AjaxResult saveDraft(@RequestBody YcActivityHomeDraft draft)
     {
-        version.setCreateBy(getUsername());
-        version.setUpdateBy(getUsername());
-        return success(homeVersionService.saveDraft(version));
+        return success(homeVersionService.saveDraft(draft, getUsername()));
     }
 
     @PreAuthorize("@ss.hasPermi('meeting:home:publish')")

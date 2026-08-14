@@ -9,6 +9,8 @@ create table if not exists yc_activity_home_version (
   schema_version    varchar(20)     not null default '1'       comment '页面JSON schema版本',
   page_json         longtext        not null                   comment '页面编排JSON',
   publish_remark    varchar(500)    default ''                comment '发布备注',
+  publish_at        datetime                                   comment '发布操作时间',
+  publish_mode      varchar(20)     not null default 'manual' comment '发布方式',
   published_by      varchar(64)     default ''                comment '发布人',
   published_time    datetime                                   comment '发布时间',
   del_flag          char(1)         default '0'                comment '删除标志',
@@ -21,6 +23,38 @@ create table if not exists yc_activity_home_version (
   unique key uk_home_version_no (activity_id, version_no),
   key idx_home_version_active (activity_id, status, del_flag)
 ) engine=innodb auto_increment=1 comment='会议移动端首页版本';
+
+-- Keep the migration safe for databases where the table was created by an earlier
+-- version of this script.
+set @add_publish_at = (
+  select if(
+    count(*) = 0,
+    'alter table yc_activity_home_version add column publish_at datetime comment ''发布操作时间''',
+    'select 1'
+  )
+  from information_schema.columns
+  where table_schema = database()
+    and table_name = 'yc_activity_home_version'
+    and column_name = 'publish_at'
+);
+prepare stmt_add_publish_at from @add_publish_at;
+execute stmt_add_publish_at;
+deallocate prepare stmt_add_publish_at;
+
+set @add_publish_mode = (
+  select if(
+    count(*) = 0,
+    'alter table yc_activity_home_version add column publish_mode varchar(20) not null default ''manual'' comment ''发布方式''',
+    'select 1'
+  )
+  from information_schema.columns
+  where table_schema = database()
+    and table_name = 'yc_activity_home_version'
+    and column_name = 'publish_mode'
+);
+prepare stmt_add_publish_mode from @add_publish_mode;
+execute stmt_add_publish_mode;
+deallocate prepare stmt_add_publish_mode;
 
 create table if not exists yc_meeting_content (
   content_id        bigint(20)      not null auto_increment    comment '内容ID',

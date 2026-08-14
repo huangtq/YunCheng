@@ -37,6 +37,13 @@
     order by version_no desc limit 1
   </select>
 
+  <select id="selectLatestGridConfigDraftByActivityId" resultMap="HomeVersionResult">
+    <include refid="selectHomeVersionVo"/>
+    where activity_id=#{activityId} and status='draft' and del_flag='0'
+      and JSON_UNQUOTE(JSON_EXTRACT(page_json, '$.source')) = 'grid-config'
+    order by update_time desc, version_id desc limit 1
+  </select>
+
   <select id="selectNextVersionNo" resultType="java.lang.Integer">
     select ifnull(max(version_no), 0) + 1 from yc_activity_home_version where activity_id=#{activityId}
   </select>
@@ -68,9 +75,15 @@
     where activity_id=#{activityId} and status='published' and del_flag='0'
   </update>
 
+  <update id="archiveOtherGridConfigDraftsByActivityId">
+    update yc_activity_home_version set status='archived', update_time=sysdate()
+    where activity_id=#{activityId} and status='draft' and version_id != #{versionId} and del_flag='0'
+      and JSON_UNQUOTE(JSON_EXTRACT(page_json, '$.source')) = 'grid-config'
+  </update>
+
   <update id="publishVersion">
     update yc_activity_home_version set status='published', publish_mode='manual', publish_at=null, published_by=#{publishedBy},
       publish_remark=#{publishRemark}, published_time=sysdate(), update_time=sysdate()
-    where version_id=#{versionId} and status in ('draft','archived') and del_flag='0'
+    where version_id=#{versionId} and status='draft' and del_flag='0'
   </update>
 </mapper>
