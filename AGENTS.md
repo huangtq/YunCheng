@@ -22,3 +22,10 @@
 - For meeting page checks, use activity IDs returned by `GET /portal/meeting/list?type=current`; the current local sample activities were `13` and `14`.
 - The unified H5 page is `/h5/pages/meeting/home?activityId={activityId}` and reads `/portal/meeting/home/{activityId}`.
 - The additive version migration is `server/sql/meeting_home_version_phase.sql`. If `yc_activity_home_version` is absent, the backend should fall back to legacy grid data, but publishing new versions still requires applying the migration.
+
+## Remote Server Access
+
+- When the user says `接管服务器` or an equivalent instruction, interpret it as authorized SSH maintenance of the project server.
+- Log in with the SSH key `%USERPROFILE%\\.ssh\\yuncheng_tunnel` as `ubuntu@124.223.26.157`.
+- Execute the user's requested server commands through non-interactive SSH from the agent and return the command output; do not open a separate interactive command-line window.
+- Do not write or expose private keys, passwords, captcha values, cookies, API tokens, or other credentials. Only perform server changes explicitly requested by the user.
