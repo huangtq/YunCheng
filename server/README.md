@@ -34,7 +34,7 @@ ry.bat
 ./ry.sh
 ```
 
-或在 IDE 中运行 `ruoyi-admin` 模块的启动类。默认端口：`8080`。
+或在 Codex 终端执行项目提供的 `start-dev.cmd`。默认端口：`8080`。
 
 ## 本地开发：连接远端 MySQL 和 Redis
 
@@ -63,25 +63,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\ssh-tunnel.ps1 -Action Stop
 MySQL 用户 `ruoyi` 的密码。该文件已加入 `.gitignore`，不要将密码写入其他
 受 Git 管理的配置文件。
 
-开发启动顺序：
+开发启动方式：
 
-1. 启动 SSH 隧道。
-2. 确认 `application-local.yml` 中的数据库密码正确。
-3. 在 IDE 中运行 `ruoyi-admin` 的启动类。
-4. 停止开发时关闭应用，再执行隧道关闭命令。
+1. 确认 `application-local.yml` 中的数据库密码正确。
+2. 在 Codex 终端执行 `server\\start-dev.cmd`，脚本会自动启动 SSH 隧道、安装模块并运行后端。
+3. 停止开发时关闭脚本，脚本会自动关闭由它创建的 SSH 隧道。
 
-## 在 Cursor 的 Run and Debug 中启动
+## 使用 Codex 终端启动
 
-项目根目录下的 `.vscode/launch.json` 已配置
-`Start RuoYi Server`，`.vscode/tasks.json` 已配置隧道的启动与关闭任务。
-这些文件属于本机 IDE 配置，已被根目录 `.gitignore` 忽略。
+项目提供 `server\\start-dev.cmd`，用于在 Codex 终端启动后端开发服务。
 
 使用方式：
 
 1. 确保 `application-local.yml` 中已填写 MySQL 密码。
-2. 打开 Cursor 左侧的 **Run and Debug** 面板。
-3. 选择 `Start RuoYi Server`。
-4. 点击绿色启动按钮或按 `F5`。
+2. 在项目根目录的 Codex 终端执行 `server\\start-dev.cmd`。
+3. 等待终端出现启动成功信息。
 
-启动配置会先自动启动 SSH 隧道，停止调试会话后自动关闭由本项目创建的
-SSH 隧道。
+脚本会先启动 SSH 隧道，后端进程退出后自动关闭由本项目创建的 SSH 隧道。

@@ -20,8 +20,8 @@
 pnpm install
 # 或 npm install / yarn
 
-# 启动开发服务
-pnpm dev
+# 启动开发服务（Codex 终端）
+.\\start-dev.cmd
 
 # 构建生产包
 pnpm build:prod
