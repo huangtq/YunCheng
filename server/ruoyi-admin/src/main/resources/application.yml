@@ -1,13 +1,13 @@
 # 项目相关配置
 ruoyi:
   # 名称
-  name: RuoYi
+  name: YunCheng
   # 版本
   version: 3.9.2
   # 版权年份
   copyrightYear: 2026
-  # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
-  profile: D:/ruoyi/uploadPath
+  # 文件路径，可通过 YUNCHENG_PROFILE_PATH 覆盖
+  profile: ${YUNCHENG_PROFILE_PATH:${user.home}/yuncheng/uploadPath}
   # Test resources can be mirrored to a separate server directory. Enable only in application-local.yml.
   test-resource:
     enabled: false
@@ -107,8 +107,8 @@ token:
   header: Authorization
   # 令牌密钥
   secret: abcdefghijklmnopqrstuvwxyz
-  # 令牌有效期（默认30分钟）
-  expireTime: 30
+  # 令牌有效期（4小时）
+  expireTime: 240
 
 # 微信服务号（H5门户）
 wechat:
@@ -147,7 +147,7 @@ referer:
   # 防盗链开关
   enabled: false
   # 允许的域名列表
-  allowed-domains: localhost,127.0.0.1,ruoyi.vip,www.ruoyi.vip
+  allowed-domains: localhost,127.0.0.1,yunchengmice.cn,www.yunchengmice.cn
 
 # 防止XSS攻击
 xss:

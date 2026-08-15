@@ -2,7 +2,7 @@
 
 > Production deployment: see [`../docs/production-deployment.md`](../docs/production-deployment.md). Keep the production external configuration unchanged during releases.
 
-基于 RuoYi-Vue 的后端服务，Spring Boot + Spring Security + Redis + JWT。
+云珵会议管理平台后端服务，Spring Boot + Spring Security + Redis + JWT。
 
 ## 技术栈
 
@@ -59,9 +59,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\ssh-tunnel.ps1 -Action Stop
 ```
 
 首次运行前，在未提交到 Git 的
-`ruoyi-admin/src/main/resources/application-local.yml` 中填写服务器
-MySQL 用户 `ruoyi` 的密码。该文件已加入 `.gitignore`，不要将密码写入其他
-受 Git 管理的配置文件。
+`ruoyi-admin/src/main/resources/application-local.yml` 中填写服务器数据库密码。
+该文件已加入 `.gitignore`，不要将密码写入其他受 Git 管理的配置文件。
 
 开发启动方式：
 

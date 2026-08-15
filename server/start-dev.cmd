@@ -25,7 +25,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [3/3] Starting RuoYi with Spring Boot DevTools enabled...
+echo [3/3] Starting YunCheng with Spring Boot DevTools enabled...
 pushd ".\ruoyi-admin"
 call mvn.cmd spring-boot:run ^
     -Dspring-boot.run.main-class=com.ruoyi.RuoYiApplication ^

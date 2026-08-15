@@ -2,7 +2,7 @@
 
 > Production deployment: see [`../docs/production-deployment.md`](../docs/production-deployment.md).
 
-基于 RuoYi-Vue3 的 Web 管理端，Vue3 + Element Plus + Vite。
+云珵会议管理平台 Web 管理端，Vue3 + Element Plus + Vite。
 
 ## 技术栈
 
@@ -18,7 +18,6 @@
 ```bash
 # 安装依赖
 pnpm install
-# 或 npm install / yarn
 
 # 启动开发服务（Codex 终端）
 .\\start-dev.cmd
@@ -31,4 +30,4 @@ pnpm build:prod
 
 ## 内置功能
 
-与后端配套，包含用户权限、系统监控、代码生成、日志管理等后台管理能力。
+与后端配套，包含会议配置、用户权限、系统监控、日志管理等后台管理能力。

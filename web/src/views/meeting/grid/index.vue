@@ -554,6 +554,7 @@ const multiple = ref(true)
 const open = ref(false)
 const title = ref("")
 const configForm = ref({ gridTemplate: "1" })
+const DEFAULT_GRID_BACKGROUND_COLOR = "#ffffff"
 const gridVisual = reactive({
   heroHeight: 0,
   countdownTop: 16,
@@ -561,7 +562,7 @@ const gridVisual = reactive({
   itemGap: 10,
   itemPadding: 10
 })
-const gridBackground = reactive({ color: "", gradient: "", imageUrl: "" })
+const gridBackground = reactive({ color: DEFAULT_GRID_BACKGROUND_COLOR, gradient: "", imageUrl: "" })
 const gridBackgroundMode = ref("color")
 const pageSettingsOpen = ref(false)
 const pageSettingsTab = ref("layout")
@@ -657,9 +658,9 @@ const isTilePreview = computed(() => String(configForm.value.gridTemplate) === "
 const isLightTilePreview = computed(() => isTilePreview.value && isLightColor(themeColor.value))
 const tileSurfaceColor = computed(() => (isLightTilePreview.value ? (themeColor.value || "#f6f6f6") : "#061a74"))
 const gridBackgroundPreviewStyle = computed(() => {
-  const style = { backgroundColor: "#f5f7fa" }
+  const style = { backgroundColor: gridBackground.color || DEFAULT_GRID_BACKGROUND_COLOR }
   if (gridBackgroundMode.value === "color") {
-    style.backgroundColor = gridBackground.color || "#f5f7fa"
+    style.backgroundColor = gridBackground.color || DEFAULT_GRID_BACKGROUND_COLOR
   } else if (gridBackgroundMode.value === "gradient") {
     style.backgroundImage = gridBackground.gradient || "none"
   } else if (gridBackground.imageUrl) {
@@ -920,7 +921,7 @@ function gridShowTitle(item) {
 }
 
 function parseGridBackground(value, mobileBackgroundUrl = "") {
-  const defaults = { color: "", gradient: "", imageUrl: "" }
+  const defaults = { color: DEFAULT_GRID_BACKGROUND_COLOR, gradient: "", imageUrl: "" }
   try {
     const parsed = JSON.parse(value || "{}")
     return {
@@ -1713,7 +1714,7 @@ onMounted(() => {
 .phone-screen {
   height: 720px;
   overflow-y: auto;
-  background: #f5f7fa;
+  background: transparent;
   scrollbar-width: thin;
 }
 .phone-screen.is-tile-screen {

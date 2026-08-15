@@ -1,4 +1,4 @@
-Application Version: ${ruoyi.version}
+YunCheng Application Version: ${ruoyi.version}
 Spring Boot Version: ${spring-boot.version}
 ////////////////////////////////////////////////////////////////////
 //                          _ooOoo_                               //
