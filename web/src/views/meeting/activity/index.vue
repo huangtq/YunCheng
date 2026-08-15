@@ -53,8 +53,6 @@
           <span>{{ parseTime(scope.row.endTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="省份" align="center" prop="province" width="100" :show-overflow-tooltip="true" />
-      <el-table-column label="城市" align="center" prop="city" width="100" :show-overflow-tooltip="true" />
       <el-table-column label="详细地址" align="center" prop="address" min-width="140" :show-overflow-tooltip="true" />
       <el-table-column label="是否展示" align="center" prop="isShow" width="90">
         <template #default="scope">
