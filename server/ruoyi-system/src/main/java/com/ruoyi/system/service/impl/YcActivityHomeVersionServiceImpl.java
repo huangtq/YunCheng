@@ -122,6 +122,31 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         return saved;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public YcActivityHomeVersion restoreToDraft(Long versionId, String username)
+    {
+        YcActivityHomeVersion source = homeVersionMapper.selectYcActivityHomeVersionById(versionId);
+        if (source == null)
+        {
+            throw new ServiceException("home version not found");
+        }
+        requireActivityAndPage(source);
+
+        YcActivityHomeVersion target = new YcActivityHomeVersion();
+        YcActivityHomeVersion currentDraft = homeVersionMapper.selectLatestGridConfigDraftByActivityId(source.getActivityId());
+        target.setVersionId(currentDraft == null ? null : currentDraft.getVersionId());
+        target.setActivityId(source.getActivityId());
+        target.setPageJson(source.getPageJson());
+        target.setSchemaVersion(source.getSchemaVersion());
+        target.setPublishRemark("");
+        target.setPublishMode("manual");
+        target.setCreateBy(username);
+        target.setUpdateBy(username);
+
+        return saveDraft(target);
+    }
+
     private void syncEditorConfig(YcActivityHomeDraft draft, String username)
     {
         YcActivityConfig config = activityConfigService.getOrCreate(draft.getActivityId(), username);

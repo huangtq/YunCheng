@@ -37,10 +37,20 @@
             @click="onGridClick(item)"
           >
             <text v-if="!item.iconUrl || isColorTile(item)" class="tile-title">{{ item.title }}</text>
+            <MeetingIcon
+              v-if="item.iconType === 'icon' && item.iconKey"
+              class="tile-icon"
+              :icon-type="item.iconType"
+              :icon-key="item.iconKey"
+              :size="gridIconSize(item)"
+              :style="tileIconStyle(item)"
+              color="#fff"
+            />
             <image
-              v-if="isColorTile(item) && item.iconUrl"
+              v-else-if="isColorTile(item) && item.iconUrl"
               class="tile-icon"
               :src="resolveUrl(item.iconUrl)"
+              :style="tileIconStyle(item)"
               mode="aspectFit"
             />
           </view>
@@ -118,18 +128,19 @@
               @click="onGridClick(item)"
             >
               <image
-                v-if="isImageCard(item)"
+                v-if="isImageCard(item, section)"
                 class="grid-card-image"
                 :src="resolveUrl(gridCardUrl(item))"
-                mode="widthFix"
+                :mode="gridCardImageMode(item)"
+                :style="gridCardImageStyle(item)"
               />
               <template v-else>
-                <view class="grid-icon-wrap" :style="gridIconWrapStyle">
+                <view class="grid-icon-wrap" :style="gridIconWrapStyle(item, section)">
                   <MeetingIcon
                     :icon-type="item.iconType"
                     :icon-key="item.iconKey"
                     :icon-url="item.iconUrl"
-                    :size="isIconOnlyFor(section) ? 64 : 56"
+                    :size="gridIconSize(item)"
                     color="#fff"
                   />
                 </view>
@@ -211,9 +222,58 @@ const gridIconSurfaceColor = computed(() => {
   const color = layout.value.themeColor || '#1f6feb'
   return isLightColor(color) ? '#4f46e5' : color
 })
-const gridIconWrapStyle = computed(() => ({
-  background: gridIconSurfaceColor.value
-}))
+const DEFAULT_ICON_SIZE = 28
+const DEFAULT_ICON_RADIUS = 12
+
+function clampStyleNumber(value, min, max, fallback) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return fallback
+  return Math.min(max, Math.max(min, parsed))
+}
+
+function gridIconSize(item) {
+  return clampStyleNumber(item?.iconSize, 20, 48, DEFAULT_ICON_SIZE) * 2
+}
+
+function gridIconWrapStyle(item, section) {
+  const size = clampStyleNumber(item?.iconSize, 20, 48, DEFAULT_ICON_SIZE)
+  const surfaceSize = isIconOnlyFor(section)
+    ? Math.max(60, size + 28)
+    : Math.max(48, size + 20)
+  return {
+    width: `${surfaceSize * 2}rpx`,
+    height: `${surfaceSize * 2}rpx`,
+    borderRadius: `${clampStyleNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS) * 2}rpx`,
+    background: item?.iconBackground || gridIconSurfaceColor.value
+  }
+}
+
+function normalizedImageRatio(value) {
+  return ['1:1', '4:3', '16:9'].includes(value) ? value : 'auto'
+}
+
+function gridCardImageMode(item) {
+  return normalizedImageRatio(item?.imageRatio) === 'auto' ? 'widthFix' : 'aspectFill'
+}
+
+function gridCardImageStyle(item) {
+  const ratio = normalizedImageRatio(item?.imageRatio)
+  const style = {
+    borderRadius: `${clampStyleNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS) * 2}rpx`
+  }
+  if (ratio !== 'auto') {
+    style.aspectRatio = ratio.replace(':', ' / ')
+    style.height = 'auto'
+    style.objectFit = 'cover'
+  }
+  return style
+}
+
+function tileIconStyle(item) {
+  if (item?.iconType !== 'icon') return {}
+  const size = gridIconSize(item)
+  return { width: `${size}rpx`, height: `${size}rpx` }
+}
 
 const tilePageStyle = computed(() => {
   const background = layout.value.backgroundUrl
@@ -344,7 +404,7 @@ function isIconOnlyFor(section) {
 }
 
 function isImageCard(item, section) {
-  return item && item.iconType === 'image' && !!gridCardUrl(item) && Number(section.columns || layout.value.gridColumns) === 2
+  return item && item.iconType === 'image' && !!gridCardUrl(item) && Number(section?.columns || layout.value.gridColumns) === 2
 }
 
 function gridCardUrl(item) {
@@ -428,7 +488,8 @@ function tileStyle(item) {
   const meta = parseTileMeta(item)
   const style = {
     gridColumn: `${item.tileCol || 'auto'} / span ${item.tileColSpan || 1}`,
-    gridRow: `${item.tileRow || 'auto'} / span ${item.tileRowSpan || 1}`
+    gridRow: `${item.tileRow || 'auto'} / span ${item.tileRowSpan || 1}`,
+    borderRadius: `${clampStyleNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS) * 2}rpx`
   }
   const gradient = meta.bg || meta.background || meta.tileBg || meta.gradientColor
   if (gradient) {
@@ -436,6 +497,8 @@ function tileStyle(item) {
     style.backgroundColor = 'transparent'
   } else if (item.iconUrl) {
     style.backgroundImage = `url(${resolveUrl(item.iconUrl)})`
+  } else if (item.iconBackground) {
+    style.backgroundColor = item.iconBackground
   }
   return style
 }
@@ -738,6 +801,8 @@ function onFooterClick() {
   margin: 5px;
 }
 .tile-item {
+  position: relative;
+  overflow: hidden;
   min-width: 0;
   margin: 6rpx;
   border-radius: 19.2px;

@@ -53,6 +53,14 @@ public class YcActivityHomeVersionController extends BaseController
         return success(homeVersionService.saveDraft(draft, getUsername()));
     }
 
+    @PreAuthorize("@ss.hasPermi('meeting:home:edit')")
+    @Log(title = "恢复移动端首页草稿", businessType = BusinessType.UPDATE)
+    @PostMapping("/{versionId}/restore-draft")
+    public AjaxResult restoreToDraft(@PathVariable Long versionId)
+    {
+        return success(homeVersionService.restoreToDraft(versionId, getUsername()));
+    }
+
     @PreAuthorize("@ss.hasPermi('meeting:home:publish')")
     @Log(title = "移动端首页发布", businessType = BusinessType.UPDATE)
     @PostMapping("/{versionId}/publish")

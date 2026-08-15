@@ -1,10 +1,15 @@
 <template>
   <div class="meeting-icon-select">
-    <el-button class="icon-select-trigger" plain @click="openDialog">
-      <MeetingIcon :icon-key="modelValue" :size="28" color="#409eff" />
-      <span>{{ currentLabel }}</span>
-      <el-icon><ArrowDown /></el-icon>
-    </el-button>
+    <button type="button" class="icon-picker-trigger" @click="openDialog">
+      <span class="icon-picker-preview">
+        <MeetingIcon :icon-key="modelValue" :size="30" color="#2563eb" />
+      </span>
+      <span class="icon-picker-content">
+        <span class="icon-picker-label">{{ currentLabel }}</span>
+        <span class="icon-picker-hint">选择会议入口图标</span>
+      </span>
+      <el-icon class="icon-picker-action"><Grid /></el-icon>
+    </button>
 
     <el-dialog
       v-model="visible"
@@ -51,7 +56,7 @@
 </template>
 
 <script setup>
-import { ArrowDown, Search } from "@element-plus/icons-vue"
+import { Grid, Search } from "@element-plus/icons-vue"
 import MeetingIcon from "@/components/MeetingIcon"
 import { meetingIconFiles } from "@/utils/meeting-icon-files"
 
@@ -104,12 +109,65 @@ function selectIcon(key) {
 </script>
 
 <style scoped>
-.icon-select-trigger {
+.icon-picker-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 220px;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  color: var(--el-text-color-primary);
+  background: var(--el-fill-color-blank);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.icon-picker-trigger:hover {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.icon-picker-preview {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-width: 180px;
-  justify-content: space-between;
+  justify-content: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  background: #f5f9ff;
+}
+
+.icon-picker-content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.icon-picker-label {
+  overflow: hidden;
+  color: var(--el-text-color-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-picker-hint {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.icon-picker-action {
+  flex: 0 0 auto;
+  color: var(--el-color-primary);
 }
 
 .icon-search {

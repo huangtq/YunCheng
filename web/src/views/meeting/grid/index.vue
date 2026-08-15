@@ -3,90 +3,84 @@
     <div class="grid-workbench">
       <div class="grid-editor">
         <section class="template-config-card mb8">
-          <div class="editor-toolbar">
-            <div class="editor-toolbar__summary">
-              <span class="editor-toolbar__title">页面草稿</span>
+          <div class="template-config-layout">
+            <div class="template-config-versionbar">
               <span class="home-editor-status" :class="{ 'is-dirty': editorDirty }">{{ editorStatus }}</span>
-            </div>
-            <div class="home-editor-actions">
-              <el-button
-                type="primary"
-                icon="DocumentChecked"
-                :loading="draftSaving"
-                @click="saveHomeDraft()"
-                v-hasPermi="['meeting:home:edit']"
-              >
-                保存草稿
-              </el-button>
-              <el-button
-                type="success"
-                icon="Promotion"
-                :loading="publishing"
-                @click="publishHome"
-                v-hasPermi="['meeting:home:publish']"
-              >
-                发布
-              </el-button>
-              <el-tooltip content="版本记录" placement="top">
+              <div class="template-config-actions">
                 <el-button
-                  circle
-                  icon="Clock"
-                  aria-label="版本记录"
-                  @click="loadHomeVersions(true)"
-                  v-hasPermi="['meeting:home:list']"
-                />
-              </el-tooltip>
+                  type="primary"
+                  icon="DocumentChecked"
+                  :loading="draftSaving"
+                  @click="saveHomeDraft()"
+                  v-hasPermi="['meeting:home:edit']"
+                >
+                  保存草稿
+                </el-button>
+                <el-button
+                  type="success"
+                  icon="Promotion"
+                  :loading="publishing"
+                  @click="publishHome"
+                  v-hasPermi="['meeting:home:publish']"
+                >
+                  发布
+                </el-button>
+                <el-tooltip content="版本记录" placement="top">
+                  <el-button
+                    circle
+                    icon="Clock"
+                    aria-label="版本记录"
+                    @click="loadHomeVersions(true, 1)"
+                    v-hasPermi="['meeting:home:list']"
+                  />
+                </el-tooltip>
+              </div>
+            </div>
+            <div class="template-config-controls">
+              <span class="template-control-label">会议模板</span>
+              <el-select
+                v-model="configForm.gridTemplate"
+                filterable
+                class="template-select"
+                aria-label="会议模板"
+                placeholder="请选择会议模板"
+              >
+                <el-option
+                  v-for="item in templateOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                >
+                  <el-popover
+                    placement="right-start"
+                    trigger="hover"
+                    :width="240"
+                    :show-after="120"
+                    :hide-after="120"
+                    popper-class="meeting-template-popover"
+                  >
+                    <template #reference>
+                      <div class="template-option">{{ item.label }}</div>
+                    </template>
+                    <div class="template-popover-content">
+                      <div class="template-popover-title">{{ item.label }}</div>
+                      <el-image
+                        class="template-popover-image"
+                        :src="item.preview"
+                        :preview-src-list="[item.preview]"
+                        fit="contain"
+                        preview-teleported
+                      />
+                      <div v-if="item.description" class="template-popover-description">
+                        {{ item.description }}
+                      </div>
+                    </div>
+                  </el-popover>
+                </el-option>
+              </el-select>
+              <el-button plain icon="Setting" class="page-settings-button" @click="pageSettingsOpen = true">页面设置</el-button>
             </div>
           </div>
-          <el-form :model="configForm" inline class="template-settings-bar">
-          <el-form-item label="会议模板" class="template-select-item">
-            <el-select
-              v-model="configForm.gridTemplate"
-              filterable
-              style="width: 330px"
-              placeholder="请选择会议模板"
-            >
-              <el-option
-                v-for="item in templateOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              >
-                <el-popover
-                  placement="right-start"
-                  trigger="hover"
-                  :width="240"
-                  :show-after="120"
-                  :hide-after="120"
-                  popper-class="meeting-template-popover"
-                >
-                  <template #reference>
-                    <div class="template-option">{{ item.label }}</div>
-                  </template>
-                  <div class="template-popover-content">
-                    <div class="template-popover-title">{{ item.label }}</div>
-                    <el-image
-                      class="template-popover-image"
-                      :src="item.preview"
-                      :preview-src-list="[item.preview]"
-                      fit="contain"
-                      preview-teleported
-                    />
-                    <div v-if="item.description" class="template-popover-description">
-                      {{ item.description }}
-                    </div>
-                  </div>
-                </el-popover>
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item class="page-settings-launcher">
-            <el-button plain icon="Setting" @click="pageSettingsOpen = true">页面设置</el-button>
-          </el-form-item>
-        </el-form>
-        <div class="template-tip">
-          九宫格入口、模板和视觉配置共同组成移动端会议页。保存草稿生成待发布版本，发布后移动端才会切换到新版本。
-        </div>
         </section>
 
         <el-drawer v-model="pageSettingsOpen" title="页面设置" direction="rtl" size="420px" append-to-body class="page-settings-drawer">
@@ -259,10 +253,19 @@
                   :style="previewTileStyle(item)"
                 >
                   <span v-if="!item.iconUrl || isColorTile(item)" class="phone-tile-title">{{ item.title }}</span>
+                  <MeetingIcon
+                    v-if="item.iconType === 'icon' && item.iconKey"
+                    class="phone-tile-icon"
+                    :icon-key="item.iconKey"
+                    :size="previewIconSize(item)"
+                    :style="previewTileIconStyle(item)"
+                    color="#fff"
+                  />
                   <img
-                    v-if="isColorTile(item) && item.iconUrl"
+                    v-else-if="isColorTile(item) && item.iconUrl"
                     class="phone-tile-icon"
                     :src="resolveUrl(item.iconUrl)"
+                    :style="previewTileIconStyle(item)"
                     alt=""
                   />
                 </div>
@@ -337,18 +340,24 @@
                     v-if="isImageCardPreview(item)"
                     class="phone-grid-card-image"
                     :src="resolveUrl(gridCardUrl(item))"
+                    :style="previewCardImageStyle(item)"
                     alt=""
                   />
                   <template v-else>
-                    <div class="phone-grid-icon" :style="{ background: previewIconSurfaceColor }">
+                    <div class="phone-grid-icon" :style="previewGridIconStyle(item)">
                       <MeetingIcon
                         v-if="item.iconType === 'icon' && item.iconKey"
                         :icon-key="item.iconKey"
-                        :size="34"
+                        :size="previewIconSize(item)"
                         color="#fff"
                       />
-                      <img v-else-if="item.iconUrl" :src="resolveUrl(item.iconUrl)" alt="" />
-                      <el-icon v-else :size="28"><Grid /></el-icon>
+                      <img
+                        v-else-if="item.iconUrl"
+                        :src="resolveUrl(item.iconUrl)"
+                        :style="previewIconMediaStyle(item)"
+                        alt=""
+                      />
+                      <el-icon v-else :size="previewIconSize(item)"><Grid /></el-icon>
                     </div>
                     <span v-if="!isIconOnlyPreview && gridShowTitle(item)">{{ item.title }}</span>
                   </template>
@@ -371,32 +380,37 @@
       destroy-on-close
     >
       <el-scrollbar class="grid-edit-scrollbar">
-        <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="grid-form">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-position="top"
+          class="grid-form"
+          @click.capture="preventMobileFieldLabelClick"
+        >
           <section class="grid-form-section">
             <h3>基础信息</h3>
-            <el-row :gutter="24">
-              <el-col :span="14">
-                <el-form-item label="标题" prop="title">
-                  <el-input v-model="form.title" maxlength="100" placeholder="标题" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="10">
-                <el-form-item label="排序" prop="sortOrder">
-                  <el-input-number v-model="form.sortOrder" :min="0" :max="9999" controls-position="right" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-form-item label="移动端图标">
-              <el-radio-group v-model="form.iconType" @change="handleIconTypeChange">
-                <el-radio-button value="image">图片素材</el-radio-button>
-                <el-radio-button value="icon">图标库</el-radio-button>
-              </el-radio-group>
+            <el-form-item prop="title">
+              <template #label>
+                <span class="mobile-field-label">
+                  标题
+                  <el-tooltip content="显示为移动端首页入口名称，也会用于跳转页面的标题。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-input v-model="form.title" maxlength="100" placeholder="标题" />
             </el-form-item>
-            <el-form-item v-if="form.iconType === 'image'" label="素材图片" prop="iconUrl">
-              <material-select v-model="form.iconUrl" :show-tip="false" />
-            </el-form-item>
-            <el-form-item v-else label="图标选择" prop="iconKey">
-              <meeting-icon-select v-model="form.iconKey" />
+            <el-form-item prop="sortOrder">
+              <template #label>
+                <span class="mobile-field-label">
+                  排序
+                  <el-tooltip content="决定该入口在移动端首页的排列顺序，数字越小越靠前。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-input-number v-model="form.sortOrder" :min="0" :max="9999" controls-position="right" />
             </el-form-item>
           </section>
 
@@ -438,20 +452,116 @@
 
           <section class="grid-form-section">
             <h3>展示设置</h3>
-            <el-form-item label="显示状态">
+            <el-form-item>
+              <template #label>
+                <span class="mobile-field-label">
+                  展示内容
+                  <el-tooltip content="选择移动端首页入口使用图片素材还是图标库图标。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-radio-group v-model="form.iconType" @change="handleIconTypeChange">
+                <el-radio-button value="image">图片素材</el-radio-button>
+                <el-radio-button value="icon">图标库</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="form.iconType === 'image'" prop="iconUrl">
+              <template #label>
+                <span class="mobile-field-label">
+                  素材图片
+                  <el-tooltip content="普通宫格中作为入口图标；两列图文宫格中作为卡片图片；自定义宫格中可作为色块背景图。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <material-select v-model="form.iconUrl" :show-tip="false" />
+            </el-form-item>
+            <el-form-item v-else prop="iconKey">
+              <template #label>
+                <span class="mobile-field-label">
+                  图标选择
+                  <el-tooltip content="选择移动端首页展示的入口图标。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <meeting-icon-select v-model="form.iconKey" />
+            </el-form-item>
+            <el-form-item v-if="showIconSurfaceControls">
+              <template #label>
+                <span class="mobile-field-label">
+                  展示尺寸
+                  <el-tooltip content="设置入口图标或素材在移动端中的显示大小。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-slider v-model="form.iconSize" :min="20" :max="48" :step="2" show-input class="icon-style-slider" />
+            </el-form-item>
+            <el-form-item v-if="showIconSurfaceControls">
+              <template #label>
+                <span class="mobile-field-label">
+                  背景颜色
+                  <el-tooltip content="设置图标或素材外层色块；留空时跟随会议主题色。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="icon-background-control">
+                <el-color-picker v-model="form.iconBackground" show-alpha />
+                <el-input v-model="form.iconBackground" clearable placeholder="跟随主题色" />
+              </div>
+            </el-form-item>
+            <el-form-item>
+              <template #label>
+                <span class="mobile-field-label">
+                  展示圆角
+                  <el-tooltip :content="isImageCardForm ? '设置两列素材卡片的圆角。' : '设置图标或素材外层色块的圆角。'" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-slider v-model="form.iconRadius" :min="0" :max="24" :step="1" show-input class="icon-style-slider" />
+            </el-form-item>
+            <el-form-item v-if="isImageCardForm">
+              <template #label>
+                <span class="mobile-field-label">
+                  素材比例
+                  <el-tooltip content="原图按图片自身比例展示；固定比例会居中裁切素材。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-radio-group v-model="form.imageRatio" class="image-ratio-group">
+                <el-radio-button value="auto">原图</el-radio-button>
+                <el-radio-button value="1:1">1:1</el-radio-button>
+                <el-radio-button value="4:3">4:3</el-radio-button>
+                <el-radio-button value="16:9">16:9</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item>
+              <template #label>
+                <span class="mobile-field-label">
+                  显示状态
+                  <el-tooltip content="开启隐藏后，该入口不会出现在移动端发布页面中。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
               <el-switch v-model="form.hidden" active-text="隐藏此菜单" />
-            </el-form-item>
-            <el-form-item label="显示标题">
-              <el-switch v-model="form.showTitle" active-text="显示" inactive-text="隐藏" />
-              <div class="form-field-tip">纯图标模板会始终隐藏标题；其他模板按此设置展示。</div>
-            </el-form-item>
-            <el-form-item v-if="isTwoColumnPreview && form.iconType === 'image'" label="图片展示">
-              <el-switch v-model="form.displayAsCard" active-text="整图卡片" inactive-text="图标入口" />
-              <div class="form-field-tip">仅两列图文宫格生效，整图会按原比例铺满卡片。</div>
             </el-form-item>
             <template v-if="isTilePreview">
               <el-divider content-position="left">Tile 色块与布局</el-divider>
-              <el-form-item label="色块背景">
+              <el-form-item>
+                <template #label>
+                  <span class="mobile-field-label">
+                    色块背景
+                    <el-tooltip content="仅自定义宫格使用，设置该入口在移动端首页的纯色或渐变背景。" placement="top">
+                      <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                    </el-tooltip>
+                  </span>
+                </template>
                 <div class="tile-bg-editor">
                   <div class="tile-bg-toolbar">
                     <el-color-picker
@@ -477,22 +587,54 @@
               </el-form-item>
               <el-row :gutter="24">
                 <el-col :span="6">
-                  <el-form-item label="行">
+                  <el-form-item>
+                    <template #label>
+                      <span class="mobile-field-label">
+                        行
+                        <el-tooltip content="仅自定义宫格使用，设置入口起始行；填 0 时由移动端自动排列。" placement="top">
+                          <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                        </el-tooltip>
+                      </span>
+                    </template>
                     <el-input-number v-model="form.tileRow" :min="0" :max="20" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
-                  <el-form-item label="列">
+                  <el-form-item>
+                    <template #label>
+                      <span class="mobile-field-label">
+                        列
+                        <el-tooltip content="仅自定义宫格使用，设置入口起始列；填 0 时由移动端自动排列。" placement="top">
+                          <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                        </el-tooltip>
+                      </span>
+                    </template>
                     <el-input-number v-model="form.tileCol" :min="0" :max="6" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
-                  <el-form-item label="跨行">
+                  <el-form-item>
+                    <template #label>
+                      <span class="mobile-field-label">
+                        跨行
+                        <el-tooltip content="仅自定义宫格使用，决定入口在移动端首页纵向占用的网格数量。" placement="top">
+                          <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                        </el-tooltip>
+                      </span>
+                    </template>
                     <el-input-number v-model="form.tileRowSpan" :min="1" :max="6" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
-                  <el-form-item label="跨列">
+                  <el-form-item>
+                    <template #label>
+                      <span class="mobile-field-label">
+                        跨列
+                        <el-tooltip content="仅自定义宫格使用，决定入口在移动端首页横向占用的网格数量。" placement="top">
+                          <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                        </el-tooltip>
+                      </span>
+                    </template>
                     <el-input-number v-model="form.tileColSpan" :min="1" :max="6" />
                   </el-form-item>
                 </el-col>
@@ -520,7 +662,32 @@
         <el-table-column prop="publishRemark" label="发布备注" min-width="180" show-overflow-tooltip />
         <el-table-column prop="publishedTime" label="发布时间" width="180" />
         <el-table-column prop="createTime" label="创建时间" width="180" />
+      <el-table-column label="操作" width="120" fixed="right">
+          <template #default="scope">
+            <el-button
+              link
+              type="primary"
+              :loading="restoringVersionId === scope.row.versionId"
+              :disabled="scope.row.versionId === homeVersionId"
+              @click="restoreHomeVersion(scope.row)"
+              v-hasPermi="['meeting:home:edit']"
+            >
+              {{ scope.row.versionId === homeVersionId ? "当前草稿" : "覆盖草稿" }}
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
+      <div class="version-pagination">
+        <el-pagination
+          v-model:current-page="versionsPage"
+          v-model:page-size="versionsPageSize"
+          :total="versionsTotal"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handleVersionsPageChange"
+          @size-change="handleVersionsSizeChange"
+        />
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -533,7 +700,7 @@ import MaterialSelect from "@/components/MaterialSelect"
 import MeetingIcon from "@/components/MeetingIcon"
 import MeetingIconSelect from "@/components/MeetingIconSelect"
 import { MEETING_MODULE_OPTIONS, getMeetingModule, meetingModuleLabel } from "@/utils/meetingModules"
-import { listHomeVersions, publishHomeVersion, saveHomeDraft as saveHomeDraftVersion } from "@/api/meeting/homeVersion"
+import { listHomeVersions, publishHomeVersion, restoreHomeVersion as restoreHomeVersionApi, saveHomeDraft as saveHomeDraftVersion } from "@/api/meeting/homeVersion"
 import { getMeetingHomeTemplate } from "@/utils/meetingHomeTemplates"
 
 const { proxy } = getCurrentInstance()
@@ -575,6 +742,10 @@ const homeVersionId = ref(null)
 const homeVersions = ref([])
 const versionsOpen = ref(false)
 const versionsLoading = ref(false)
+const versionsPage = ref(1)
+const versionsPageSize = ref(10)
+const versionsTotal = ref(0)
+const restoringVersionId = ref(null)
 const draftSaving = ref(false)
 const publishing = ref(false)
 const editorLoaded = ref(false)
@@ -670,6 +841,63 @@ const gridBackgroundPreviewStyle = computed(() => {
   return style
 })
 const isTwoColumnPreview = computed(() => ["68", "681"].includes(String(configForm.value.gridTemplate)))
+const isImageCardForm = computed(() => isTwoColumnPreview.value && form.value.iconType === "image")
+const showIconSurfaceControls = computed(() => (
+  !isImageCardForm.value
+  && (!isTilePreview.value || form.value.iconType === "icon" || !!form.value.gradientColor)
+))
+
+const DEFAULT_ICON_SIZE = 28
+const DEFAULT_ICON_RADIUS = 12
+
+function clampNumber(value, min, max, fallback) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return fallback
+  return Math.min(max, Math.max(min, parsed))
+}
+
+function previewIconSize(item) {
+  return clampNumber(item?.iconSize, 20, 48, DEFAULT_ICON_SIZE)
+}
+
+function previewGridIconStyle(item) {
+  const size = previewIconSize(item)
+  const surfaceSize = isIconOnlyPreview.value
+    ? Math.max(60, size + 28)
+    : Math.max(44, size + 16)
+  return {
+    width: `${surfaceSize}px`,
+    height: `${surfaceSize}px`,
+    borderRadius: `${clampNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS)}px`,
+    background: item?.iconBackground || previewIconSurfaceColor.value
+  }
+}
+
+function previewIconMediaStyle(item) {
+  const size = previewIconSize(item)
+  return { width: `${size}px`, height: `${size}px` }
+}
+
+function normalizedImageRatio(value) {
+  return ["1:1", "4:3", "16:9"].includes(value) ? value : "auto"
+}
+
+function previewCardImageStyle(item) {
+  const ratio = normalizedImageRatio(item?.imageRatio)
+  const style = {
+    borderRadius: `${clampNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS)}px`
+  }
+  if (ratio !== "auto") {
+    style.aspectRatio = ratio.replace(":", " / ")
+    style.objectFit = "cover"
+  }
+  return style
+}
+
+function previewTileIconStyle(item) {
+  const size = previewIconSize(item)
+  return { width: `${size}px`, height: `${size}px` }
+}
 
 function isImageCardPreview(item) {
   return item && item.iconType === "image" && !!gridCardUrl(item) && previewGridClass.value === "grid-two"
@@ -678,6 +906,13 @@ function isImageCardPreview(item) {
 function gridCardUrl(item) {
   return item?.contentUrl || item?.iconUrl || ""
 }
+
+function preventMobileFieldLabelClick(event) {
+  if (event.target?.closest?.(".mobile-field-label")) {
+    event.preventDefault()
+  }
+}
+
 const solidColorValue = computed(() => {
   const value = String(form.value.gradientColor || form.value.tileBg || "").trim()
   if (!value || /gradient|url\(/i.test(value)) return ""
@@ -786,7 +1021,8 @@ function previewTileStyle(item) {
   const meta = parseTileMeta(item)
   const style = {
     gridColumn: `${item.tileCol || "auto"} / span ${item.tileColSpan || 1}`,
-    gridRow: `${item.tileRow || "auto"} / span ${item.tileRowSpan || 1}`
+    gridRow: `${item.tileRow || "auto"} / span ${item.tileRowSpan || 1}`,
+    borderRadius: `${clampNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS)}px`
   }
   const gradient = meta.bg || meta.background || meta.tileBg || meta.gradientColor
   if (gradient) {
@@ -794,6 +1030,8 @@ function previewTileStyle(item) {
     style.backgroundColor = "transparent"
   } else if (item.iconUrl) {
     style.backgroundImage = `url("${resolveUrl(item.iconUrl)}")`
+  } else if (item.iconBackground) {
+    style.backgroundColor = item.iconBackground
   }
   return style
 }
@@ -865,7 +1103,16 @@ function getList() {
   loading.value = true
   queryParams.value.activityId = activityId.value
   listGrid(queryParams.value).then(res => {
-    gridList.value = res.rows
+    gridList.value = (res.rows || []).map(item => {
+      const options = parseGridOptions(item.remark)
+      return {
+        ...item,
+        iconSize: clampNumber(options.iconSize, 20, 48, DEFAULT_ICON_SIZE),
+        iconBackground: options.iconBackground || "",
+        iconRadius: clampNumber(options.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
+        imageRatio: normalizedImageRatio(options.imageRatio)
+      }
+    })
     total.value = res.total
     loading.value = false
   }).catch(() => { loading.value = false })
@@ -1013,6 +1260,10 @@ function buildHomePage() {
     iconType: item.iconType || "image",
     iconKey: item.iconKey || "",
     iconUrl: item.iconUrl || "",
+    iconSize: clampNumber(item.iconSize, 20, 48, DEFAULT_ICON_SIZE),
+    iconBackground: item.iconBackground || "",
+    iconRadius: clampNumber(item.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
+    imageRatio: normalizedImageRatio(item.imageRatio),
     contentId: item.contentId || null,
     displayAsCard: item.displayAsCard === true,
     tileRow: item.tileRow || 0,
@@ -1092,7 +1343,7 @@ async function saveHomeDraft(options = {}) {
     configForm.value.remark = configRemark
     configForm.value.mobileBackgroundUrl = mobileBackgroundUrl
     editorDirty.value = false
-    await loadHomeVersions(false)
+    await loadHomeVersions(false, 1)
     if (!silent) proxy.$modal.msgSuccess("草稿已保存")
     return res.data
   } finally {
@@ -1111,7 +1362,7 @@ async function publishHome() {
     await publishHomeVersion(homeVersionId.value, value)
     homeVersionId.value = null
     editorDirty.value = false
-    await loadHomeVersions(false)
+    await loadHomeVersions(false, 1)
     proxy.$modal.msgSuccess("会议页已发布")
   } catch {
     // Dialog cancellation and request failures are handled by the shared modal/request layers.
@@ -1120,16 +1371,25 @@ async function publishHome() {
   }
 }
 
-async function loadHomeVersions(openDialog = true) {
+async function loadHomeVersions(openDialog = true, pageNum = versionsPage.value) {
   versionsLoading.value = true
   try {
-    const res = await listHomeVersions({ activityId: Number(activityId.value), pageNum: 1, pageSize: 100 })
+    const res = await listHomeVersions({
+      activityId: Number(activityId.value),
+      pageNum,
+      pageSize: versionsPageSize.value
+    })
     homeVersions.value = res.rows || []
-    const draft = homeVersions.value.find(item => item.status === "draft" && String(item.pageJson || "").includes('"source":"grid-config"'))
-    homeVersionId.value = draft ? draft.versionId : null
+    versionsPage.value = pageNum
+    versionsTotal.value = Number(res.total || 0)
+    if (pageNum === 1) {
+      const draft = homeVersions.value.find(item => item.status === "draft" && String(item.pageJson || "").includes('"source":"grid-config"'))
+      homeVersionId.value = draft ? draft.versionId : null
+    }
     if (openDialog) versionsOpen.value = true
   } catch (error) {
     homeVersions.value = []
+    versionsTotal.value = 0
     if (openDialog) {
       const message = String(error?.message || "")
       proxy.$modal.msgWarning(message.includes("yc_activity_home_version")
@@ -1139,6 +1399,31 @@ async function loadHomeVersions(openDialog = true) {
   } finally {
     versionsLoading.value = false
   }
+}
+
+function handleVersionsPageChange(pageNum) {
+  loadHomeVersions(false, pageNum)
+}
+
+function handleVersionsSizeChange(pageSize) {
+  versionsPageSize.value = pageSize
+  loadHomeVersions(false, 1)
+}
+
+function restoreHomeVersion(row) {
+  const versionNo = row?.versionNo || "未知"
+  proxy.$modal.confirm(`确认将版本 v${versionNo} 的内容覆盖到当前草稿吗？当前草稿中未保存的内容会被替换。`).then(async () => {
+    restoringVersionId.value = row.versionId
+    try {
+      const res = await restoreHomeVersionApi(row.versionId)
+      homeVersionId.value = res.data?.versionId || null
+      editorDirty.value = false
+      await loadHomeVersions(false, 1)
+      proxy.$modal.msgSuccess(`版本 v${versionNo} 已覆盖到当前草稿`)
+    } finally {
+      restoringVersionId.value = null
+    }
+  }).catch(() => {})
 }
 
 function handleSelectionChange(selection) {
@@ -1209,6 +1494,10 @@ function restoreForm(data) {
     tileColSpan: data.tileColSpan || 1,
     gradientColor: options.gradientColor || tileBg || "",
     tileBg,
+    iconSize: clampNumber(options.iconSize, 20, 48, DEFAULT_ICON_SIZE),
+    iconBackground: options.iconBackground || "",
+    iconRadius: clampNumber(options.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
+    imageRatio: normalizedImageRatio(options.imageRatio),
     hidden: options.hidden !== undefined
       ? options.hidden === true || options.hidden === 1 || options.hidden === "1"
       : String(data.status) === "0",
@@ -1225,6 +1514,10 @@ function buildPayload() {
   delete payload.tileBg
   delete payload.opacity
   delete payload.hidden
+  delete payload.iconSize
+  delete payload.iconBackground
+  delete payload.iconRadius
+  delete payload.imageRatio
   payload.status = form.value.hidden ? "0" : "1"
   payload.iconType = form.value.iconType || "image"
   payload.iconUrl = payload.iconType === "image" ? (form.value.iconUrl || "") : ""
@@ -1234,6 +1527,10 @@ function buildPayload() {
   payload.contentUrl = ""
   const bg = String(form.value.gradientColor || form.value.tileBg || "").trim()
   const remarkObj = { __gridForm: true }
+  remarkObj.iconSize = clampNumber(form.value.iconSize, 20, 48, DEFAULT_ICON_SIZE)
+  remarkObj.iconBackground = form.value.iconBackground || ""
+  remarkObj.iconRadius = clampNumber(form.value.iconRadius, 0, 24, DEFAULT_ICON_RADIUS)
+  remarkObj.imageRatio = normalizedImageRatio(form.value.imageRatio)
   if (form.value.displayAsCard) remarkObj.displayAsCard = true
   if (form.value.showTitle === false) remarkObj.showTitle = false
   if (bg) {
@@ -1276,6 +1573,10 @@ function reset() {
     tileColSpan: 1,
     gradientColor: "",
     tileBg: "",
+    iconSize: DEFAULT_ICON_SIZE,
+    iconBackground: "",
+    iconRadius: DEFAULT_ICON_RADIUS,
+    imageRatio: "auto",
     displayAsCard: false,
     showTitle: true,
     hidden: false,
@@ -1357,7 +1658,7 @@ onMounted(() => {
   }
   loadMeta()
   getList()
-  loadHomeVersions(false)
+  loadHomeVersions(false, 1)
 })
 </script>
 
@@ -1372,65 +1673,101 @@ onMounted(() => {
   min-width: 0;
 }
 .template-config-card {
-  padding: 0 0 14px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
 }
-.editor-toolbar {
+.template-config-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.template-config-versionbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 40px;
+  gap: 12px;
 }
-.editor-toolbar__summary {
+.template-config-controls {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
   min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #e3e8ef;
 }
-.editor-toolbar__title {
-  color: #1f2937;
-  font-size: 16px;
+.template-control-label {
+  flex: 0 0 auto;
+  color: #526174;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
-.home-editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .home-editor-status {
-  color: #606266;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #dfe5ec;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #526174;
   font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
 }
 .home-editor-status.is-dirty {
-  color: #e6a23c;
+  border-color: #f3d19e;
+  background: #fdf6ec;
+  color: #b7791f;
 }
-.template-settings-bar {
+.template-config-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f2f5;
+  gap: 6px;
 }
-.template-settings-bar :deep(.el-form-item) {
-  margin: 0;
+.version-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
-.template-select-item :deep(.el-form-item__label) {
-  color: #526174;
-  font-weight: 600;
+.template-select {
+  flex: 1 1 auto;
+  min-width: 140px;
+  max-width: 300px;
 }
-.page-settings-launcher :deep(.el-button) {
+.page-settings-button {
   color: #526174;
   border-color: #d9e1ea;
   background: #fff;
 }
-.page-settings-launcher :deep(.el-button:hover) {
+.page-settings-button:hover {
   color: #1f6feb;
   border-color: #9fc5ee;
   background: #f3f8ff;
+}
+@media (max-width: 760px) {
+  .template-config-card {
+    padding: 14px;
+  }
+  .template-config-layout {
+    gap: 10px;
+  }
+  .template-config-versionbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .template-config-controls {
+    flex-wrap: wrap;
+  }
+  .template-select {
+    max-width: none;
+  }
+  .template-config-actions {
+    flex-wrap: wrap;
+  }
 }
 .page-settings-drawer :deep(.el-drawer__header) {
   margin-bottom: 0;
@@ -1464,12 +1801,6 @@ onMounted(() => {
 .grid-icon-thumb :deep(.el-image) {
   width: 100%;
   height: 100%;
-}
-.template-tip {
-  margin-top: 4px;
-  color: #606266;
-  font-size: 13px;
-  line-height: 1.5;
 }
 .template-option {
   width: 100%;
@@ -1565,6 +1896,25 @@ onMounted(() => {
   line-height: 22px;
   font-weight: 600;
 }
+.mobile-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+.mobile-field-help {
+  position: relative;
+  top: -1px;
+  flex: 0 0 auto;
+  color: #909399;
+  cursor: help;
+  font-size: 15px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.mobile-field-help:hover {
+  color: #409eff;
+}
 .grid-form-section :deep(.el-form-item) {
   margin-bottom: 18px;
 }
@@ -1603,6 +1953,22 @@ onMounted(() => {
   min-width: 72px;
   padding: 8px 12px;
 }
+.icon-style-slider {
+  width: min(100%, 560px);
+}
+.icon-background-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 360px);
+}
+.icon-background-control .el-input {
+  flex: 1;
+}
+.image-ratio-group {
+  display: flex;
+  flex-wrap: wrap;
+}
 .module-tip {
   display: flex;
   align-items: center;
@@ -1638,12 +2004,6 @@ onMounted(() => {
 .grid-form-section :deep(.editor) {
   width: min(100%, 700px);
 }
-.form-field-tip {
-  margin-top: 6px;
-  color: #909399;
-  font-size: 12px;
-  line-height: 1.5;
-}
 .grid-form-section :deep(.el-divider) {
   margin: 6px 0 18px;
 }
@@ -1661,20 +2021,6 @@ onMounted(() => {
 .grid-background-color-row { display: flex; align-items: center; gap: 8px; }
 .grid-background-color-row .el-input { flex: 1; }
 @media (max-width: 700px) {
-  .editor-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .home-editor-actions {
-    flex-wrap: wrap;
-  }
-  .template-settings-bar {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-  .template-select-item :deep(.el-select) {
-    width: min(330px, calc(100vw - 92px)) !important;
-  }
   .grid-edit-drawer { width: min(100vw, 720px) !important; }
   .grid-form-section :deep(.el-form-item__label) {
     float: none;
@@ -1719,12 +2065,6 @@ onMounted(() => {
 }
 .phone-screen.is-tile-screen {
   background: transparent;
-}
-.template-tip {
-  color: #606266;
-  font-size: 13px;
-  line-height: 1.5;
-  padding: 0 2px 4px;
 }
 .grid-visual-panel {
   padding: 2px 0;
@@ -2018,6 +2358,7 @@ onMounted(() => {
   grid-template-rows: 88px 97px 97px 97px;
 }
 .phone-tile-item {
+  position: relative;
   min-width: 0;
   margin: 3px;
   overflow: hidden;

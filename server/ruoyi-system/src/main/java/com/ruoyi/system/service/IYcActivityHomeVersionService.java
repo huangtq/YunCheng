@@ -17,6 +17,8 @@ public interface IYcActivityHomeVersionService
 
     YcActivityHomeVersion saveDraft(YcActivityHomeDraft draft, String username);
 
+    YcActivityHomeVersion restoreToDraft(Long versionId, String username);
+
     YcActivityHomeVersion publish(Long versionId, String publishedBy, String publishRemark);
 
     YcActivityHomeVersion schedule(Long versionId, Date publishAt, String scheduledBy);

@@ -2,6 +2,38 @@ import cache from '@/plugins/cache'
 import useSettingsStore from '@/store/modules/settings'
 
 const PERSIST_KEY = 'tags-view-visited'
+const MEETING_ROUTE_TAG_GROUPS = new Map([
+  ['meeting-place', new Set([
+    '/meeting/activity-config/venue',
+    '/meeting/activity-config/topic',
+    '/meeting/activity-config/schedule',
+    '/meeting/activity-config/expert'
+  ])],
+  ['meeting-guest', new Set([
+    '/meeting/activity-config/guest',
+    '/meeting/activity-config/guest-trip',
+    '/meeting/activity-config/guest-rule',
+    '/meeting/activity-config/guest-fee'
+  ])],
+  ['meeting-hotel', new Set([
+    '/meeting/activity-config/hotel',
+    '/meeting/activity-config/hotel-order',
+    '/meeting/activity-config/hotel-assign'
+  ])]
+])
+
+const ROUTE_TAG_GROUP_BY_PATH = new Map(
+  [...MEETING_ROUTE_TAG_GROUPS.entries()].flatMap(([group, paths]) => [...paths].map(path => [path, group]))
+)
+
+function getTagsGroup(view) {
+  const configuredGroup = view?.meta?.tagsGroup
+  const pathGroup = ROUTE_TAG_GROUP_BY_PATH.get(view?.path) || ''
+  const group = configuredGroup || pathGroup
+  if (!group) return ''
+  const activityId = view?.query?.id
+  return activityId ? `${group}:${activityId}` : group
+}
 
 function isPersistEnabled() {
   return useSettingsStore().tagsViewPersist
@@ -59,9 +91,9 @@ const useTagsViewStore = defineStore(
         )
       },
       addVisitedView(view) {
-        const tagsGroup = view.meta && view.meta.tagsGroup && !view.meta.tabKey
+        const tagsGroup = getTagsGroup(view)
         if (tagsGroup) {
-          const idx = this.visitedViews.findIndex(v => v.meta && v.meta.tagsGroup === tagsGroup)
+          const idx = this.visitedViews.findIndex(v => getTagsGroup(v) === tagsGroup)
           const next = Object.assign({}, view, {
             title: getViewTitle(view)
           })
@@ -194,10 +226,10 @@ const useTagsViewStore = defineStore(
         })
       },
       updateVisitedView(view) {
-        const tagsGroup = view.meta && view.meta.tagsGroup && !view.meta.tabKey
+        const tagsGroup = getTagsGroup(view)
         for (let v of this.visitedViews) {
           const samePath = getViewKey(v) === getViewKey(view)
-          const sameGroup = tagsGroup && v.meta && v.meta.tagsGroup === tagsGroup
+          const sameGroup = tagsGroup && getTagsGroup(v) === tagsGroup
           if (samePath || sameGroup) {
             Object.assign(v, view, {
               title: getViewTitle(view)

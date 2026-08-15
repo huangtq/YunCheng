@@ -12,6 +12,10 @@ export function saveHomeDraft(data) {
   return request({ url: '/meeting/home-version/draft', method: 'post', data })
 }
 
+export function restoreHomeVersion(versionId) {
+  return request({ url: `/meeting/home-version/${versionId}/restore-draft`, method: 'post' })
+}
+
 export function publishHomeVersion(versionId, publishRemark) {
   return request({ url: `/meeting/home-version/${versionId}/publish`, method: 'post', data: { publishRemark } })
 }
