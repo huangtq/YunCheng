@@ -64,7 +64,10 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
     public YcActivityHomeVersion saveDraft(YcActivityHomeVersion version)
     {
         requireActivityAndPage(version);
+        // The database column is NOT NULL; new drafts always start in manual mode.
         version.setSchemaVersion(StringUtils.isEmpty(version.getSchemaVersion()) ? DEFAULT_SCHEMA_VERSION : version.getSchemaVersion());
+        version.setPublishMode(StringUtils.isEmpty(version.getPublishMode()) ? "manual" : version.getPublishMode());
+        if (version.getPublishRemark() == null) version.setPublishRemark("");
         if (version.getVersionId() == null)
         {
             YcActivityHomeVersion existingDraft = homeVersionMapper.selectLatestGridConfigDraftByActivityId(version.getActivityId());
