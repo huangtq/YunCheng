@@ -17,6 +17,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.YcActivityGrid;
+import com.ruoyi.system.domain.YcActivityGridAttachment;
 import com.ruoyi.system.service.IYcActivityGridService;
 
 @RestController
@@ -48,7 +49,7 @@ public class YcActivityGridController extends BaseController
     public AjaxResult add(@RequestBody YcActivityGrid grid)
     {
         grid.setCreateBy(getUsername());
-        return toAjax(ycActivityGridService.insertYcActivityGrid(grid));
+        return ycActivityGridService.insertYcActivityGrid(grid) > 0 ? success(grid) : error();
     }
 
     @PreAuthorize("@ss.hasPermi('meeting:grid:edit')")
@@ -57,7 +58,7 @@ public class YcActivityGridController extends BaseController
     public AjaxResult edit(@RequestBody YcActivityGrid grid)
     {
         grid.setUpdateBy(getUsername());
-        return toAjax(ycActivityGridService.updateYcActivityGrid(grid));
+        return ycActivityGridService.updateYcActivityGrid(grid) > 0 ? success(grid) : error();
     }
 
     @PreAuthorize("@ss.hasPermi('meeting:grid:remove')")
@@ -66,5 +67,19 @@ public class YcActivityGridController extends BaseController
     public AjaxResult remove(@PathVariable Long[] gridIds)
     {
         return toAjax(ycActivityGridService.deleteYcActivityGridByIds(gridIds));
+    }
+
+    @PreAuthorize("@ss.hasPermi('meeting:grid:list')")
+    @GetMapping("/{gridId}/attachments")
+    public AjaxResult attachments(@PathVariable Long gridId)
+    {
+        return success(ycActivityGridService.selectAttachments(gridId));
+    }
+
+    @PreAuthorize("@ss.hasPermi('meeting:grid:edit')")
+    @PostMapping("/{gridId}/attachments")
+    public AjaxResult saveAttachments(@PathVariable Long gridId, @RequestBody List<YcActivityGridAttachment> attachments)
+    {
+        return toAjax(ycActivityGridService.syncAttachments(gridId, attachments, getUsername()));
     }
 }

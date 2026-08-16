@@ -182,6 +182,7 @@
             <template #default="scope">
               <span v-if="scope.row.linkType === 'module'">{{ moduleLabel(scope.row.moduleKey) }}</span>
               <span v-else-if="scope.row.linkType === 'url'">{{ scope.row.externalUrl }}</span>
+              <span v-else-if="scope.row.linkType === 'pdf'">{{ fileNameFromUrl(scope.row.contentUrl) }}</span>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -417,11 +418,12 @@
           <section class="grid-form-section">
             <h3>点击后的动作</h3>
             <el-form-item label="动作类型" prop="linkType">
-              <el-radio-group v-model="form.linkType" class="action-type-group">
+              <el-radio-group v-model="form.linkType" class="action-type-group" @change="handleLinkTypeChange">
                 <el-radio-button value="none">无动作</el-radio-button>
                 <el-radio-button value="module">模块跳转</el-radio-button>
                 <el-radio-button value="url">外部链接</el-radio-button>
                 <el-radio-button value="content">内容页</el-radio-button>
+                <el-radio-button value="pdf">PDF页</el-radio-button>
               </el-radio-group>
             </el-form-item>
             <el-form-item v-if="form.linkType === 'module'" label="模块跳转" prop="moduleKey">
@@ -447,6 +449,59 @@
                 :min-height="300"
                 :upload-url="contentImageUploadUrl"
               />
+            </el-form-item>
+            <el-form-item v-if="form.linkType === 'content'" label="附件">
+              <div class="grid-attachment-editor">
+                <el-upload
+                  :action="attachmentUploadUrl"
+                  :headers="uploadHeaders"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+                  multiple
+                  :show-file-list="false"
+                  :before-upload="beforeAttachmentUpload"
+                  :on-success="handleAttachmentUploadSuccess"
+                  :on-error="handleAttachmentUploadError"
+                >
+                  <el-button type="primary" plain icon="Upload">上传附件</el-button>
+                </el-upload>
+                <div class="el-upload__tip grid-attachment-tip">支持 PDF、Word、Excel、PPT、ZIP、TXT，单个文件不超过 10MB。</div>
+                <div v-if="form.attachments?.length" class="grid-attachment-list">
+                  <div v-for="(attachment, index) in form.attachments" :key="attachment.clientId || attachment.attachmentId || index" class="grid-attachment-item">
+                    <div class="grid-attachment-icon"><el-icon><Document /></el-icon></div>
+                    <div class="grid-attachment-fields">
+                      <div class="grid-attachment-original">{{ attachment.originalName || attachment.downloadName || attachment.displayName }}</div>
+                      <el-input v-model="attachment.displayName" size="small" placeholder="展示名称" maxlength="255">
+                        <template #prepend>展示名</template>
+                      </el-input>
+                      <el-input v-model="attachment.downloadName" size="small" placeholder="下载文件名（含扩展名）" maxlength="255">
+                        <template #prepend>下载名</template>
+                      </el-input>
+                    </div>
+                    <el-button class="grid-attachment-remove" link type="danger" @click="removeAttachment(index)">移除</el-button>
+                  </div>
+                </div>
+              </div>
+            </el-form-item>
+            <el-form-item v-if="form.linkType === 'pdf'" label="PDF文件" prop="contentUrl">
+              <div class="pdf-upload-area">
+                <el-upload
+                  :action="pdfUploadUrl"
+                  :headers="uploadHeaders"
+                  accept=".pdf,application/pdf"
+                  :show-file-list="false"
+                  :before-upload="beforePdfUpload"
+                  :on-success="handlePdfUploadSuccess"
+                  :on-error="handlePdfUploadError"
+                >
+                  <el-button type="primary" plain icon="Upload">上传PDF</el-button>
+                </el-upload>
+                <div class="el-upload__tip pdf-upload-tip">仅支持 PDF，单文件不超过 10MB；移动端将使用 PDF 阅读页打开。</div>
+              </div>
+              <div v-if="form.contentUrl" class="pdf-file-value">
+                <el-icon><Document /></el-icon>
+                <span class="pdf-file-name">{{ form.pdfFileName || fileNameFromUrl(form.contentUrl) }}</span>
+                <el-button link type="danger" @click="clearPdfFile">移除</el-button>
+              </div>
             </el-form-item>
           </section>
 
@@ -693,7 +748,7 @@
 </template>
 
 <script setup name="MeetingGrid">
-import { listGrid, getGrid, addGrid, updateGrid, delGrid } from "@/api/meeting/grid"
+import { listGrid, getGrid, addGrid, updateGrid, delGrid, listGridAttachments, saveGridAttachments } from "@/api/meeting/grid"
 import { getActivity } from "@/api/meeting/activity"
 import { getActivityConfig } from "@/api/meeting/config"
 import MaterialSelect from "@/components/MaterialSelect"
@@ -702,6 +757,8 @@ import MeetingIconSelect from "@/components/MeetingIconSelect"
 import { MEETING_MODULE_OPTIONS, getMeetingModule, meetingModuleLabel } from "@/utils/meetingModules"
 import { listHomeVersions, publishHomeVersion, restoreHomeVersion as restoreHomeVersionApi, saveHomeDraft as saveHomeDraftVersion } from "@/api/meeting/homeVersion"
 import { getMeetingHomeTemplate } from "@/utils/meetingHomeTemplates"
+import { getToken } from "@/utils/auth"
+import { Document } from "@element-plus/icons-vue"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -712,6 +769,13 @@ const activityId = computed(() => route.query.id)
 const contentImageUploadUrl = computed(() => activityId.value
   ? `${baseUrl}/meeting/activity/${activityId.value}/file/upload`
   : "")
+const pdfUploadUrl = computed(() => activityId.value
+  ? `${baseUrl}/meeting/activity/${activityId.value}/file/upload`
+  : "")
+const attachmentUploadUrl = computed(() => activityId.value
+  ? `${baseUrl}/meeting/activity/${activityId.value}/file/upload`
+  : "")
+const uploadHeaders = computed(() => ({ Authorization: `Bearer ${getToken()}` }))
 const activityInfo = ref({})
 const loading = ref(true)
 const gridList = ref([])
@@ -907,6 +971,12 @@ function gridCardUrl(item) {
   return item?.contentUrl || item?.iconUrl || ""
 }
 
+function resolveGridIconUrl(item) {
+  if (item?.iconUrl) return item.iconUrl
+  if (item?.iconType === "image" && item?.contentUrl) return item.contentUrl
+  return ""
+}
+
 function preventMobileFieldLabelClick(event) {
   if (event.target?.closest?.(".mobile-field-label")) {
     event.preventDefault()
@@ -1082,9 +1152,12 @@ const queryParams = ref({
 
 const form = ref({})
 const selectedModule = computed(() => getMeetingModule(form.value.moduleKey))
-const rules = {
-  title: [{ required: true, message: "标题不能为空", trigger: "blur" }]
-}
+const rules = computed(() => ({
+  title: [{ required: true, message: "标题不能为空", trigger: "blur" }],
+  contentUrl: form.value.linkType === "pdf"
+    ? [{ required: true, message: "请上传PDF文件", trigger: "change" }]
+    : []
+}))
 
 function resolveUrl(url) {
   if (!url) return ""
@@ -1096,6 +1169,7 @@ function linkTypeLabel(type) {
   if (type === "module") return "内置模块"
   if (type === "url") return "外部链接"
   if (type === "content") return "内容页"
+  if (type === "pdf") return "PDF页"
   return "无"
 }
 
@@ -1107,6 +1181,7 @@ function getList() {
       const options = parseGridOptions(item.remark)
       return {
         ...item,
+        iconUrl: resolveGridIconUrl(item),
         iconSize: clampNumber(options.iconSize, 20, 48, DEFAULT_ICON_SIZE),
         iconBackground: options.iconBackground || "",
         iconRadius: clampNumber(options.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
@@ -1223,13 +1298,22 @@ function homeEntryTarget(item) {
   if (item.linkType === "module") return { targetType: "module", target: { moduleKey: item.moduleKey || "" } }
   if (item.linkType === "url") return { targetType: "external", target: { url: item.externalUrl || "" } }
   if (item.linkType === "phone") return { targetType: "phone", target: { phone: item.phone || item.externalUrl || "" } }
+  if (item.linkType === "pdf") {
+    return {
+      targetType: "pdf",
+      target: { url: item.contentUrl || "" },
+      contentType: "pdf",
+      contentUrl: item.contentUrl || ""
+    }
+  }
   if (item.linkType === "content") {
     return {
       targetType: "content",
       target: item.contentId ? { contentId: item.contentId } : { contentId: null },
       legacyContent: item.content || "",
       contentType: item.contentType || "text",
-      contentUrl: item.contentUrl || ""
+      contentUrl: item.contentUrl || "",
+      attachments: item.attachments || []
     }
   }
   return { targetType: "group", target: {}, children: [{ id: `grid-${item.gridId}-placeholder`, title: "未配置动作", enabled: false, targetType: "module", target: { moduleKey: "apply" } }] }
@@ -1250,7 +1334,7 @@ function buildHomePage() {
   const sectionKey = template.layout.gridTemplate === "tile" ? "tiles" : template.layout.template === "image-map" ? "hotspots" : "menu"
   const sourceItems = template.layout.template === "image-map" && parseHomeBlocks().length
     ? parseHomeBlocks()
-    : previewItems.value.filter(item => ["module", "url", "content"].includes(item.linkType))
+    : previewItems.value.filter(item => ["module", "url", "content", "pdf"].includes(item.linkType))
   const entries = sourceItems.map((item, index) => ({
     id: `grid-${item.gridId || item.id || index}`,
     title: item.title || "",
@@ -1481,13 +1565,16 @@ function restoreForm(data) {
   const legacyImageContent = data.contentType === "image" && data.contentUrl
     ? `<p><img src="${resolveUrl(data.contentUrl)}" /></p>`
     : ""
-  return {
-    ...data,
+    return {
+      ...data,
     iconType: data.iconType || (data.iconKey ? "icon" : "image"),
     iconKey: data.iconKey || "",
+    iconUrl: resolveGridIconUrl(data),
     content: data.content || options.content || legacyImageContent,
-    contentType: "text",
-    contentUrl: data.contentUrl || "",
+      contentType: data.contentType || (data.linkType === "pdf" ? "pdf" : "text"),
+      contentUrl: data.contentUrl || "",
+      pdfFileName: fileNameFromUrl(data.contentUrl, "PDF文件"),
+      attachments: Array.isArray(data.attachments) ? data.attachments.map(normalizeAttachment) : [],
     tileRow: data.tileRow || 0,
     tileCol: data.tileCol || 0,
     tileRowSpan: data.tileRowSpan || 1,
@@ -1523,8 +1610,11 @@ function buildPayload() {
   payload.iconUrl = payload.iconType === "image" ? (form.value.iconUrl || "") : ""
   payload.iconKey = payload.iconType === "icon" ? (form.value.iconKey || "") : ""
   payload.showTitle = form.value.showTitle !== false
-  payload.contentType = "text"
-  payload.contentUrl = ""
+  payload.contentType = form.value.linkType === "pdf" ? "pdf" : "text"
+  payload.contentUrl = form.value.linkType === "pdf" ? (form.value.contentUrl || "") : ""
+  payload.content = form.value.linkType === "pdf" ? "" : (form.value.content || "")
+  delete payload.pdfFileName
+  delete payload.attachments
   const bg = String(form.value.gradientColor || form.value.tileBg || "").trim()
   const remarkObj = { __gridForm: true }
   remarkObj.iconSize = clampNumber(form.value.iconSize, 20, 48, DEFAULT_ICON_SIZE)
@@ -1536,6 +1626,9 @@ function buildPayload() {
   if (bg) {
     remarkObj.bg = bg
     remarkObj.gradientColor = bg
+  }
+  if (form.value.linkType === "content" && form.value.attachments?.length) {
+    remarkObj.attachmentCount = form.value.attachments.length
   }
   payload.remark = JSON.stringify(remarkObj)
   return payload
@@ -1567,6 +1660,8 @@ function reset() {
     content: "",
     contentType: "text",
     contentUrl: "",
+    pdfFileName: "",
+    attachments: [],
     tileRow: 0,
     tileCol: 0,
     tileRowSpan: 1,
@@ -1593,6 +1688,124 @@ function handleIconTypeChange(type) {
   } else {
     form.value.iconKey = ""
   }
+}
+
+function handleLinkTypeChange(type) {
+  if (type === "pdf") {
+    form.value.contentType = "pdf"
+    form.value.content = ""
+    form.value.externalUrl = ""
+  } else if (type === "content") {
+    form.value.contentType = "text"
+    form.value.contentUrl = ""
+    form.value.pdfFileName = ""
+  } else {
+    form.value.contentType = "text"
+    form.value.contentUrl = ""
+    form.value.pdfFileName = ""
+    form.value.attachments = []
+  }
+  nextTick(() => {
+    proxy.$refs.formRef?.clearValidate("contentUrl")
+    if (type === "pdf" && !form.value.contentUrl) {
+      proxy.$refs.formRef?.validateField("contentUrl")
+    }
+  })
+}
+
+function fileNameFromUrl(url, fallback = "文件") {
+  const value = String(url || "")
+  if (!value) return fallback
+  const clean = value.split(/[?#]/)[0]
+  return decodeURIComponent(clean.slice(clean.lastIndexOf("/") + 1)) || fallback
+}
+
+function normalizeAttachment(attachment, index = 0) {
+  const fileName = attachment?.downloadName || attachment?.originalName || fileNameFromUrl(attachment?.fileUrl, "附件")
+  return {
+    ...attachment,
+    clientId: attachment?.clientId || `attachment-${attachment?.attachmentId || Date.now()}-${index}`,
+    displayName: attachment?.displayName || attachment?.originalName || fileName,
+    downloadName: fileName
+  }
+}
+
+function beforeAttachmentUpload(file) {
+  if (file.size / 1024 / 1024 > 10) {
+    proxy.$modal.msgError("附件不能超过 10MB")
+    return false
+  }
+  if (!/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|txt)$/i.test(file.name || "")) {
+    proxy.$modal.msgError("暂不支持该附件类型")
+    return false
+  }
+  return true
+}
+
+function handleAttachmentUploadSuccess(response) {
+  if (response?.code !== 200) {
+    proxy.$modal.msgError(response?.msg || "附件上传失败")
+    return
+  }
+  const file = response.data || response
+  const fileUrl = file.fileName || file.url || ""
+  if (!fileUrl) {
+    proxy.$modal.msgError("附件上传结果无文件地址")
+    return
+  }
+  const originalName = file.originalName || file.originalFilename || fileNameFromUrl(fileUrl, "附件")
+  form.value.attachments = [...(form.value.attachments || []), normalizeAttachment({
+    fileUrl,
+    fileType: file.fileSuffix || file.fileType || "",
+    fileSize: file.fileSize || 0,
+    originalName,
+    displayName: originalName,
+    downloadName: originalName
+  }, form.value.attachments?.length || 0)]
+  proxy.$modal.msgSuccess("附件上传成功")
+}
+
+function handleAttachmentUploadError() {
+  proxy.$modal.msgError("附件上传失败")
+}
+
+function removeAttachment(index) {
+  form.value.attachments = (form.value.attachments || []).filter((_, itemIndex) => itemIndex !== index)
+}
+
+function beforePdfUpload(file) {
+  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name)
+  if (!isPdf) {
+    proxy.$modal.msgError("只能上传 PDF 文件")
+    return false
+  }
+  if (file.size / 1024 / 1024 > 10) {
+    proxy.$modal.msgError("PDF 文件不能超过 10MB")
+    return false
+  }
+  return true
+}
+
+function handlePdfUploadSuccess(response) {
+  if (response?.code !== 200) {
+    proxy.$modal.msgError(response?.msg || "PDF 上传失败")
+    return
+  }
+  const file = response.data || response
+  form.value.contentUrl = file.fileName || file.url || ""
+  form.value.pdfFileName = file.originalName || file.originalFilename || fileNameFromUrl(form.value.contentUrl)
+  proxy.$refs.formRef?.clearValidate("contentUrl")
+  proxy.$modal.msgSuccess("PDF 上传成功")
+}
+
+function handlePdfUploadError() {
+  proxy.$modal.msgError("PDF 上传失败")
+}
+
+function clearPdfFile() {
+  form.value.contentUrl = ""
+  form.value.pdfFileName = ""
+  nextTick(() => proxy.$refs.formRef?.validateField("contentUrl"))
 }
 
 function handleAdd() {
@@ -1629,11 +1842,26 @@ function handleUpdate(row) {
 }
 
 function submitForm() {
+  if (form.value.linkType === "pdf" && !String(form.value.contentUrl || "").trim()) {
+    proxy.$modal.msgError("请先上传PDF文件")
+    nextTick(() => proxy.$refs.formRef?.validateField("contentUrl"))
+    return
+  }
   proxy.$refs["formRef"].validate(valid => {
     if (!valid) return
     const payload = buildPayload()
     const req = form.value.gridId ? updateGrid(payload) : addGrid(payload)
-    req.then(() => {
+    req.then(res => {
+      const savedGridId = form.value.gridId || res.data?.gridId || payload.gridId
+      if (!savedGridId) throw new Error("九宫格保存成功但未返回项目ID")
+      const attachments = form.value.linkType === "content"
+        ? (form.value.attachments || []).map(item => {
+          const { clientId, originalName, ...saved } = item
+          return saved
+        })
+        : []
+      return saveGridAttachments(savedGridId, attachments)
+    }).then(() => {
       proxy.$modal.msgSuccess("操作成功")
       open.value = false
       getList()
@@ -1831,6 +2059,86 @@ onMounted(() => {
 }
 .grid-form {
   padding: 0 2px 8px;
+}
+.pdf-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+.pdf-upload-tip {
+  margin-top: 7px;
+  line-height: 1.5;
+  text-align: left;
+}
+.grid-attachment-editor {
+  width: 100%;
+}
+.grid-attachment-tip {
+  margin-top: 7px;
+  line-height: 1.5;
+}
+.grid-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.grid-attachment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+.grid-attachment-icon {
+  display: flex;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #1f6feb;
+  border-radius: 4px;
+  background: #e8f1ff;
+}
+.grid-attachment-fields {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+.grid-attachment-original {
+  overflow: hidden;
+  color: #606266;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grid-attachment-remove {
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+.pdf-file-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: #fff;
+}
+.pdf-file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #606266;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .grid-edit-scrollbar {

@@ -1,6 +1,7 @@
 package com.ruoyi.framework.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -58,6 +59,10 @@ public class SecurityConfig
     @Autowired
     private PermitAllUrlProperties permitAllUrl;
 
+    /** Local H5 runs on a different port from the API when previewing PDFs. */
+    @Value("${ruoyi.security.allow-cross-origin-pdf-frame:false}")
+    private boolean allowCrossOriginPdfFrame;
+
 	/**
 	 * 身份验证实现
 	 */
@@ -90,7 +95,15 @@ public class SecurityConfig
             .csrf(csrf -> csrf.disable())
             // 禁用HTTP响应标头
             .headers((headersCustomizer) -> {
-                headersCustomizer.cacheControl(cache -> cache.disable()).frameOptions(options -> options.sameOrigin());
+                headersCustomizer.cacheControl(cache -> cache.disable());
+                if (allowCrossOriginPdfFrame)
+                {
+                    headersCustomizer.frameOptions(options -> options.disable());
+                }
+                else
+                {
+                    headersCustomizer.frameOptions(options -> options.sameOrigin());
+                }
             })
             // 认证失败处理类
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))

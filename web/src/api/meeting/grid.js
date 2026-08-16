@@ -37,3 +37,18 @@ export function delGrid(gridId) {
     method: 'delete'
   })
 }
+
+export function listGridAttachments(gridId) {
+  return request({
+    url: `/meeting/grid/${gridId}/attachments`,
+    method: 'get'
+  })
+}
+
+export function saveGridAttachments(gridId, data) {
+  return request({
+    url: `/meeting/grid/${gridId}/attachments`,
+    method: 'post',
+    data
+  })
+}

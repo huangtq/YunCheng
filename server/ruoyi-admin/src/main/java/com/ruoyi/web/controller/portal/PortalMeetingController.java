@@ -7,9 +7,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.config.RuoYiConfig;
+import com.ruoyi.common.utils.file.FileUtils;
+import com.ruoyi.system.domain.YcActivityGridAttachment;
 import com.ruoyi.system.service.IYcPortalMeetingService;
 import com.ruoyi.system.service.IYcMeetingNoticeService;
 import com.ruoyi.common.core.domain.model.MpLoginUser;
@@ -46,6 +50,27 @@ public class PortalMeetingController extends BaseController
     {
         response.sendRedirect(portalMeetingService.getPublicAttachmentUrl(activityId, attachmentId,
             mpTokenService.getLoginUser(request)));
+    }
+
+    @GetMapping("/grid/{activityId}/attachment/{gridId}/{attachmentId}")
+    public void downloadGridAttachment(@PathVariable Long activityId, @PathVariable Long gridId,
+        @PathVariable Long attachmentId, HttpServletResponse response) throws java.io.IOException
+    {
+        YcActivityGridAttachment attachment = portalMeetingService.getPublicGridAttachment(activityId, gridId, attachmentId);
+        String fileUrl = attachment.getFileUrl();
+        if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://"))
+        {
+            response.sendRedirect(fileUrl);
+            return;
+        }
+        if (!FileUtils.checkAllowDownload(fileUrl))
+        {
+            throw new IllegalArgumentException("附件地址非法");
+        }
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        FileUtils.setAttachmentResponseHeader(response, attachment.getDownloadName());
+        String filePath = RuoYiConfig.getProfile() + FileUtils.stripPrefix(fileUrl);
+        FileUtils.writeBytes(filePath, response.getOutputStream());
     }
 
     @GetMapping("/activity/{activityId}")

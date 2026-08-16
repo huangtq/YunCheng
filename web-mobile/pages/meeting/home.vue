@@ -540,7 +540,13 @@ function onGridClick(item) {
       if ((item.contentType === 'image' || !item.legacyContent) && legacyUrl) {
         uni.navigateTo({ url: `/pages/common/imageview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title || '图片内容')}&url=${encodeURIComponent(legacyUrl)}` })
       } else {
-        uni.navigateTo({ url: `/pages/common/textview/index?activityId=${activityId.value}&title=${encodeURIComponent(item.title || '内容')}&content=${encodeURIComponent(item.legacyContent)}` })
+        const query = [
+          `activityId=${encodeURIComponent(activityId.value || '')}`,
+          `title=${encodeURIComponent(item.title || '内容')}`,
+          `content=${encodeURIComponent(item.legacyContent)}`
+        ]
+        if (item.gridId) query.push(`gridId=${encodeURIComponent(item.gridId)}`)
+        uni.navigateTo({ url: `/pages/common/textview/index?${query.join('&')}` })
       }
       return
     }
@@ -560,6 +566,12 @@ function onGridClick(item) {
   if (item.linkType === 'url' && item.externalUrl) {
     uni.navigateTo({
       url: `/pages/common/webview/index?activityId=${encodeURIComponent(activityId.value || '')}&title=${encodeURIComponent(item.title)}&url=${encodeURIComponent(item.externalUrl)}`
+    })
+    return
+  }
+  if (item.linkType === 'pdf' && (item.contentUrl || item.pdfUrl || item.url)) {
+    uni.navigateTo({
+      url: `/pages/common/pdf/index?activityId=${encodeURIComponent(activityId.value || '')}&title=${encodeURIComponent(item.title || 'PDF文件')}&url=${encodeURIComponent(item.contentUrl || item.pdfUrl || item.url)}`
     })
     return
   }

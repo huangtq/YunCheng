@@ -2,6 +2,7 @@ package com.ruoyi.system.domain;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import java.util.List;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
@@ -30,6 +31,7 @@ public class YcActivityGrid extends BaseEntity
     private Integer tileColSpan;
     private String status;
     private String delFlag;
+    private List<YcActivityGridAttachment> attachments;
 
     public Long getGridId() { return gridId; }
     public void setGridId(Long gridId) { this.gridId = gridId; }
@@ -69,6 +71,8 @@ public class YcActivityGrid extends BaseEntity
     public void setStatus(String status) { this.status = status; }
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public List<YcActivityGridAttachment> getAttachments() { return attachments; }
+    public void setAttachments(List<YcActivityGridAttachment> attachments) { this.attachments = attachments; }
 
     @Override
     public String toString() {

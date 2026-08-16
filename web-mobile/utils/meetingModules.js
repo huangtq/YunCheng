@@ -47,6 +47,12 @@ export function resolveEntryPage(activityId, entry) {
     return /^\d+$/.test(String(contentId || ''))
       ? `/pages/meeting/content?activityId=${activityId}&contentId=${contentId}` : ''
   }
+  if (targetType === 'pdf') {
+    const url = typeof target === 'object' ? (target.url || entry.contentUrl || entry.pdfUrl || entry.url) : (target || entry.contentUrl || entry.pdfUrl || entry.url)
+    return url
+      ? `/pages/common/pdf/index?activityId=${encodeURIComponent(activityId || '')}&title=${encodeURIComponent(entry.title || 'PDF文件')}&url=${encodeURIComponent(url)}`
+      : ''
+  }
   if (targetType === 'module') {
     const moduleKey = typeof target === 'object' ? target.moduleKey : target
     return moduleKey ? resolveModulePage(activityId, moduleKey, entry.title) : ''

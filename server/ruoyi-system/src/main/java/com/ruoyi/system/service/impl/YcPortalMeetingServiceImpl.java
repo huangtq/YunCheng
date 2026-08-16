@@ -19,6 +19,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.YcActivity;
 import com.ruoyi.system.domain.YcActivityConfig;
 import com.ruoyi.system.domain.YcActivityGrid;
+import com.ruoyi.system.domain.YcActivityGridAttachment;
 import com.ruoyi.system.domain.YcActivityNav;
 import com.ruoyi.system.domain.YcApplyChannel;
 import com.ruoyi.system.domain.YcApplyField;
@@ -37,6 +38,7 @@ import com.ruoyi.system.domain.YcMeetingContent;
 import com.ruoyi.system.domain.YcMeetingContentAttachment;
 import com.ruoyi.system.mapper.YcActivityConfigMapper;
 import com.ruoyi.system.mapper.YcActivityGridMapper;
+import com.ruoyi.system.mapper.YcActivityGridAttachmentMapper;
 import com.ruoyi.system.mapper.YcActivityMapper;
 import com.ruoyi.system.mapper.YcActivityNavMapper;
 import com.ruoyi.system.mapper.YcApplyChannelMapper;
@@ -62,6 +64,7 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
     @Autowired private YcActivityMapper activityMapper;
     @Autowired private YcActivityConfigMapper configMapper;
     @Autowired private YcActivityGridMapper gridMapper;
+    @Autowired private YcActivityGridAttachmentMapper gridAttachmentMapper;
     @Autowired private YcScheduleMapper scheduleMapper;
     @Autowired private YcGuestMapper guestMapper;
     @Autowired private YcVenueMapper venueMapper;
@@ -561,10 +564,17 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             entry.put("tileRowSpan", grid.getTileRowSpan());
             entry.put("tileColSpan", grid.getTileColSpan());
             entry.put("sort", grid.getSortOrder());
+            entry.put("attachments", grid.getAttachments());
             String linkType = StringUtils.isEmpty(grid.getLinkType()) ? "none" : grid.getLinkType();
-            entry.put("targetType", "module".equals(linkType) ? "module" : ("url".equals(linkType) ? "external" : ("content".equals(linkType) ? "content" : "group")));
+            entry.put("targetType", "module".equals(linkType) ? "module" : ("url".equals(linkType) ? "external" : ("content".equals(linkType) ? "content" : ("pdf".equals(linkType) ? "pdf" : "group"))));
             if ("module".equals(linkType)) entry.put("target", grid.getModuleKey());
             else if ("url".equals(linkType)) entry.put("target", grid.getExternalUrl());
+            else if ("pdf".equals(linkType))
+            {
+                entry.put("target", grid.getContentUrl());
+                entry.put("contentType", "pdf");
+                entry.put("contentUrl", grid.getContentUrl());
+            }
             else if ("content".equals(linkType))
             {
                 entry.put("target", grid.getContentUrl());
@@ -633,10 +643,51 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
         q.setActivityId(activityId);
         q.setStatus("1");
         List<YcActivityGrid> list = gridMapper.selectYcActivityGridList(q);
+        for (YcActivityGrid grid : list)
+        {
+            grid.setAttachments(loadGridAttachments(grid.getGridId()));
+        }
         list.sort((a, b) -> Integer.compare(
             a.getSortOrder() == null ? 0 : a.getSortOrder(),
             b.getSortOrder() == null ? 0 : b.getSortOrder()));
         return list;
+    }
+
+    @Override
+    public YcActivityGridAttachment getPublicGridAttachment(Long activityId, Long gridId, Long attachmentId)
+    {
+        requireActivity(activityId);
+        YcActivityGrid grid = gridMapper.selectYcActivityGridById(gridId);
+        if (grid == null || !activityId.equals(grid.getActivityId()) || !"1".equals(grid.getStatus()))
+        {
+            throw new ServiceException("grid attachment not available");
+        }
+        for (YcActivityGridAttachment attachment : loadGridAttachments(gridId))
+        {
+            if (attachmentId.equals(attachment.getAttachmentId()) && "1".equals(attachment.getStatus()))
+            {
+                return attachment;
+            }
+        }
+        throw new ServiceException("grid attachment not available");
+    }
+
+    private List<YcActivityGridAttachment> loadGridAttachments(Long gridId)
+    {
+        try
+        {
+            return gridAttachmentMapper.selectByGridId(gridId);
+        }
+        catch (DataAccessException e)
+        {
+            String message = e.getMessage();
+            if (message != null && message.contains("yc_activity_grid_attachment")
+                && (message.contains("doesn't exist") || message.contains("does not exist") || message.contains("不存在")))
+            {
+                return new ArrayList<>();
+            }
+            throw e;
+        }
     }
 
     @Override

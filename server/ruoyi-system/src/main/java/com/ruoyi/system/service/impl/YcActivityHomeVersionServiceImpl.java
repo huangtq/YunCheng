@@ -306,7 +306,7 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
             }
             if (ancestors.contains(id)) throw new ServiceException("entryTree cannot contain cycles");
             if (!ids.add(id)) throw new ServiceException("entryTree entry id must be unique");
-            if (!"group".equals(targetType) && !"content".equals(targetType) && !"module".equals(targetType)
+            if (!"group".equals(targetType) && !"content".equals(targetType) && !"pdf".equals(targetType) && !"module".equals(targetType)
                 && !"file".equals(targetType) && !"map".equals(targetType) && !"external".equals(targetType) && !"phone".equals(targetType))
             {
                 throw new ServiceException("unsupported entry targetType: " + targetType);
@@ -325,6 +325,12 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
             {
                 target = targetObject == null ? target : targetObject.getString("phone");
                 if (StringUtils.isEmpty(target)) throw new ServiceException("phone entry requires a phone target");
+            }
+            if ("pdf".equals(targetType))
+            {
+                target = targetObject == null ? target : targetObject.getString("url");
+                if (StringUtils.isEmpty(target)) target = entry.getString("contentUrl");
+                if (StringUtils.isEmpty(target)) throw new ServiceException("pdf entry requires a file target");
             }
             if ("content".equals(targetType) && publishing)
             {

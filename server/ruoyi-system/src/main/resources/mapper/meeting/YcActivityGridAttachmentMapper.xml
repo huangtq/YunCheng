@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.YcActivityGridAttachmentMapper">
+    <resultMap type="YcActivityGridAttachment" id="GridAttachmentResult">
+        <result property="attachmentId" column="attachment_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="gridId" column="grid_id" />
+        <result property="displayName" column="display_name" />
+        <result property="downloadName" column="download_name" />
+        <result property="fileUrl" column="file_url" />
+        <result property="fileType" column="file_type" />
+        <result property="fileSize" column="file_size" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectGridAttachmentVo">
+        select attachment_id, activity_id, grid_id, display_name, download_name, file_url,
+               file_type, file_size, sort_order, status, del_flag, create_by, create_time,
+               update_by, update_time
+        from yc_activity_grid_attachment
+    </sql>
+
+    <select id="selectByGridId" resultMap="GridAttachmentResult">
+        <include refid="selectGridAttachmentVo" />
+        where grid_id = #{gridId} and status = '1' and del_flag = '0'
+        order by sort_order asc, attachment_id asc
+    </select>
+
+    <select id="selectAllByGridId" resultMap="GridAttachmentResult">
+        <include refid="selectGridAttachmentVo" />
+        where grid_id = #{gridId} and del_flag = '0'
+        order by sort_order asc, attachment_id asc
+    </select>
+
+    <insert id="insertAttachment" parameterType="YcActivityGridAttachment" useGeneratedKeys="true" keyProperty="attachmentId">
+        insert into yc_activity_grid_attachment(
+            activity_id, grid_id, display_name, download_name, file_url, file_type, file_size,
+            sort_order, status, del_flag, create_by, create_time
+        ) values (
+            #{activityId}, #{gridId}, #{displayName}, #{downloadName}, #{fileUrl}, #{fileType}, #{fileSize},
+            #{sortOrder}, #{status}, '0', #{createBy}, sysdate()
+        )
+    </insert>
+
+    <delete id="deleteByGridId">
+        update yc_activity_grid_attachment
+        set del_flag = '2', update_time = sysdate()
+        where grid_id = #{gridId} and del_flag = '0'
+    </delete>
+</mapper>

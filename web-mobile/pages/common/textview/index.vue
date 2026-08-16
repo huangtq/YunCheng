@@ -14,6 +14,21 @@
       <view class="content-card">
         <rich-text class="content-body" :nodes="content" />
       </view>
+      <view v-if="attachments.length" class="attachments-card">
+        <view class="attachments-title">附件</view>
+        <view
+          v-for="item in attachments"
+          :key="item.attachmentId || item.fileUrl"
+          class="attachment-item"
+          @click="openAttachment(item)"
+        >
+          <view class="attachment-main">
+            <text class="attachment-name">{{ item.displayName || item.fileName || '附件' }}</text>
+            <text v-if="item.fileSize" class="attachment-size">{{ formatSize(item.fileSize) }}</text>
+          </view>
+          <text class="attachment-action">下载</text>
+        </view>
+      </view>
     </view>
 
     <view v-if="drawerOpen" class="drawer-mask" @click="drawerOpen = false">
@@ -37,6 +52,9 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getPortalGrid } from '@/api/portal/meeting'
 import { openMeetingItem } from '@/utils/meetingNavigation'
 import { setupMeetingShare } from '@/utils/wxShare'
+import { getMpToken } from '@/utils/mpAuth'
+import config from '@/config'
+import { mergeLocationQuery } from '@/utils/h5Route'
 
 const title = ref('内容')
 const content = ref('')
@@ -44,24 +62,58 @@ const activityId = ref('')
 const gridId = ref('')
 const drawerOpen = ref(false)
 const gridItems = ref([])
+const attachments = ref([])
 
 onLoad(options => {
-  title.value = decodeURIComponent(options?.title || '内容')
-  content.value = decodeURIComponent(options?.content || '')
-  activityId.value = options?.activityId || ''
-  gridId.value = options?.gridId || ''
+  const query = mergeLocationQuery(options || {})
+  title.value = decodeURIComponent(query.title || '内容')
+  content.value = decodeURIComponent(query.content || '')
+  activityId.value = query.activityId || ''
+  gridId.value = query.gridId || ''
   if (activityId.value) setupMeetingShare(activityId.value)
   if (!activityId.value) return
   getPortalGrid(activityId.value)
     .then(res => {
       gridItems.value = res.data || []
-      const currentItem = gridItems.value.find(item => String(item.gridId) === String(gridId.value))
+      const currentItem = gridItems.value.find(item => normalizeGridId(item.gridId) === normalizeGridId(gridId.value))
       if (currentItem?.content) {
         content.value = currentItem.content
       }
+      attachments.value = normalizeAttachments(currentItem?.attachments || [])
     })
     .catch(() => { gridItems.value = [] })
 })
+
+function normalizeGridId(value) {
+  return String(value || '').replace(/^(legacy-)?grid-/, '')
+}
+
+function normalizeAttachments(items) {
+  return (items || []).map(item => ({
+    ...item,
+    downloadUrl: item.downloadUrl || (item.attachmentId && gridId.value
+      ? `/portal/meeting/grid/${activityId.value}/attachment/${normalizeGridId(gridId.value)}/${item.attachmentId}`
+      : item.fileUrl)
+  })).filter(item => item.downloadUrl)
+}
+
+function openAttachment(item) {
+  const url = item.downloadUrl
+  if (!url) return
+  uni.downloadFile({
+    url: /^https?:\/\//i.test(url) ? url : config.baseUrl + url,
+    header: getMpToken() ? { 'Mp-Authorization': `Bearer ${getMpToken()}` } : {},
+    success: ({ tempFilePath }) => uni.openDocument({ filePath: tempFilePath, showMenu: true }),
+    fail: () => uni.showToast({ title: '附件下载失败', icon: 'none' })
+  })
+}
+
+function formatSize(size) {
+  const bytes = Number(size || 0)
+  if (!bytes) return ''
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
 
 onShow(() => {
   if (activityId.value) setupMeetingShare(activityId.value)
@@ -123,6 +175,48 @@ function selectMenu(item) {
 .content-card {
   padding: 24px;
   background: #fff;
+}
+.attachments-card {
+  margin-top: 16px;
+  padding: 20px 24px;
+  background: #fff;
+  border-top: 1px solid #ebeef5;
+}
+.attachments-title {
+  margin-bottom: 12px;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+}
+.attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid #f0f2f5;
+}
+.attachment-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+.attachment-name {
+  overflow: hidden;
+  color: #303133;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attachment-size {
+  color: #909399;
+  font-size: 12px;
+}
+.attachment-action {
+  flex: 0 0 auto;
+  color: #1f6feb;
+  font-size: 13px;
 }
 .content-body {
   display: block;

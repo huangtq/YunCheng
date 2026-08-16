@@ -3,6 +3,7 @@ package com.ruoyi.system.service;
 import java.util.List;
 import java.util.Map;
 import com.ruoyi.system.domain.YcApplyOrder;
+import com.ruoyi.system.domain.YcActivityGridAttachment;
 import com.ruoyi.common.core.domain.model.MpLoginUser;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -19,6 +20,8 @@ public interface IYcPortalMeetingService
     List<Map<String, Object>> listActivities(String type);
 
     List<?> listGrid(Long activityId);
+
+    YcActivityGridAttachment getPublicGridAttachment(Long activityId, Long gridId, Long attachmentId);
 
     List<?> listModule(String moduleKey, Long activityId);
 

@@ -16,6 +16,13 @@ export function openMeetingItem(activityId, item, options = {}) {
     return true
   }
 
+  if (entry.linkType === 'pdf' && (entry.contentUrl || entry.pdfUrl || entry.url)) {
+    navigate({
+      url: `/pages/common/pdf/index?activityId=${encodeURIComponent(activityId || '')}&title=${encodeURIComponent(entry.title || 'PDF文件')}&url=${encodeURIComponent(entry.contentUrl || entry.pdfUrl || entry.url)}`
+    })
+    return true
+  }
+
   if (entry.linkType === 'content' && entry.contentType === 'image' && (entry.gridId || entry.contentUrl || entry.content || entry.iconUrl)) {
     const query = [
       `activityId=${encodeURIComponent(activityId || '')}`,

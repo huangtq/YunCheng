@@ -84,6 +84,12 @@
       "navigationStyle": "custom",
       "navigationBarTitleText": "浏览图片"
     }
+  }, {
+    "path": "pages/common/pdf/index",
+    "style": {
+      "navigationStyle": "custom",
+      "navigationBarTitleText": "PDF文件"
+    }
   }],
   "globalStyle": {
     "navigationBarTextStyle": "black",
