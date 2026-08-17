@@ -100,11 +100,14 @@ create table if not exists yc_meeting_content_attachment (
   key idx_content_attachment (content_id, status, del_flag)
 ) engine=innodb auto_increment=1 comment='会议内容附件';
 
--- P0 administration permissions. INSERT IGNORE keeps this additive script re-runnable.
-insert ignore into sys_menu values('2122', '会议首页查询', '2101', '22', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:home:list', '#', 'admin', sysdate(), '', null, '查看首页版本与草稿');
-insert ignore into sys_menu values('2123', '会议首页编辑', '2101', '23', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:home:edit', '#', 'admin', sysdate(), '', null, '保存首页草稿');
-insert ignore into sys_menu values('2124', '会议首页发布', '2101', '24', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:home:publish', '#', 'admin', sysdate(), '', null, '发布或回滚首页版本');
-insert ignore into sys_menu values('2125', '会议内容查询', '2101', '25', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:list', '#', 'admin', sysdate(), '', null, '查看会议内容');
-insert ignore into sys_menu values('2126', '会议内容新增', '2101', '26', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:add', '#', 'admin', sysdate(), '', null, '新增会议内容');
-insert ignore into sys_menu values('2127', '会议内容编辑', '2101', '27', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:edit', '#', 'admin', sysdate(), '', null, '编辑会议内容及附件');
-insert ignore into sys_menu values('2128', '会议内容删除', '2101', '28', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:remove', '#', 'admin', sysdate(), '', null, '删除会议内容及附件');
+-- P0 administration permissions. 2122-2125 are already assigned to meeting
+-- order operations in the original schema, so use the next available range.
+insert ignore into sys_menu values('2204', '会议首页查询', '2101', '104', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:home:list', '#', 'admin', sysdate(), '', null, '查看首页版本与草稿');
+insert ignore into sys_menu values('2205', '会议首页编辑', '2101', '105', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:home:edit', '#', 'admin', sysdate(), '', null, '保存首页草稿');
+insert ignore into sys_menu values('2206', '会议首页发布', '2101', '106', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:home:publish', '#', 'admin', sysdate(), '', null, '发布或回滚首页版本');
+insert ignore into sys_menu values('2207', '会议内容查询', '2101', '107', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:list', '#', 'admin', sysdate(), '', null, '查看会议内容');
+insert ignore into sys_menu values('2208', '会议内容新增', '2101', '108', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:add', '#', 'admin', sysdate(), '', null, '新增会议内容');
+insert ignore into sys_menu values('2209', '会议内容编辑', '2101', '109', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:edit', '#', 'admin', sysdate(), '', null, '编辑会议内容及附件');
+insert ignore into sys_menu values('2210', '会议内容删除', '2101', '110', '', '', '', '', 1, 0, 'F', '0', '0', 'meeting:content:remove', '#', 'admin', sysdate(), '', null, '删除会议内容及附件');
+
+insert ignore into sys_role_menu values ('1', '2204'), ('1', '2205'), ('1', '2206'), ('1', '2207'), ('1', '2208'), ('1', '2209'), ('1', '2210');
