@@ -132,6 +132,7 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             versionStatus = "compatibility";
         }
 
+        normalizeHomePresentation(page);
         decorateEntryStates(page.getJSONArray("entryTree"), activityId, user);
 
         Map<String, Object> data = new HashMap<>();
@@ -202,12 +203,12 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             JSONObject entry = entries.getJSONObject(i);
             if (entry == null) continue;
             boolean enabled = !Boolean.FALSE.equals(entry.getBoolean("enabled"));
-            String targetType = entry.getString("targetType");
+            String targetType = entryTargetType(entry);
             boolean loginRequired = false;
             boolean registeredRequired = false;
             boolean available = enabled;
             String unavailableMessage = "";
-            if ("content".equals(targetType) && !entry.containsKey("legacyContent"))
+            if ("content".equals(targetType) && !hasLegacyContentTarget(entry))
             {
                 Object target = entry.get("target");
                 Long contentId = target instanceof JSONObject
@@ -554,33 +555,36 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             JSONObject entry = new JSONObject();
             entry.put("id", "legacy-grid-" + grid.getGridId());
             entry.put("title", grid.getTitle());
-            entry.put("iconUrl", grid.getIconUrl());
-            entry.put("iconType", grid.getIconType());
-            entry.put("contentUrl", grid.getContentUrl());
-            entry.put("content", grid.getContent());
-            entry.put("contentType", grid.getContentType());
-            entry.put("tileRow", grid.getTileRow());
-            entry.put("tileCol", grid.getTileCol());
-            entry.put("tileRowSpan", grid.getTileRowSpan());
-            entry.put("tileColSpan", grid.getTileColSpan());
             entry.put("sort", grid.getSortOrder());
-            entry.put("attachments", grid.getAttachments());
+            JSONObject display = new JSONObject();
+            display.put("type", StringUtils.isEmpty(grid.getIconType()) ? "image" : grid.getIconType());
+            display.put("assetUrl", grid.getIconUrl());
+            display.put("iconKey", grid.getIconKey());
+            entry.put("display", display);
+            JSONObject itemLayout = new JSONObject();
+            itemLayout.put("tileRow", grid.getTileRow());
+            itemLayout.put("tileCol", grid.getTileCol());
+            itemLayout.put("tileRowSpan", grid.getTileRowSpan());
+            itemLayout.put("tileColSpan", grid.getTileColSpan());
+            entry.put("layout", itemLayout);
             String linkType = StringUtils.isEmpty(grid.getLinkType()) ? "none" : grid.getLinkType();
-            entry.put("targetType", "module".equals(linkType) ? "module" : ("url".equals(linkType) ? "external" : ("content".equals(linkType) ? "content" : ("pdf".equals(linkType) ? "pdf" : "group"))));
-            if ("module".equals(linkType)) entry.put("target", grid.getModuleKey());
-            else if ("url".equals(linkType)) entry.put("target", grid.getExternalUrl());
+            JSONObject target = new JSONObject();
+            target.put("type", "module".equals(linkType) ? "module" : ("url".equals(linkType) ? "external" : ("content".equals(linkType) ? "content" : ("pdf".equals(linkType) ? "pdf" : "group"))));
+            if ("module".equals(linkType)) target.put("moduleKey", grid.getModuleKey());
+            else if ("url".equals(linkType)) target.put("url", grid.getExternalUrl());
             else if ("pdf".equals(linkType))
             {
-                entry.put("target", grid.getContentUrl());
-                entry.put("contentType", "pdf");
-                entry.put("contentUrl", grid.getContentUrl());
+                target.put("url", grid.getContentUrl());
+                target.put("fileType", "pdf");
             }
             else if ("content".equals(linkType))
             {
-                entry.put("target", grid.getContentUrl());
-                entry.put("legacyContent", grid.getContent());
-                entry.put("contentType", grid.getContentType());
+                target.put("legacyContent", grid.getContent());
+                target.put("contentType", grid.getContentType());
+                target.put("legacyMediaUrl", grid.getContentUrl());
+                target.put("attachments", grid.getAttachments());
             }
+            entry.put("target", target);
             entries.add(entry);
         }
         return entries;
@@ -651,6 +655,146 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             a.getSortOrder() == null ? 0 : a.getSortOrder(),
             b.getSortOrder() == null ? 0 : b.getSortOrder()));
         return list;
+    }
+
+    /**
+     * Presentation settings are persisted as versioned JSON. Normalize them at
+     * the portal boundary so old drafts and malformed values retain a stable
+     * mobile rendering without requiring a database migration.
+     */
+    private void normalizeHomePresentation(JSONObject page)
+    {
+        if (page == null) return;
+        JSONObject layout = page.getJSONObject("layout");
+        if (layout == null)
+        {
+            layout = new JSONObject();
+            page.put("layout", layout);
+        }
+        JSONObject visual = layout.getJSONObject("visual");
+        if (visual == null)
+        {
+            visual = new JSONObject();
+            layout.put("visual", visual);
+        }
+        visual.put("heroHeight", clampPresentationNumber(visual.getInteger("heroHeight"), 0, 0, 1600));
+        visual.put("countdownTop", clampPresentationNumber(visual.getInteger("countdownTop"), 16, 0, 200));
+        visual.put("countdownBottom", clampPresentationNumber(visual.getInteger("countdownBottom"), 20, 0, 200));
+        visual.put("itemGap", clampPresentationNumber(visual.getInteger("itemGap"), 10, 0, 100));
+        visual.put("itemPadding", clampPresentationNumber(visual.getInteger("itemPadding"), 10, 0, 100));
+        visual.put("heroRadius", clampPresentationNumber(visual.getInteger("heroRadius"), 0, 0, 48));
+        visual.put("cardRadius", clampPresentationNumber(visual.getInteger("cardRadius"), 10, 0, 48));
+        visual.put("heroFit", presentationValue(visual.getString("heroFit"), "cover", "cover", "contain"));
+        visual.put("heroPosition", presentationValue(visual.getString("heroPosition"), "center", "top", "center", "bottom"));
+        visual.put("cardStyle", presentationValue(visual.getString("cardStyle"), "plain", "plain", "raised", "outlined", "soft"));
+
+        JSONObject background = layout.getJSONObject("background");
+        if (background != null)
+        {
+            background.put("imageMode", presentationValue(background.getString("imageMode"), "repeat", "repeat", "cover"));
+            background.put("imagePosition", presentationValue(background.getString("imagePosition"), "top", "top", "center"));
+        }
+        normalizeEntryPresentation(page.getJSONArray("entryTree"));
+    }
+
+    private void normalizeEntryPresentation(JSONArray entries)
+    {
+        if (entries == null) return;
+        for (int i = 0; i < entries.size(); i++)
+        {
+            JSONObject entry = entries.getJSONObject(i);
+            if (entry == null) continue;
+            JSONObject display = entry.getJSONObject("display");
+            if (display == null)
+            {
+                display = new JSONObject();
+                display.put("type", presentationValue(entry.getString("iconType"), "image", "image", "icon"));
+                display.put("assetUrl", entry.getString("iconUrl"));
+                display.put("iconKey", entry.getString("iconKey"));
+                entry.put("display", display);
+            }
+            display.put("type", presentationValue(display.getString("type"), "image", "image", "icon"));
+            if (StringUtils.isEmpty(display.getString("assetUrl")) && "image".equals(display.getString("type")) && "image".equals(entry.getString("contentType")))
+            {
+                display.put("assetUrl", entry.getString("contentUrl"));
+            }
+            JSONObject options = display.getJSONObject("options");
+            if (options == null)
+            {
+                options = new JSONObject();
+                display.put("options", options);
+            }
+            options.put("imageFit", presentationValue(options.getString("imageFit"), presentationValue(entry.getString("imageFit"), "cover", "cover", "contain"), "cover", "contain"));
+            options.put("imagePosition", presentationValue(options.getString("imagePosition"), presentationValue(entry.getString("imagePosition"), "center", "top", "center", "bottom"), "top", "center", "bottom"));
+
+            Object rawTarget = entry.get("target");
+            String legacyTarget = rawTarget instanceof String ? (String) rawTarget : "";
+            JSONObject target = entry.getJSONObject("target");
+            if (target == null)
+            {
+                target = new JSONObject();
+                entry.put("target", target);
+            }
+            String targetType = presentationValue(target.getString("type"), entry.getString("targetType"), "group", "content", "pdf", "module", "file", "map", "external", "phone");
+            target.put("type", targetType);
+            if ("module".equals(targetType) && StringUtils.isEmpty(target.getString("moduleKey"))) target.put("moduleKey", StringUtils.isNotEmpty(entry.getString("moduleKey")) ? entry.getString("moduleKey") : legacyTarget);
+            if ("external".equals(targetType) && StringUtils.isEmpty(target.getString("url"))) target.put("url", StringUtils.isNotEmpty(entry.getString("externalUrl")) ? entry.getString("externalUrl") : legacyTarget);
+            if ("pdf".equals(targetType) && StringUtils.isEmpty(target.getString("url"))) target.put("url", StringUtils.isNotEmpty(entry.getString("contentUrl")) ? entry.getString("contentUrl") : legacyTarget);
+            if ("content".equals(targetType))
+            {
+                if (!target.containsKey("contentId") && legacyTarget.matches("\\d+")) target.put("contentId", legacyTarget);
+                if (!target.containsKey("legacyContent")) target.put("legacyContent", entry.getString("legacyContent"));
+                if (!target.containsKey("legacyMediaUrl")) target.put("legacyMediaUrl", StringUtils.isNotEmpty(entry.getString("contentUrl")) ? entry.getString("contentUrl") : legacyTarget);
+                if (!target.containsKey("contentType")) target.put("contentType", entry.getString("contentType"));
+                if (!target.containsKey("attachments")) target.put("attachments", entry.getJSONArray("attachments"));
+            }
+
+            JSONObject itemLayout = entry.getJSONObject("layout");
+            if (itemLayout == null)
+            {
+                itemLayout = new JSONObject();
+                entry.put("layout", itemLayout);
+            }
+            if (!itemLayout.containsKey("sectionKey")) itemLayout.put("sectionKey", entry.getString("sectionKey"));
+            if (!itemLayout.containsKey("tileRow")) itemLayout.put("tileRow", entry.getInteger("tileRow"));
+            if (!itemLayout.containsKey("tileCol")) itemLayout.put("tileCol", entry.getInteger("tileCol"));
+            if (!itemLayout.containsKey("tileRowSpan")) itemLayout.put("tileRowSpan", entry.getInteger("tileRowSpan"));
+            if (!itemLayout.containsKey("tileColSpan")) itemLayout.put("tileColSpan", entry.getInteger("tileColSpan"));
+            if (!itemLayout.containsKey("bounds")) itemLayout.put("bounds", entry.getJSONObject("bounds"));
+            normalizeEntryPresentation(entry.getJSONArray("children"));
+        }
+    }
+
+    private String entryTargetType(JSONObject entry)
+    {
+        JSONObject target = entry.getJSONObject("target");
+        return target == null || StringUtils.isEmpty(target.getString("type"))
+            ? entry.getString("targetType") : target.getString("type");
+    }
+
+    private boolean hasLegacyContentTarget(JSONObject entry)
+    {
+        if (StringUtils.isNotEmpty(entry.getString("legacyContent")) || StringUtils.isNotEmpty(entry.getString("contentUrl"))) return true;
+        JSONObject target = entry.getJSONObject("target");
+        return target != null && (StringUtils.isNotEmpty(target.getString("legacyContent")) || StringUtils.isNotEmpty(target.getString("legacyMediaUrl")));
+    }
+
+    private int clampPresentationNumber(Integer value, int fallback, int min, int max)
+    {
+        int number = value == null ? fallback : value;
+        return Math.max(min, Math.min(max, number));
+    }
+
+    private String presentationValue(String value, String fallback, String... allowed)
+    {
+        if (value != null)
+        {
+            for (String candidate : allowed)
+            {
+                if (candidate.equals(value)) return value;
+            }
+        }
+        return fallback;
     }
 
     @Override

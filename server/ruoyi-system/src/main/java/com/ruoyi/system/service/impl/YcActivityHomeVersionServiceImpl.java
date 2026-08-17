@@ -27,7 +27,7 @@ import com.ruoyi.system.service.IYcActivityHomeVersionService;
 @Service
 public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionService
 {
-    private static final String DEFAULT_SCHEMA_VERSION = "1";
+    private static final String DEFAULT_SCHEMA_VERSION = "3";
 
     @Autowired
     private YcActivityHomeVersionMapper homeVersionMapper;
@@ -285,7 +285,7 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
             for (int j = 0; j < entries.size(); j++)
             {
                 JSONObject entry = entries.getJSONObject(j);
-                if (entry != null && !Boolean.FALSE.equals(entry.getBoolean("enabled")) && key.equals(entry.getString("sectionKey"))) count++;
+                if (entry != null && !Boolean.FALSE.equals(entry.getBoolean("enabled")) && key.equals(entrySectionKey(entry))) count++;
             }
             if (count < min) throw new ServiceException("template section " + key + " requires at least " + min + " enabled entries");
             if (max > 0 && count > max) throw new ServiceException("template section " + key + " allows at most " + max + " entries");
@@ -299,7 +299,7 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
             JSONObject entry = entries.getJSONObject(i);
             if (entry == null) throw new ServiceException("entryTree contains an invalid entry");
             String id = entry.getString("id");
-            String targetType = entry.getString("targetType");
+            String targetType = entryTargetType(entry);
             if (StringUtils.isEmpty(id) || StringUtils.isEmpty(targetType))
             {
                 throw new ServiceException("entry id and targetType required");
@@ -336,8 +336,9 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
             {
                 Long contentId = targetObject == null ? parseLong(target) : targetObject.getLong("contentId");
                 com.ruoyi.system.domain.YcMeetingContent content = contentId == null ? null : contentMapper.selectYcMeetingContentById(contentId);
-                boolean legacyGridContent = contentId == null
-                    && (StringUtils.isNotEmpty(entry.getString("legacyContent")) || StringUtils.isNotEmpty(entry.getString("contentUrl")));
+                boolean legacyGridContent = contentId == null && (StringUtils.isNotEmpty(entry.getString("legacyContent"))
+                    || StringUtils.isNotEmpty(entry.getString("contentUrl")) || (targetObject != null
+                    && (StringUtils.isNotEmpty(targetObject.getString("legacyContent")) || StringUtils.isNotEmpty(targetObject.getString("legacyMediaUrl")))));
                 if (!legacyGridContent && (content == null || !activityId.equals(content.getActivityId()) || !"published".equals(content.getStatus())))
                 {
                     throw new ServiceException("content entry must reference published content");
@@ -377,7 +378,8 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
 
     private void validateImageMapBounds(JSONObject entry)
     {
-        JSONObject bounds = entry.getJSONObject("bounds");
+        JSONObject itemLayout = entry.getJSONObject("layout");
+        JSONObject bounds = itemLayout == null ? entry.getJSONObject("bounds") : itemLayout.getJSONObject("bounds");
         if (bounds == null) throw new ServiceException("image map entry requires bounds");
         Double left = bounds.getDouble("left");
         Double top = bounds.getDouble("top");
@@ -387,5 +389,19 @@ public class YcActivityHomeVersionServiceImpl implements IYcActivityHomeVersionS
         {
             throw new ServiceException("image map entry bounds must stay within 0-100%");
         }
+    }
+
+    private String entryTargetType(JSONObject entry)
+    {
+        JSONObject target = entry.getJSONObject("target");
+        return target == null || StringUtils.isEmpty(target.getString("type"))
+            ? entry.getString("targetType") : target.getString("type");
+    }
+
+    private String entrySectionKey(JSONObject entry)
+    {
+        JSONObject itemLayout = entry.getJSONObject("layout");
+        return itemLayout == null || StringUtils.isEmpty(itemLayout.getString("sectionKey"))
+            ? entry.getString("sectionKey") : itemLayout.getString("sectionKey");
     }
 }

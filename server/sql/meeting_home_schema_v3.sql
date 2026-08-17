@@ -1,0 +1,31 @@
+-- Meeting home schema v3
+--
+-- No new table is required. yc_activity_home_version.page_json is the
+-- versioned page snapshot and is the only source of truth for new page
+-- entries. yc_activity_grid remains a legacy compatibility source.
+--
+-- v3 entry contract:
+-- {
+--   "id": "grid-123",
+--   "title": "会议议程",
+--   "display": {
+--     "type": "image|icon",
+--     "assetUrl": "card image only",
+--     "iconKey": "icon identifier only",
+--     "options": { "imageFit": "cover", "imagePosition": "center" }
+--   },
+--   "target": {
+--     "type": "module|external|content|pdf|phone|group",
+--     "moduleKey|url|contentId": "destination-specific value"
+--   },
+--   "layout": { "sectionKey": "menu", "tileRow": 0, "tileCol": 0 }
+-- }
+--
+-- Existing page_json values and yc_activity_grid rows do not need a data
+-- update: the portal converts v1/v2 and legacy grid rows to v3 at read time.
+-- New drafts are written with schema_version = '3'.
+
+-- Apply after meeting_home_version_phase.sql. It changes only the default for
+-- new rows; historical snapshots retain their original schema marker.
+alter table yc_activity_home_version
+    modify column schema_version varchar(20) not null default '3' comment '页面JSON schema版本';

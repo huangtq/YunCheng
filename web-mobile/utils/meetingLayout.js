@@ -57,7 +57,12 @@ export function buildHomeLayout(rawLayout = {}, config = {}) {
       countdownTop: Number(rawVisual.countdownTop) || 16,
       countdownBottom: Number(rawVisual.countdownBottom) || 20,
       itemGap: Number(rawVisual.itemGap) || 10,
-      itemPadding: Number(rawVisual.itemPadding) || 10
+      itemPadding: Number(rawVisual.itemPadding) || 10,
+      heroFit: rawVisual.heroFit === 'contain' ? 'contain' : 'cover',
+      heroPosition: ['top', 'bottom'].includes(rawVisual.heroPosition) ? rawVisual.heroPosition : 'center',
+      heroRadius: Math.min(48, Math.max(0, Number(rawVisual.heroRadius) || 0)),
+      cardStyle: ['raised', 'outlined', 'soft'].includes(rawVisual.cardStyle) ? rawVisual.cardStyle : 'plain',
+      cardRadius: Math.min(48, Math.max(0, Number(rawVisual.cardRadius) || 10))
     },
     audioUrl: rawLayout.audioUrl || config.audioUrl || '',
     audioAutoplay: rawLayout.audioAutoplay === true || String(config.audioAutoplay) === '1',

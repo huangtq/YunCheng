@@ -77,7 +77,8 @@
             v-if="isImageCardGrid && (layout.heroUrl || activity.coverUrl)"
             class="cover-auto-image"
             :src="resolveUrl(layout.heroUrl || activity.coverUrl)"
-            mode="widthFix"
+            :mode="heroImageMode"
+            :style="heroImageStyle"
           />
           <view v-if="layout.showCoverMeta" class="cover-mask">
             <view class="title">{{ activity.activityName || '会议' }}</view>
@@ -182,7 +183,7 @@ const pageThemeStyle = computed(() => ({
   '--theme-color': layout.value.themeColor || '#1f6feb',
   backgroundColor: layout.value.gridTemplate === 'tile'
     ? (isLightTile.value ? tileSurfaceColor.value : '#000')
-    : '#f5f7fa',
+    : (layout.value.background?.color || '#f5f7fa'),
   paddingBottom: layout.value.gridTemplate === 'tile' ? '0' : undefined,
   backgroundImage: layout.value.background?.gradient || layout.value.background?.imageUrl
     ? `${layout.value.background?.gradient || ''}${layout.value.background?.imageUrl ? `${layout.value.background?.gradient ? ', ' : ''}url(${resolveUrl(layout.value.background.imageUrl)})` : ''}`
@@ -193,20 +194,39 @@ const pageThemeStyle = computed(() => ({
 const coverStyle = computed(() => {
   const url = layout.value.heroUrl || activity.value.coverUrl
   const tileBg = tileSurfaceColor.value
+  const visual = layout.value.visual || {}
+  const heroPosition = `${visual.heroPosition || 'center'} center`
   if (!url) {
     return {
-      background: `linear-gradient(135deg, ${layout.value.themeColor || '#1f6feb'}, #0b3d91)`
+      background: `linear-gradient(135deg, ${layout.value.themeColor || '#1f6feb'}, #0b3d91)`,
+      borderRadius: `${visual.heroRadius || 0}rpx`
     }
   }
   const full = url.startsWith('http') ? url : (config.baseUrl + url)
   const isPcViewport = typeof window !== 'undefined' && window.innerWidth >= 750
   return {
     backgroundImage: `url(${full})`,
-    backgroundSize: isTile.value ? 'contain' : 'cover',
-    backgroundPosition: isTile.value ? 'top center' : 'center',
+    backgroundSize: isTile.value ? 'contain' : (visual.heroFit || 'cover'),
+    backgroundPosition: isTile.value ? 'top center' : heroPosition,
     backgroundRepeat: 'no-repeat',
     backgroundColor: isTile.value ? tileBg : 'transparent',
-    height: isTile.value ? (isPcViewport ? '421.875px' : '56.25vw') : undefined
+    height: isTile.value ? (isPcViewport ? '421.875px' : '56.25vw') : undefined,
+    borderRadius: `${visual.heroRadius || 0}rpx`
+  }
+})
+
+const heroImageMode = computed(() => {
+  const visual = layout.value.visual || {}
+  if (!(Number(visual.heroHeight) > 0)) return 'widthFix'
+  return visual.heroFit === 'contain' ? 'aspectFit' : 'aspectFill'
+})
+
+const heroImageStyle = computed(() => {
+  const visual = layout.value.visual || {}
+  return {
+    borderRadius: `${visual.heroRadius || 0}rpx`,
+    objectPosition: `${visual.heroPosition || 'center'} center`,
+    height: Number(visual.heroHeight) > 0 ? '100%' : 'auto'
   }
 })
 
@@ -253,7 +273,8 @@ function normalizedImageRatio(value) {
 }
 
 function gridCardImageMode(item) {
-  return normalizedImageRatio(item?.imageRatio) === 'auto' ? 'widthFix' : 'aspectFill'
+  if (normalizedImageRatio(item?.imageRatio) === 'auto') return 'widthFix'
+  return item?.imageFit === 'contain' ? 'aspectFit' : 'aspectFill'
 }
 
 function gridCardImageStyle(item) {
@@ -264,7 +285,8 @@ function gridCardImageStyle(item) {
   if (ratio !== 'auto') {
     style.aspectRatio = ratio.replace(':', ' / ')
     style.height = 'auto'
-    style.objectFit = 'cover'
+    style.objectFit = item?.imageFit === 'contain' ? 'contain' : 'cover'
+    style.objectPosition = `${['top', 'bottom'].includes(item?.imagePosition) ? item.imagePosition : 'center'} center`
   }
   return style
 }
@@ -276,43 +298,64 @@ function tileIconStyle(item) {
 }
 
 const tilePageStyle = computed(() => {
-  const background = layout.value.backgroundUrl
+  const background = layout.value.background || {}
+  const backgroundUrl = background.imageUrl || layout.value.backgroundUrl
   return {
-    backgroundColor: isLightTile.value ? tileSurfaceColor.value : '#1100ab',
-    backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
-    backgroundSize: '100% 100%',
-    backgroundPosition: '50% 100%',
-    backgroundRepeat: 'no-repeat',
+    backgroundColor: background.color || (isLightTile.value ? tileSurfaceColor.value : '#1100ab'),
+    backgroundImage: background.gradient || backgroundUrl
+      ? `${background.gradient || ''}${backgroundUrl ? `${background.gradient ? ', ' : ''}url(${resolveUrl(backgroundUrl)})` : ''}`
+      : 'none',
+    backgroundSize: background.imageMode === 'repeat' ? '100% auto' : 'cover',
+    backgroundPosition: `${background.imagePosition === 'center' ? 'center' : 'top'} center`,
+    backgroundRepeat: background.imageMode === 'repeat' ? 'repeat-y' : 'no-repeat',
     backgroundAttachment: isLightTile.value ? 'scroll' : 'fixed'
   }
 })
 
 const imageMapStyle = computed(() => {
-  const background = layout.value.backgroundUrl
+  const background = layout.value.background || {}
+  const backgroundUrl = background.imageUrl || layout.value.backgroundUrl
   return {
-    backgroundColor: layout.value.themeColor || '#f5f7fa',
-    backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
-    backgroundSize: '100% auto',
-    backgroundRepeat: 'no-repeat'
+    backgroundColor: background.color || layout.value.themeColor || '#f5f7fa',
+    backgroundImage: background.gradient || backgroundUrl
+      ? `${background.gradient || ''}${backgroundUrl ? `${background.gradient ? ', ' : ''}url(${resolveUrl(backgroundUrl)})` : ''}`
+      : 'none',
+    backgroundSize: background.imageMode === 'cover' ? 'cover' : '100% auto',
+    backgroundPosition: `${background.imagePosition === 'center' ? 'center' : 'top'} center`,
+    backgroundRepeat: background.imageMode === 'cover' ? 'no-repeat' : 'repeat-y'
   }
 })
 
 const standardPageStyle = computed(() => {
-  const background = layout.value.backgroundUrl
+  const background = layout.value.background || {}
+  const backgroundUrl = background.imageUrl || layout.value.backgroundUrl
   const visual = layout.value.visual || {}
   const imageCardGap = Math.max(Number(visual.itemGap) || 10, 18)
   const imageCardPadding = Math.max(Number(visual.itemPadding) || 10, 12)
+  const cardStyle = visual.cardStyle || 'plain'
+  const cardSkin = {
+    plain: { background: 'transparent', border: 'transparent', shadow: 'none' },
+    raised: { background: '#ffffff', border: 'transparent', shadow: '0 8rpx 20rpx rgba(30, 75, 181, 0.12)' },
+    outlined: { background: 'rgba(255, 255, 255, 0.82)', border: 'rgba(30, 75, 181, 0.14)', shadow: 'none' },
+    soft: { background: 'rgba(234, 248, 255, 0.9)', border: 'transparent', shadow: 'none' }
+  }[cardStyle] || { background: 'transparent', border: 'transparent', shadow: 'none' }
   return {
-    backgroundColor: isImageCardGrid.value ? '#eaf8ff' : '#fff',
-    backgroundImage: background ? `url(${resolveUrl(background)})` : 'none',
-    backgroundSize: '100% auto',
-    backgroundPosition: 'top center',
-    backgroundRepeat: 'repeat-y',
+    backgroundColor: background.color || (isImageCardGrid.value ? '#eaf8ff' : '#fff'),
+    backgroundImage: background.gradient || backgroundUrl
+      ? `${background.gradient || ''}${backgroundUrl ? `${background.gradient ? ', ' : ''}url(${resolveUrl(backgroundUrl)})` : ''}`
+      : 'none',
+    backgroundSize: background.imageMode === 'cover' ? 'cover' : '100% auto',
+    backgroundPosition: `${background.imagePosition === 'center' ? 'center' : 'top'} center`,
+    backgroundRepeat: background.imageMode === 'cover' ? 'no-repeat' : 'repeat-y',
     '--grid-hero-height': visual.heroHeight > 0 ? `${visual.heroHeight}rpx` : 'auto',
     '--grid-countdown-top': `${visual.countdownTop || 16}rpx`,
     '--grid-countdown-bottom': `${visual.countdownBottom || 20}rpx`,
     '--grid-item-gap': `${imageCardGap}rpx`,
-    '--grid-item-padding': `${imageCardPadding}rpx`
+    '--grid-item-padding': `${imageCardPadding}rpx`,
+    '--grid-card-radius': `${visual.cardRadius || 10}rpx`,
+    '--grid-card-background': cardSkin.background,
+    '--grid-card-border': cardSkin.border,
+    '--grid-card-shadow': cardSkin.shadow
   }
 })
 
@@ -378,14 +421,44 @@ async function loadHome() {
 }
 
 function flattenEntries(entries = []) {
-  return entries.filter(entry => entry && entry.enabled !== false).map(entry => ({
-    ...entry,
-    gridId: entry.id,
-    linkType: entry.targetType,
-    moduleKey: entry.targetType === 'module' ? (entry.target?.moduleKey || entry.target) : '',
-    externalUrl: entry.targetType === 'external' ? (entry.target?.url || entry.target) : '',
-    contentUrl: entry.targetType === 'content' ? (entry.contentUrl || entry.target?.url || '') : ''
-  }))
+  return entries.filter(entry => entry && entry.enabled !== false).map(entry => {
+    const display = entry.display || {}
+    const displayOptions = display.options || {}
+    const target = entry.target || {}
+    const targetType = target.type || entry.targetType || entry.type || ''
+    const itemLayout = entry.layout || {}
+    const legacyTarget = typeof target === 'object' ? target : {}
+    return {
+      ...entry,
+      gridId: entry.id,
+      targetType,
+      target,
+      linkType: targetType,
+      moduleKey: targetType === 'module' ? (legacyTarget.moduleKey || target) : '',
+      externalUrl: targetType === 'external' ? (legacyTarget.url || target) : '',
+      contentUrl: targetType === 'content' ? (legacyTarget.legacyMediaUrl || entry.contentUrl || '') : '',
+      contentType: legacyTarget.contentType || entry.contentType || '',
+      legacyContent: legacyTarget.legacyContent || entry.legacyContent || '',
+      attachments: legacyTarget.attachments || entry.attachments || [],
+      iconType: display.type || entry.iconType || 'image',
+      iconKey: display.iconKey || entry.iconKey || '',
+      iconUrl: display.assetUrl || entry.iconUrl || '',
+      iconSize: displayOptions.iconSize ?? entry.iconSize,
+      iconBackground: displayOptions.iconBackground ?? entry.iconBackground,
+      iconRadius: displayOptions.iconRadius ?? entry.iconRadius,
+      imageRatio: displayOptions.imageRatio || entry.imageRatio,
+      imageFit: displayOptions.imageFit || entry.imageFit,
+      imagePosition: displayOptions.imagePosition || entry.imagePosition,
+      displayAsCard: displayOptions.displayAsCard ?? entry.displayAsCard,
+      showTitle: displayOptions.showTitle ?? entry.showTitle,
+      sectionKey: itemLayout.sectionKey || entry.sectionKey,
+      tileRow: itemLayout.tileRow ?? entry.tileRow,
+      tileCol: itemLayout.tileCol ?? entry.tileCol,
+      tileRowSpan: itemLayout.tileRowSpan ?? entry.tileRowSpan,
+      tileColSpan: itemLayout.tileColSpan ?? entry.tileColSpan,
+      bounds: itemLayout.bounds || entry.bounds
+    }
+  })
 }
 
 function buildEntrySections(entries) {
@@ -408,7 +481,7 @@ function isImageCard(item, section) {
 }
 
 function gridCardUrl(item) {
-  return item?.contentUrl || item?.iconUrl || ''
+  return item?.iconUrl || ''
 }
 
 function isLightColor(color) {
@@ -712,6 +785,7 @@ function onFooterClick() {
   min-height: 0;
   margin: 0 -20rpx;
   background: none;
+  overflow: hidden;
 }
 .standard-page.is-image-card-grid .cover-auto-image {
   display: block;
@@ -754,6 +828,11 @@ function onFooterClick() {
 }
 .standard-page.is-image-card-grid .grid-item.is-image-card {
   padding: var(--grid-item-padding, 10rpx);
+  overflow: hidden;
+  border: 2rpx solid var(--grid-card-border, transparent);
+  border-radius: var(--grid-card-radius, 10rpx);
+  background: var(--grid-card-background, transparent);
+  box-shadow: var(--grid-card-shadow, none);
 }
 .standard-page.is-image-card-grid .grid {
   display: grid;

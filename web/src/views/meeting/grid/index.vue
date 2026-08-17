@@ -100,6 +100,23 @@
                   <small>设为 0 时，主图按图片原始比例展示</small>
                 </div>
                 <div class="grid-visual-section grid-visual-section--two">
+                  <span>主视觉样式</span>
+                  <label>图片展示
+                    <el-select v-model="gridVisual.heroFit">
+                      <el-option label="完整展示" value="contain" />
+                      <el-option label="铺满裁切" value="cover" />
+                    </el-select>
+                  </label>
+                  <label>裁切位置
+                    <el-select v-model="gridVisual.heroPosition">
+                      <el-option label="顶部" value="top" />
+                      <el-option label="居中" value="center" />
+                      <el-option label="底部" value="bottom" />
+                    </el-select>
+                  </label>
+                  <label>圆角<el-input-number v-model="gridVisual.heroRadius" :min="0" :max="48" :step="2" /></label>
+                </div>
+                <div class="grid-visual-section grid-visual-section--two">
                   <span>倒计时</span>
                   <label>上边距<el-input-number v-model="gridVisual.countdownTop" :min="0" :max="200" :step="2" /></label>
                   <label>下边距<el-input-number v-model="gridVisual.countdownBottom" :min="0" :max="200" :step="2" /></label>
@@ -108,6 +125,18 @@
                   <span>九宫格</span>
                   <label>卡片间距<el-input-number v-model="gridVisual.itemGap" :min="0" :max="100" :step="2" /></label>
                   <label>外侧留白<el-input-number v-model="gridVisual.itemPadding" :min="0" :max="100" :step="2" /></label>
+                </div>
+                <div class="grid-visual-section grid-visual-section--two">
+                  <span>卡片皮肤</span>
+                  <label>样式
+                    <el-select v-model="gridVisual.cardStyle">
+                      <el-option label="无底简洁" value="plain" />
+                      <el-option label="白底浮层" value="raised" />
+                      <el-option label="细边框" value="outlined" />
+                      <el-option label="柔和底色" value="soft" />
+                    </el-select>
+                  </label>
+                  <label>统一圆角<el-input-number v-model="gridVisual.cardRadius" :min="0" :max="48" :step="2" /></label>
                 </div>
               </div>
             </el-tab-pane>
@@ -138,6 +167,20 @@
                 <div v-else class="grid-background-field">
                   <span>背景图片</span>
                   <material-select v-model="gridBackground.imageUrl" :show-tip="false" />
+                  <div class="grid-background-image-options">
+                    <label>显示方式
+                      <el-radio-group v-model="gridBackground.imageMode">
+                        <el-radio-button value="repeat">纵向平铺</el-radio-button>
+                        <el-radio-button value="cover">铺满页面</el-radio-button>
+                      </el-radio-group>
+                    </label>
+                    <label>图片位置
+                      <el-radio-group v-model="gridBackground.imagePosition">
+                        <el-radio-button value="top">顶部</el-radio-button>
+                        <el-radio-button value="center">居中</el-radio-button>
+                      </el-radio-group>
+                    </label>
+                  </div>
                 </div>
               </div>
             </el-tab-pane>
@@ -595,6 +638,27 @@
                 <el-radio-button value="16:9">16:9</el-radio-button>
               </el-radio-group>
             </el-form-item>
+            <el-form-item v-if="isImageCardForm">
+              <template #label>
+                <span class="mobile-field-label">
+                  素材展示
+                  <el-tooltip content="决定固定比例素材是否裁切，以及裁切时优先保留的区域。" placement="top">
+                    <el-icon class="mobile-field-help"><question-filled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="image-presentation-control">
+                <el-radio-group v-model="form.imageFit">
+                  <el-radio-button value="cover">铺满裁切</el-radio-button>
+                  <el-radio-button value="contain">完整展示</el-radio-button>
+                </el-radio-group>
+                <el-radio-group v-model="form.imagePosition">
+                  <el-radio-button value="top">顶部</el-radio-button>
+                  <el-radio-button value="center">居中</el-radio-button>
+                  <el-radio-button value="bottom">底部</el-radio-button>
+                </el-radio-group>
+              </div>
+            </el-form-item>
             <el-form-item>
               <template #label>
                 <span class="mobile-field-label">
@@ -791,16 +855,23 @@ const gridVisual = reactive({
   countdownTop: 16,
   countdownBottom: 20,
   itemGap: 10,
-  itemPadding: 10
+  itemPadding: 10,
+  heroFit: "cover",
+  heroPosition: "center",
+  heroRadius: 0,
+  cardStyle: "plain",
+  cardRadius: 10
 })
-const gridBackground = reactive({ color: DEFAULT_GRID_BACKGROUND_COLOR, gradient: "", imageUrl: "" })
+const gridBackground = reactive({ color: DEFAULT_GRID_BACKGROUND_COLOR, gradient: "", imageUrl: "", imageMode: "repeat", imagePosition: "top" })
 const gridBackgroundMode = ref("color")
 const pageSettingsOpen = ref(false)
 const pageSettingsTab = ref("layout")
 const activeGridBackground = computed(() => ({
   color: gridBackgroundMode.value === "color" ? gridBackground.color : "",
   gradient: gridBackgroundMode.value === "gradient" ? gridBackground.gradient : "",
-  imageUrl: gridBackgroundMode.value === "image" ? gridBackground.imageUrl : ""
+  imageUrl: gridBackgroundMode.value === "image" ? gridBackground.imageUrl : "",
+  imageMode: gridBackground.imageMode === "cover" ? "cover" : "repeat",
+  imagePosition: gridBackground.imagePosition === "center" ? "center" : "top"
 }))
 const homeVersionId = ref(null)
 const homeVersions = ref([])
@@ -900,7 +971,9 @@ const gridBackgroundPreviewStyle = computed(() => {
     style.backgroundImage = gridBackground.gradient || "none"
   } else if (gridBackground.imageUrl) {
     style.backgroundImage = `url("${resolveUrl(gridBackground.imageUrl)}")`
-    style.backgroundSize = "cover"
+    style.backgroundSize = gridBackground.imageMode === "cover" ? "cover" : "100% auto"
+    style.backgroundPosition = `${gridBackground.imagePosition === "center" ? "center" : "top"} center`
+    style.backgroundRepeat = gridBackground.imageMode === "cover" ? "no-repeat" : "repeat-y"
   }
   return style
 })
@@ -946,6 +1019,14 @@ function normalizedImageRatio(value) {
   return ["1:1", "4:3", "16:9"].includes(value) ? value : "auto"
 }
 
+function normalizedImageFit(value) {
+  return value === "contain" ? "contain" : "cover"
+}
+
+function normalizedImagePosition(value) {
+  return ["top", "bottom"].includes(value) ? value : "center"
+}
+
 function previewCardImageStyle(item) {
   const ratio = normalizedImageRatio(item?.imageRatio)
   const style = {
@@ -953,7 +1034,8 @@ function previewCardImageStyle(item) {
   }
   if (ratio !== "auto") {
     style.aspectRatio = ratio.replace(":", " / ")
-    style.objectFit = "cover"
+    style.objectFit = normalizedImageFit(item?.imageFit)
+    style.objectPosition = `${normalizedImagePosition(item?.imagePosition)} center`
   }
   return style
 }
@@ -968,12 +1050,12 @@ function isImageCardPreview(item) {
 }
 
 function gridCardUrl(item) {
-  return item?.contentUrl || item?.iconUrl || ""
+  return item?.iconUrl || (item?.contentType === "image" ? item.contentUrl : "")
 }
 
 function resolveGridIconUrl(item) {
   if (item?.iconUrl) return item.iconUrl
-  if (item?.iconType === "image" && item?.contentUrl) return item.contentUrl
+  if (item?.iconType === "image" && item?.contentType === "image" && item?.contentUrl) return item.contentUrl
   return ""
 }
 
@@ -1185,7 +1267,9 @@ function getList() {
         iconSize: clampNumber(options.iconSize, 20, 48, DEFAULT_ICON_SIZE),
         iconBackground: options.iconBackground || "",
         iconRadius: clampNumber(options.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
-        imageRatio: normalizedImageRatio(options.imageRatio)
+        imageRatio: normalizedImageRatio(options.imageRatio),
+        imageFit: normalizedImageFit(options.imageFit),
+        imagePosition: normalizedImagePosition(options.imagePosition)
       }
     })
     total.value = res.total
@@ -1225,7 +1309,18 @@ watch(gridBackground, markEditorDirty, { deep: true })
 watch(gridBackgroundMode, markEditorDirty)
 
 function defaultGridVisual() {
-  return { heroHeight: 0, countdownTop: 16, countdownBottom: 20, itemGap: 10, itemPadding: 10 }
+  return {
+    heroHeight: 0,
+    countdownTop: 16,
+    countdownBottom: 20,
+    itemGap: 10,
+    itemPadding: 10,
+    heroFit: "cover",
+    heroPosition: "center",
+    heroRadius: 0,
+    cardStyle: "plain",
+    cardRadius: 10
+  }
 }
 
 function parseGridVisual(value) {
@@ -1243,7 +1338,7 @@ function gridShowTitle(item) {
 }
 
 function parseGridBackground(value, mobileBackgroundUrl = "") {
-  const defaults = { color: DEFAULT_GRID_BACKGROUND_COLOR, gradient: "", imageUrl: "" }
+  const defaults = { color: DEFAULT_GRID_BACKGROUND_COLOR, gradient: "", imageUrl: "", imageMode: "repeat", imagePosition: "top" }
   try {
     const parsed = JSON.parse(value || "{}")
     return {
@@ -1295,28 +1390,61 @@ function homeTemplateKey() {
 }
 
 function homeEntryTarget(item) {
-  if (item.linkType === "module") return { targetType: "module", target: { moduleKey: item.moduleKey || "" } }
-  if (item.linkType === "url") return { targetType: "external", target: { url: item.externalUrl || "" } }
-  if (item.linkType === "phone") return { targetType: "phone", target: { phone: item.phone || item.externalUrl || "" } }
+  if (item.linkType === "module") return { type: "module", moduleKey: item.moduleKey || "" }
+  if (item.linkType === "url") return { type: "external", url: item.externalUrl || "" }
+  if (item.linkType === "phone") return { type: "phone", phone: item.phone || item.externalUrl || "" }
   if (item.linkType === "pdf") {
     return {
-      targetType: "pdf",
-      target: { url: item.contentUrl || "" },
-      contentType: "pdf",
-      contentUrl: item.contentUrl || ""
+      type: "pdf",
+      url: item.contentUrl || "",
+      fileType: "pdf"
     }
   }
   if (item.linkType === "content") {
     return {
-      targetType: "content",
-      target: item.contentId ? { contentId: item.contentId } : { contentId: null },
+      type: "content",
+      contentId: item.contentId || null,
       legacyContent: item.content || "",
       contentType: item.contentType || "text",
-      contentUrl: item.contentUrl || "",
+      legacyMediaUrl: item.contentUrl || "",
       attachments: item.attachments || []
     }
   }
-  return { targetType: "group", target: {}, children: [{ id: `grid-${item.gridId}-placeholder`, title: "未配置动作", enabled: false, targetType: "module", target: { moduleKey: "apply" } }] }
+  return { type: "group" }
+}
+
+function homeEntryDisplay(item) {
+  return {
+    type: item.iconType || "image",
+    assetUrl: item.iconType === "image" ? (item.iconUrl || "") : "",
+    iconKey: item.iconType === "icon" ? (item.iconKey || "") : "",
+    options: {
+      iconSize: clampNumber(item.iconSize, 20, 48, DEFAULT_ICON_SIZE),
+      iconBackground: item.iconBackground || "",
+      iconRadius: clampNumber(item.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
+      imageRatio: normalizedImageRatio(item.imageRatio),
+      imageFit: normalizedImageFit(item.imageFit),
+      imagePosition: normalizedImagePosition(item.imagePosition),
+      displayAsCard: item.displayAsCard === true,
+      showTitle: item.showTitle !== false
+    }
+  }
+}
+
+function homeEntryLayout(item, sectionKey) {
+  return {
+    sectionKey,
+    tileRow: item.tileRow || 0,
+    tileCol: item.tileCol || 0,
+    tileRowSpan: item.tileRowSpan || 1,
+    tileColSpan: item.tileColSpan || 1,
+    bounds: item.bounds || {
+      left: item.left,
+      top: item.top,
+      width: item.width,
+      height: item.height
+    }
+  }
 }
 
 function parseHomeBlocks() {
@@ -1335,34 +1463,24 @@ function buildHomePage() {
   const sourceItems = template.layout.template === "image-map" && parseHomeBlocks().length
     ? parseHomeBlocks()
     : previewItems.value.filter(item => ["module", "url", "content", "pdf"].includes(item.linkType))
-  const entries = sourceItems.map((item, index) => ({
-    id: `grid-${item.gridId || item.id || index}`,
-    title: item.title || "",
-    enabled: String(item.status) !== "0",
-    sort: item.sortOrder || index,
-    sectionKey,
-    iconType: item.iconType || "image",
-    iconKey: item.iconKey || "",
-    iconUrl: item.iconUrl || "",
-    iconSize: clampNumber(item.iconSize, 20, 48, DEFAULT_ICON_SIZE),
-    iconBackground: item.iconBackground || "",
-    iconRadius: clampNumber(item.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
-    imageRatio: normalizedImageRatio(item.imageRatio),
-    contentId: item.contentId || null,
-    displayAsCard: item.displayAsCard === true,
-    tileRow: item.tileRow || 0,
-    tileCol: item.tileCol || 0,
-    tileRowSpan: item.tileRowSpan || 1,
-    tileColSpan: item.tileColSpan || 1,
-    showTitle: item.showTitle !== false,
-    bounds: item.bounds || {
-      left: item.left,
-      top: item.top,
-      width: item.width,
-      height: item.height
-    },
-    ...homeEntryTarget(item)
-  }))
+  const entries = sourceItems.map((item, index) => {
+    const target = homeEntryTarget(item)
+    return {
+      id: `grid-${item.gridId || item.id || index}`,
+      title: item.title || "",
+      enabled: String(item.status) !== "0",
+      sort: item.sortOrder || index,
+      display: homeEntryDisplay(item),
+      target,
+      layout: homeEntryLayout(item, sectionKey),
+      children: target.type === "group" ? [{
+        id: `grid-${item.gridId || item.id || index}-placeholder`,
+        title: "未配置动作",
+        enabled: false,
+        target: { type: "module", moduleKey: "apply" }
+      }] : undefined
+    }
+  })
   const layout = {
     ...JSON.parse(JSON.stringify(template.layout)),
     template: configForm.value.mobileTemplate || template.layout.template,
@@ -1393,7 +1511,7 @@ function buildHomePage() {
   return {
     source: "grid-config",
     mode: "standard",
-    schemaVersion: "2",
+    schemaVersion: "3",
     templateKey,
     theme: { color: themeColor.value, background: { ...activeGridBackground.value } },
     layout,
@@ -1418,7 +1536,7 @@ async function saveHomeDraft(options = {}) {
       versionId: homeVersionId.value,
       activityId: Number(activityId.value),
       pageJson,
-      schemaVersion: "2",
+      schemaVersion: "3",
       gridTemplate: configForm.value.gridTemplate,
       configRemark,
       mobileBackgroundUrl
@@ -1585,6 +1703,8 @@ function restoreForm(data) {
     iconBackground: options.iconBackground || "",
     iconRadius: clampNumber(options.iconRadius, 0, 24, DEFAULT_ICON_RADIUS),
     imageRatio: normalizedImageRatio(options.imageRatio),
+    imageFit: normalizedImageFit(options.imageFit),
+    imagePosition: normalizedImagePosition(options.imagePosition),
     hidden: options.hidden !== undefined
       ? options.hidden === true || options.hidden === 1 || options.hidden === "1"
       : String(data.status) === "0",
@@ -1605,6 +1725,8 @@ function buildPayload() {
   delete payload.iconBackground
   delete payload.iconRadius
   delete payload.imageRatio
+  delete payload.imageFit
+  delete payload.imagePosition
   payload.status = form.value.hidden ? "0" : "1"
   payload.iconType = form.value.iconType || "image"
   payload.iconUrl = payload.iconType === "image" ? (form.value.iconUrl || "") : ""
@@ -1621,6 +1743,8 @@ function buildPayload() {
   remarkObj.iconBackground = form.value.iconBackground || ""
   remarkObj.iconRadius = clampNumber(form.value.iconRadius, 0, 24, DEFAULT_ICON_RADIUS)
   remarkObj.imageRatio = normalizedImageRatio(form.value.imageRatio)
+  remarkObj.imageFit = normalizedImageFit(form.value.imageFit)
+  remarkObj.imagePosition = normalizedImagePosition(form.value.imagePosition)
   if (form.value.displayAsCard) remarkObj.displayAsCard = true
   if (form.value.showTitle === false) remarkObj.showTitle = false
   if (bg) {
@@ -1672,6 +1796,8 @@ function reset() {
     iconBackground: "",
     iconRadius: DEFAULT_ICON_RADIUS,
     imageRatio: "auto",
+    imageFit: "cover",
+    imagePosition: "center",
     displayAsCard: false,
     showTitle: true,
     hidden: false,
@@ -2444,6 +2570,25 @@ onMounted(() => {
 }
 .grid-visual-section :deep(.el-input-number) {
   width: 100%;
+}
+.grid-visual-section :deep(.el-select) {
+  width: 100%;
+}
+.grid-background-image-options,
+.image-presentation-control {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.grid-background-image-options label {
+  display: grid;
+  gap: 8px;
+  color: #526174;
+  font-size: 13px;
+}
+.image-presentation-control :deep(.el-radio-group) {
+  display: flex;
+  flex-wrap: wrap;
 }
 .phone-cover {
   display: flex;
