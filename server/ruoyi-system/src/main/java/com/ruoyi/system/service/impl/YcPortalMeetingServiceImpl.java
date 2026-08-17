@@ -132,7 +132,7 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             versionStatus = "compatibility";
         }
 
-        normalizeHomePresentation(page);
+        normalizeHomePresentation(page, activityId);
         decorateEntryStates(page.getJSONArray("entryTree"), activityId, user);
 
         Map<String, Object> data = new HashMap<>();
@@ -662,7 +662,7 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
      * the portal boundary so old drafts and malformed values retain a stable
      * mobile rendering without requiring a database migration.
      */
-    private void normalizeHomePresentation(JSONObject page)
+    private void normalizeHomePresentation(JSONObject page, Long activityId)
     {
         if (page == null) return;
         JSONObject layout = page.getJSONObject("layout");
@@ -694,10 +694,10 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             background.put("imageMode", presentationValue(background.getString("imageMode"), "repeat", "repeat", "cover"));
             background.put("imagePosition", presentationValue(background.getString("imagePosition"), "top", "top", "center"));
         }
-        normalizeEntryPresentation(page.getJSONArray("entryTree"));
+        normalizeEntryPresentation(page.getJSONArray("entryTree"), tileBackgrounds(activityId));
     }
 
-    private void normalizeEntryPresentation(JSONArray entries)
+    private void normalizeEntryPresentation(JSONArray entries, Map<String, String> tileBackgrounds)
     {
         if (entries == null) return;
         for (int i = 0; i < entries.size(); i++)
@@ -726,6 +726,10 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             }
             options.put("imageFit", presentationValue(options.getString("imageFit"), presentationValue(entry.getString("imageFit"), "cover", "cover", "contain"), "cover", "contain"));
             options.put("imagePosition", presentationValue(options.getString("imagePosition"), presentationValue(entry.getString("imagePosition"), "center", "top", "center", "bottom"), "top", "center", "bottom"));
+            String tileBackground = firstTileBackground(options);
+            if (StringUtils.isEmpty(tileBackground)) tileBackground = firstTileBackground(entry);
+            if (StringUtils.isEmpty(tileBackground) && tileBackgrounds != null) tileBackground = tileBackgrounds.get(entry.getString("id"));
+            if (StringUtils.isNotEmpty(tileBackground)) options.put("tileBackground", tileBackground);
 
             Object rawTarget = entry.get("target");
             String legacyTarget = rawTarget instanceof String ? (String) rawTarget : "";
@@ -761,7 +765,67 @@ public class YcPortalMeetingServiceImpl implements IYcPortalMeetingService
             if (!itemLayout.containsKey("tileRowSpan")) itemLayout.put("tileRowSpan", entry.getInteger("tileRowSpan"));
             if (!itemLayout.containsKey("tileColSpan")) itemLayout.put("tileColSpan", entry.getInteger("tileColSpan"));
             if (!itemLayout.containsKey("bounds")) itemLayout.put("bounds", entry.getJSONObject("bounds"));
-            normalizeEntryPresentation(entry.getJSONArray("children"));
+            normalizeEntryPresentation(entry.getJSONArray("children"), tileBackgrounds);
+        }
+    }
+
+    private Map<String, String> tileBackgrounds(Long activityId)
+    {
+        Map<String, String> backgrounds = new HashMap<>();
+        if (activityId == null) return backgrounds;
+        YcActivityGrid query = new YcActivityGrid();
+        query.setActivityId(activityId);
+        for (YcActivityGrid grid : gridMapper.selectYcActivityGridList(query))
+        {
+            String background = tileBackgroundFromRemark(grid.getRemark());
+            if (StringUtils.isEmpty(background) || grid.getGridId() == null) continue;
+            backgrounds.put("grid-" + grid.getGridId(), background);
+            backgrounds.put("legacy-grid-" + grid.getGridId(), background);
+        }
+        return backgrounds;
+    }
+
+    private String firstTileBackground(JSONObject value)
+    {
+        if (value == null) return "";
+        String[] keys = { "tileBackground", "tileBg", "bg", "background", "gradientColor" };
+        for (String key : keys)
+        {
+            String background = value.getString(key);
+            if (StringUtils.isNotEmpty(background)) return background;
+        }
+        return "";
+    }
+
+    private String tileBackgroundFromRemark(String remark)
+    {
+        if (StringUtils.isEmpty(remark)) return "";
+        if (remark.startsWith("tile-bg:")) return remark.substring(8);
+        try
+        {
+            return tileBackgroundFromOptions(JSON.parseObject(remark), 0);
+        }
+        catch (Exception e)
+        {
+            return "";
+        }
+    }
+
+    private String tileBackgroundFromOptions(JSONObject options, int depth)
+    {
+        if (options == null || depth > 3) return "";
+        String background = firstTileBackground(options);
+        if (StringUtils.isNotEmpty(background)) return background;
+        String nested = options.getString("remark");
+        if (StringUtils.isEmpty(nested)) return "";
+        if (nested.startsWith("tile-bg:")) return nested.substring(8);
+        try
+        {
+            return tileBackgroundFromOptions(JSON.parseObject(nested), depth + 1);
+        }
+        catch (Exception e)
+        {
+            return "";
         }
     }
 

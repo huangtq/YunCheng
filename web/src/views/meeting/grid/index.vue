@@ -1414,6 +1414,7 @@ function homeEntryTarget(item) {
 }
 
 function homeEntryDisplay(item) {
+  const tileBackground = String(item.gradientColor || item.tileBg || "").trim()
   return {
     type: item.iconType || "image",
     assetUrl: item.iconType === "image" ? (item.iconUrl || "") : "",
@@ -1426,7 +1427,8 @@ function homeEntryDisplay(item) {
       imageFit: normalizedImageFit(item.imageFit),
       imagePosition: normalizedImagePosition(item.imagePosition),
       displayAsCard: item.displayAsCard === true,
-      showTitle: item.showTitle !== false
+      showTitle: item.showTitle !== false,
+      tileBackground
     }
   }
 }

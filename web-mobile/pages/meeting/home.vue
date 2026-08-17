@@ -31,12 +31,13 @@
             class="tile-item"
             :class="{
               'is-color-tile': isColorTile(item),
-              'is-tall-color-tile': isTallColorTile(item)
+              'has-tile-icon': hasTileIcon(item),
+              'is-tall-tile': isTallTile(item)
             }"
             :style="tileStyle(item)"
             @click="onGridClick(item)"
           >
-            <text v-if="!item.iconUrl || isColorTile(item)" class="tile-title">{{ item.title }}</text>
+            <text v-if="shouldShowTileTitle(item)" class="tile-title">{{ item.title }}</text>
             <MeetingIcon
               v-if="item.iconType === 'icon' && item.iconKey"
               class="tile-icon"
@@ -47,7 +48,7 @@
               color="#fff"
             />
             <image
-              v-else-if="isColorTile(item) && item.iconUrl"
+              v-else-if="item.iconUrl"
               class="tile-icon"
               :src="resolveUrl(item.iconUrl)"
               :style="tileIconStyle(item)"
@@ -451,6 +452,7 @@ function flattenEntries(entries = []) {
       imagePosition: displayOptions.imagePosition || entry.imagePosition,
       displayAsCard: displayOptions.displayAsCard ?? entry.displayAsCard,
       showTitle: displayOptions.showTitle ?? entry.showTitle,
+      tileBackground: displayOptions.tileBackground || displayOptions.tileBg || displayOptions.bg || displayOptions.background || displayOptions.gradientColor || entry.tileBackground || entry.tileBg || entry.gradientColor || '',
       sectionKey: itemLayout.sectionKey || entry.sectionKey,
       tileRow: itemLayout.tileRow ?? entry.tileRow,
       tileCol: itemLayout.tileCol ?? entry.tileCol,
@@ -549,27 +551,37 @@ function resolveTileBgMeta(options = {}, depth = 0) {
 }
 
 function isColorTile(item) {
-  const meta = parseTileMeta(item)
-  return !!(meta.bg || meta.background || meta.tileBg || meta.gradientColor)
+  return !!tileBackground(item)
 }
 
-function isTallColorTile(item) {
-  return isColorTile(item) && Number(item.tileRowSpan || 1) >= 2
+function tileBackground(item) {
+  if (item && item.tileBackground) return item.tileBackground
+  const meta = parseTileMeta(item)
+  return meta.bg || meta.background || meta.tileBg || meta.gradientColor || ''
+}
+
+function hasTileIcon(item) {
+  return !!(item && (item.iconUrl || (item.iconType === 'icon' && item.iconKey)))
+}
+
+function isTallTile(item) {
+  return hasTileIcon(item) && Number(item.tileRowSpan || 1) >= 2
+}
+
+function shouldShowTileTitle(item) {
+  return !!item && item.showTitle !== false && !!item.title
 }
 
 function tileStyle(item) {
-  const meta = parseTileMeta(item)
   const style = {
     gridColumn: `${item.tileCol || 'auto'} / span ${item.tileColSpan || 1}`,
     gridRow: `${item.tileRow || 'auto'} / span ${item.tileRowSpan || 1}`,
     borderRadius: `${clampStyleNumber(item?.iconRadius, 0, 24, DEFAULT_ICON_RADIUS) * 2}rpx`
   }
-  const gradient = meta.bg || meta.background || meta.tileBg || meta.gradientColor
+  const gradient = tileBackground(item)
   if (gradient) {
     style.backgroundImage = gradient
     style.backgroundColor = 'transparent'
-  } else if (item.iconUrl) {
-    style.backgroundImage = `url(${resolveUrl(item.iconUrl)})`
   } else if (item.iconBackground) {
     style.backgroundColor = item.iconBackground
   }
@@ -909,7 +921,7 @@ function onFooterClick() {
   border-radius: 10px;
   box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
 }
-.tile-item.is-color-tile .tile-title {
+.tile-item.has-tile-icon .tile-title {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -925,7 +937,7 @@ function onFooterClick() {
   white-space: nowrap;
   word-break: keep-all;
 }
-.tile-item.is-color-tile .tile-icon {
+.tile-item.has-tile-icon .tile-icon {
   position: absolute;
   right: 5px;
   bottom: 5px;
@@ -934,14 +946,14 @@ function onFooterClick() {
   height: 50px;
   margin: 0;
 }
-.tile-item.is-tall-color-tile .tile-title {
+.tile-item.is-tall-tile .tile-title {
   top: 15px;
   left: 15px;
   max-width: none;
   font-size: 24px;
   white-space: nowrap;
 }
-.tile-item.is-tall-color-tile .tile-icon {
+.tile-item.is-tall-tile .tile-icon {
   right: 8px;
   bottom: 8px;
   width: 80px;
