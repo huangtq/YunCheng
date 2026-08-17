@@ -46,6 +46,7 @@
               :size="gridIconSize(item)"
               :style="tileIconStyle(item)"
               color="#fff"
+              monochrome
             />
             <image
               v-else-if="item.iconUrl"

@@ -2,7 +2,7 @@
   <image
     v-if="source && !imageFailed"
     class="meeting-icon"
-    :style="{ width: `${size}rpx`, height: `${size}rpx` }"
+    :style="imageStyle"
     :src="source"
     mode="aspectFit"
     @error="imageFailed = true"
@@ -34,6 +34,10 @@ const props = defineProps({
   color: {
     type: String,
     default: ''
+  },
+  monochrome: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -51,6 +55,14 @@ const source = computed(() => {
   }
   return `${config.baseUrl}${props.iconUrl}`
 })
+
+const imageStyle = computed(() => ({
+  width: `${props.size}rpx`,
+  height: `${props.size}rpx`,
+  // Library SVGs use a fixed dark fill. Tile cards need the same white icon
+  // treatment as the existing transparent PNG assets.
+  filter: props.monochrome ? 'brightness(0) invert(1)' : ''
+}))
 
 watch(
   () => [props.iconType, props.iconKey, props.iconUrl],

@@ -5,6 +5,7 @@
     :src="fileIconUrl"
     :width="size"
     :height="size"
+    :style="imageStyle"
     alt=""
     @error="imageFailed = true"
   />
@@ -28,6 +29,10 @@ const props = defineProps({
   color: {
     type: String,
     default: "currentColor"
+  },
+  monochrome: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -35,6 +40,10 @@ const imageFailed = ref(false)
 const fileIconUrl = computed(() => {
   return props.iconKey ? `/icons/meeting/${props.iconKey}.svg` : ""
 })
+
+const imageStyle = computed(() => ({
+  filter: props.monochrome ? "brightness(0) invert(1)" : ""
+}))
 
 watch(() => props.iconKey, () => {
   imageFailed.value = false

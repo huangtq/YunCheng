@@ -304,6 +304,7 @@
                     :size="previewIconSize(item)"
                     :style="previewTileIconStyle(item)"
                     color="#fff"
+                    monochrome
                   />
                   <img
                     v-else-if="isColorTile(item) && item.iconUrl"
