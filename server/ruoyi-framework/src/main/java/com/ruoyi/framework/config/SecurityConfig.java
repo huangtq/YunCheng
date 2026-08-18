@@ -114,6 +114,8 @@ public class SecurityConfig
                 permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                 // 对于登录login 注册register 验证码captchaImage 允许匿名访问
                 requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
+                    // Reverse-proxy readiness checks must not require a user token.
+                    .requestMatchers("/internal/health/**").permitAll()
                     // C端门户（公开读 + 微信授权；写接口自行校验 Mp-Token）
                     .requestMatchers("/portal/**").permitAll()
                     // 静态资源，可匿名访问

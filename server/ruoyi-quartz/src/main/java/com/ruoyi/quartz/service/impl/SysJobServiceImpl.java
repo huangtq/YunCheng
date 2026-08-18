@@ -6,7 +6,9 @@ import org.quartz.JobDataMap;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.constant.ScheduleConstants;
@@ -31,17 +33,39 @@ public class SysJobServiceImpl implements ISysJobService
     @Autowired
     private SysJobMapper jobMapper;
 
+    @Value("${ruoyi.quartz.enabled:true}")
+    private boolean quartzEnabled;
+
     /**
      * 项目启动时，初始化定时器 主要是防止手动修改数据库导致未同步到定时任务处理（注：不能手动修改数据库ID和任务组名，否则会导致脏数据）
      */
     @PostConstruct
     public void init() throws SchedulerException, TaskException
     {
-        scheduler.clear();
-        List<SysJob> jobList = jobMapper.selectJobAll();
-        for (SysJob job : jobList)
+        if (!quartzEnabled)
         {
-            ScheduleUtils.createScheduleJob(scheduler, job);
+            return;
+        }
+        activate();
+    }
+
+    @Override
+    public synchronized void activate() throws SchedulerException, TaskException
+    {
+        // The JDBC store already contains the authoritative schedule after the first
+        // activation. Re-sync only an empty store so a handover does not rewrite
+        // triggers while Quartz is starting its clustered acquisition loop.
+        if (scheduler.getJobKeys(GroupMatcher.anyJobGroup()).isEmpty())
+        {
+            List<SysJob> jobList = jobMapper.selectJobAll();
+            for (SysJob job : jobList)
+            {
+                ScheduleUtils.createScheduleJob(scheduler, job);
+            }
+        }
+        if (!scheduler.isStarted())
+        {
+            scheduler.start();
         }
     }
 

@@ -30,3 +30,12 @@
 - Log in with the SSH key `%USERPROFILE%\\.ssh\\yuncheng_tunnel` as `ubuntu@124.223.26.157`.
 - Execute the user's requested server commands through non-interactive SSH from the agent and return the command output; do not open a separate interactive command-line window.
 - Do not write or expose private keys, passwords, captcha values, cookies, API tokens, or other credentials. Only perform server changes explicitly requested by the user.
+
+## Production Blue-Green Deployment
+
+- The authoritative release procedure is [`docs/production-deployment.md`](docs/production-deployment.md); read it before changing production.
+- Production backend runs as two systemd slots: `ruoyi-admin@a` on `127.0.0.1:8081` and `ruoyi-admin@b` on `127.0.0.1:8082`. Nginx routes the `ruoyi_backend` upstream to the active slot.
+- Never replace the live JAR in place, restart the only production process, or overwrite `/project/ruoyi/config`. Upload a uniquely identified release, then promote it with `sudo /project/ruoyi/bin/promote-bluegreen.sh <release-id>`.
+- The promotion script starts and checks the inactive slot before reloading Nginx, switches static assets atomically, and activates Quartz only after traffic cutover. Check readiness and public API/PC/H5 status after every release.
+- To restore the previous release, use `sudo /project/ruoyi/bin/rollback-bluegreen.sh`; do not manually guess the active slot or edit `/project/ruoyi/bluegreen-state`.
+- Keep release artifacts for at least seven days. Secrets belong only in root-owned files under `/project/ruoyi/env`; never put them in commands, archives, logs, Git, or AI messages.

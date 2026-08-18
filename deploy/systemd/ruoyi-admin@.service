@@ -1,0 +1,21 @@
+[Unit]
+Description=YunCheng RuoYi backend (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/project/ruoyi
+EnvironmentFile=/project/ruoyi/env/%i
+ExecStart=/usr/bin/java -Xms512m -Xmx1024m -jar ${JAR_PATH} --server.address=127.0.0.1 --server.port=${SERVER_PORT}
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

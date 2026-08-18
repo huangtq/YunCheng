@@ -12,6 +12,9 @@ import com.ruoyi.quartz.domain.SysJob;
  */
 public interface ISysJobService
 {
+    /** Synchronize persisted jobs and start the scheduler after a blue-green handover. */
+    void activate() throws SchedulerException, TaskException;
+
     /**
      * 获取quartz调度器的计划任务
      * 
